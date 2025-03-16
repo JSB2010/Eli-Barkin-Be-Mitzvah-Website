@@ -1,13 +1,3 @@
-// Import Vercel Analytics and Speed Insights
-import { inject as injectAnalytics } from '@vercel/analytics';
-import { injectSpeedInsights } from '@vercel/speed-insights';
-
-// Initialize Vercel Analytics
-injectAnalytics();
-
-// Initialize Vercel Speed Insights
-injectSpeedInsights();
-
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Handle RSVP form submission
