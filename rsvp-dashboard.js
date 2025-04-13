@@ -2,24 +2,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const dashboardContainer = document.getElementById('dashboard-container');
 
     // Fetch data from Formcarry API
-    fetch(`https://formcarry.com/s/C6atiqnXy-0?api_key=RMug62xr3IvpuwqQniaw5umHTnp7odj8h4YOF7I3DJRJT647A2UlF8yvaFEn8eHq`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-            return response.json();
-        })
+    fetch('https://formcarry.com/s/C6atiqnXy-0')
+        .then(response => response.json())
         .then(data => {
             // Parse and display data
             displayData(data);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
-            dashboardContainer.innerHTML = `<p>Error fetching data: ${error.message}. Please try again later.</p>`;
+            dashboardContainer.innerHTML = '<p>Error fetching data. Please try again later.</p>';
         });
 
     function displayData(data) {
-        if (data && data.submissions && data.submissions.length > 0) {
+        if (data && data.length > 0) {
             const table = document.createElement('table');
             table.classList.add('dashboard-table');
 
@@ -37,17 +32,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Create table body
             const tbody = document.createElement('tbody');
-            data.submissions.forEach(entry => {
+            data.forEach(entry => {
                 const row = document.createElement('tr');
-                const fields = entry.fields[0];
                 row.innerHTML = `
-                    <td>${fields.name}</td>
-                    <td>${fields.email}</td>
-                    <td>${fields.phone}</td>
-                    <td>${fields.attending}</td>
-                    <td>${fields.guestCount}</td>
-                    <td>${fields.dietaryRestrictions}</td>
-                    <td>${fields.message}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.email}</td>
+                    <td>${entry.phone}</td>
+                    <td>${entry.attending}</td>
+                    <td>${entry.guestCount}</td>
+                    <td>${entry.dietaryRestrictions}</td>
+                    <td>${entry.message}</td>
                 `;
                 tbody.appendChild(row);
             });
