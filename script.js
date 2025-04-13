@@ -5,32 +5,81 @@ document.addEventListener('DOMContentLoaded', function() {
     const formConfirmation = document.getElementById('formConfirmation');
     const resetFormButton = document.getElementById('resetForm');
     const guestCountGroup = document.getElementById('guestCountGroup');
-    
+
     // Show/hide guest count based on attendance
     if (rsvpForm) {
         const attendingRadios = rsvpForm.querySelectorAll('input[name="attending"]');
+        const additionalGuestsContainer = document.getElementById('additionalGuestsContainer');
+        const guestCountInput = document.getElementById('guestCount');
+
+        // Function to update additional guest name fields
+        function updateGuestFields() {
+            const guestCount = parseInt(guestCountInput.value) || 1;
+            additionalGuestsContainer.innerHTML = '';
+
+            // Only add additional guest fields if count > 1
+            if (guestCount > 1) {
+                // Add a heading for additional guests
+                const heading = document.createElement('h3');
+                heading.textContent = 'Additional Guest Names';
+                heading.style.marginTop = '20px';
+                heading.style.marginBottom = '10px';
+                additionalGuestsContainer.appendChild(heading);
+
+                // Add name fields for additional guests (excluding the primary guest)
+                for (let i = 2; i <= guestCount; i++) {
+                    const guestFieldDiv = document.createElement('div');
+                    guestFieldDiv.className = 'form-group';
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `guestName${i}`);
+                    label.textContent = `Guest ${i} Name:`;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = `guestName${i}`;
+                    input.name = `guestName${i}`;
+                    input.required = true;
+
+                    guestFieldDiv.appendChild(label);
+                    guestFieldDiv.appendChild(input);
+                    additionalGuestsContainer.appendChild(guestFieldDiv);
+                }
+            }
+        }
+
+        // Listen for changes to guest count
+        guestCountInput.addEventListener('change', updateGuestFields);
+        guestCountInput.addEventListener('input', updateGuestFields);
+
+        // Show/hide guest count based on attendance
         attendingRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 if (this.value === 'yes') {
                     guestCountGroup.style.display = 'block';
+                    updateGuestFields(); // Update guest fields when showing the section
                 } else {
                     guestCountGroup.style.display = 'none';
+                    additionalGuestsContainer.innerHTML = ''; // Clear additional guest fields
                 }
             });
         });
+
+        // Initialize guest fields on page load
+        updateGuestFields();
 
         // Handle form submission (for Formcarry)
         rsvpForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const form = this;
             const submitButton = form.querySelector('button[type="submit"]');
-            
+
             // Store original button text
             const originalButtonText = submitButton.innerHTML;
-            
+
             // Change button text to show it's submitting
             submitButton.innerHTML = 'Submitting...';
-            
+
             // Submit form using fetch API for Formcarry
             fetch(form.action, {
                 method: form.method,
@@ -57,35 +106,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     // Reset form button
     if (resetFormButton) {
         resetFormButton.addEventListener('click', function() {
             formConfirmation.classList.add('hidden');
             rsvpForm.style.display = 'block';
             rsvpForm.reset();
-            
+
             // Scroll back to form
             rsvpForm.scrollIntoView({ behavior: 'smooth' });
         });
     }
-    
+
     // Sports theme animation
     const sportCards = document.querySelectorAll('.sport-card');
     sportCards.forEach(card => {
         card.addEventListener('mouseenter', function() {
             this.style.transform = 'translateY(-10px)';
         });
-        
+
         card.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0)';
         });
     });
-    
+
     // Add active class to current nav link
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     const navLinks = document.querySelectorAll('nav a');
-    
+
     navLinks.forEach(link => {
         const linkPage = link.getAttribute('href');
         if (linkPage === currentPage) {
@@ -94,21 +143,21 @@ document.addEventListener('DOMContentLoaded', function() {
             link.classList.remove('active');
         }
     });
-    
+
     // Add special effects on scroll
     function handleScrollEffects() {
         const elements = document.querySelectorAll('.info-card, .sport-card, .about-content');
         const windowHeight = window.innerHeight;
-        
+
         elements.forEach(element => {
             const elementPosition = element.getBoundingClientRect().top;
-            
+
             if (elementPosition < windowHeight - 100) {
                 element.classList.add('visible');
             }
         });
     }
-    
+
     // Add CSS class for fade-in effect
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
@@ -117,19 +166,19 @@ document.addEventListener('DOMContentLoaded', function() {
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        
+
         .info-card.visible, .sport-card.visible, .about-content.visible {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         .floating-sport {
             position: absolute;
             z-index: 1;
             animation: float linear infinite;
             pointer-events: none;
         }
-        
+
         @keyframes float {
             0% {
                 transform: translate(0, 0) rotate(0deg);
@@ -146,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(styleSheet);
-    
+
     // Listen for scroll events
     window.addEventListener('scroll', handleScrollEffects);
     // Initial check for elements in view

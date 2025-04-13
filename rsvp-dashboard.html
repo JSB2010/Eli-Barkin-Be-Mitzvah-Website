@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP Dashboard - Eli's Sports Be Mitzvah</title>
+    <link rel="icon" href="logo.PNG" type="image/png">
+    <link rel="stylesheet" href="rsvp-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="analytics.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>RSVP Dashboard</h1>
+            <div class="header-actions">
+                <a href="index.html" class="btn secondary">Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="loading" class="loading">Loading RSVP data...</div>
+
+        <div id="dashboard-container" class="hidden">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total RSVPs</h3>
+                    <div id="total-submissions" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Attending</h3>
+                    <div id="attending-count" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Not Attending</h3>
+                    <div id="not-attending-count" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Guests</h3>
+                    <div id="total-guests" class="stat-value">0</div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Attendance Breakdown</h3>
+                    <canvas id="attendance-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Submissions Timeline</h3>
+                    <canvas id="timeline-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>RSVP Submissions</h2>
+                    <div class="table-actions">
+                        <input type="text" id="search-box" class="search-box" placeholder="Search...">
+                        <select id="filter-dropdown" class="filter-dropdown">
+                            <option value="all">All Submissions</option>
+                            <option value="attending">Attending</option>
+                            <option value="not-attending">Not Attending</option>
+                        </select>
+                        <button id="export-btn" class="btn">Export CSV</button>
+                    </div>
+                </div>
+
+                <div id="table-content">
+                    <!-- Table will be dynamically added here -->
+                </div>
+
+                <div id="pagination" class="pagination">
+                    <!-- Pagination buttons will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Eli Barkin's Be Mitzvah</p>
+        </div>
+    </footer>
+
+    <script src="rsvp-dashboard.js"></script>
+</body>
+</html>

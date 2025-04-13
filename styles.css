@@ -498,6 +498,20 @@ textarea {
     gap: 2rem;
 }
 
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--dark-gray);
+}
+
+#additionalGuestsContainer h3 {
+    color: var(--primary-blue);
+    font-size: 1.3rem;
+    border-bottom: 1px solid var(--light-blue);
+    padding-bottom: 0.5rem;
+}
+
 .radio-options label {
     display: inline-flex;
     align-items: center;
