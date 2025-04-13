@@ -29,17 +29,17 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        
+
         // Clear previous error messages
         errorMessage.textContent = '';
-        
+
         // Sign in with Firebase Authentication
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 // Login successful, show dashboard
                 loginSection.style.display = 'none';
                 dashboardSection.style.display = 'block';
-                
+
                 // Fetch RSVP submissions
                 fetchSubmissions();
             })
@@ -62,13 +62,21 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
+    // Check if Firebase Auth is available
+    if (!firebase.auth) {
+        loginSection.style.display = 'none';
+        dashboardSection.style.display = 'none';
+        document.body.innerHTML = '<div style="text-align: center; padding: 2rem;"><h2>Error</h2><p>Firebase Authentication is not available. Please check your Firebase configuration.</p></div>';
+        return;
+    }
+
     // Check if user is already logged in
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             // User is signed in, show dashboard
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
-            
+
             // Fetch RSVP submissions
             fetchSubmissions();
         } else {
@@ -82,7 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchSubmissions() {
         loadingElement.style.display = 'block';
         tableContainer.style.display = 'none';
-        
+
+        // Check if Firestore is available
+        if (!db) {
+            loadingElement.textContent = 'Error: Firestore database is not available. Please check your Firebase configuration.';
+            return;
+        }
+
         db.collection('rsvps').orderBy('submittedAt', 'desc').get()
             .then((querySnapshot) => {
                 allSubmissions = querySnapshot.docs.map(doc => {
@@ -93,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         submittedAt: doc.data().submittedAt?.toDate() || new Date()
                     };
                 });
-                
+
                 // Process submissions
                 processSubmissions();
             })
@@ -163,12 +177,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalSubmissions = allSubmissions.length;
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
-        
+
         // Calculate total guests (sum of guest counts for attending submissions)
         const totalGuests = allSubmissions
             .filter(submission => submission.attending === 'yes')
             .reduce((total, submission) => total + (submission.guestCount || 1), 0);
-        
+
         // Update DOM elements
         totalSubmissionsElement.textContent = totalSubmissions;
         attendingCountElement.textContent = attendingCount;
@@ -181,12 +195,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear existing charts
         const attendanceChartCanvas = document.getElementById('attendance-chart');
         const timelineChartCanvas = document.getElementById('timeline-chart');
-        
+
+        // Destroy existing charts if they exist
+        if (window.attendanceChart instanceof Chart) {
+            window.attendanceChart.destroy();
+        }
+        if (window.timelineChart instanceof Chart) {
+            window.timelineChart.destroy();
+        }
+
         // Attendance breakdown chart
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
-        
-        new Chart(attendanceChartCanvas, {
+
+        window.attendanceChart = new Chart(attendanceChartCanvas, {
             type: 'pie',
             data: {
                 labels: ['Attending', 'Not Attending'],
@@ -206,19 +228,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         // Submissions timeline chart
         const submissionDates = {};
         allSubmissions.forEach(submission => {
             const date = submission.submittedAt.toLocaleDateString();
             submissionDates[date] = (submissionDates[date] || 0) + 1;
         });
-        
+
         // Sort dates chronologically
         const sortedDates = Object.keys(submissionDates).sort((a, b) => new Date(a) - new Date(b));
         const submissionCounts = sortedDates.map(date => submissionDates[date]);
-        
-        new Chart(timelineChartCanvas, {
+
+        window.timelineChart = new Chart(timelineChartCanvas, {
             type: 'line',
             data: {
                 labels: sortedDates,
@@ -265,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const noDataRow = document.createElement('tr');
             noDataRow.innerHTML = `<td colspan="7" style="text-align: center;">No submissions found</td>`;
             submissionsBody.appendChild(noDataRow);
-            
+
             // Clear pagination
             paginationContainer.innerHTML = '';
             return;
@@ -274,16 +296,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create table rows
         paginatedSubmissions.forEach(submission => {
             const row = document.createElement('tr');
-            
+
             // Format date
             const submissionDate = submission.submittedAt;
-            const formattedDate = submissionDate.toLocaleDateString() + ' ' + 
+            const formattedDate = submissionDate.toLocaleDateString() + ' ' +
                                  submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
+
             // Format additional guests
             const additionalGuests = submission.additionalGuests || [];
             const formattedGuests = additionalGuests.join(', ');
-            
+
             row.innerHTML = `
                 <td>${formattedDate}</td>
                 <td>${submission.name || ''}</td>
@@ -293,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${submission.guestCount || 1}</td>
                 <td>${formattedGuests}</td>
             `;
-            
+
             submissionsBody.appendChild(row);
         });
 
@@ -304,13 +326,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create pagination buttons
     function createPagination() {
         paginationContainer.innerHTML = '';
-        
+
         const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
-        
+
         if (totalPages <= 1) {
             return;
         }
-        
+
         // Previous button
         const prevButton = document.createElement('button');
         prevButton.innerHTML = '&laquo;';
@@ -322,12 +344,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         paginationContainer.appendChild(prevButton);
-        
+
         // Page buttons
         const maxButtons = 5;
         const startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
         const endPage = Math.min(totalPages, startPage + maxButtons - 1);
-        
+
         for (let i = startPage; i <= endPage; i++) {
             const pageButton = document.createElement('button');
             pageButton.textContent = i;
@@ -338,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             paginationContainer.appendChild(pageButton);
         }
-        
+
         // Next button
         const nextButton = document.createElement('button');
         nextButton.innerHTML = '&raquo;';
@@ -360,17 +382,17 @@ document.addEventListener('DOMContentLoaded', function() {
     exportBtn.addEventListener('click', function() {
         // Create CSV content
         let csvContent = 'data:text/csv;charset=utf-8,';
-        
+
         // Add headers
         csvContent += 'Date,Name,Email,Phone,Attending,Guest Count,Additional Guests\n';
-        
+
         // Add rows
         filteredSubmissions.forEach(submission => {
-            const formattedDate = submission.submittedAt.toLocaleDateString() + ' ' + 
+            const formattedDate = submission.submittedAt.toLocaleDateString() + ' ' +
                                  submission.submittedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
+
             const additionalGuests = (submission.additionalGuests || []).join(', ');
-            
+
             // Format CSV row and handle commas in fields
             const row = [
                 formattedDate,
@@ -381,20 +403,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 submission.guestCount || 1,
                 `"${additionalGuests.replace(/"/g, '""')}"`
             ].join(',');
-            
+
             csvContent += row + '\n';
         });
-        
+
         // Create download link
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
         link.setAttribute('href', encodedUri);
         link.setAttribute('download', `rsvp-submissions-${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
-        
+
         // Trigger download
         link.click();
-        
+
         // Clean up
         document.body.removeChild(link);
     });
