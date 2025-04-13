@@ -26,12 +26,13 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingElement.style.display = 'block';
         dashboardContainer.classList.add('hidden');
 
-        // Replace with your actual Formcarry API endpoint and API key
-        fetch('https://formcarry.com/s/C6atiqnXy-0/submissions', {
+        // Formcarry API endpoint with form ID
+        fetch('https://formcarry.com/api/submissions?formId=C6atiqnXy-0', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer YOUR_FORMCARRY_API_KEY' // Replace with your actual API key
             }
         })
         .then(response => {
@@ -42,17 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             // Process the submissions
-            if (data && data.submissions) {
-                allSubmissions = data.submissions.map(submission => {
+            if (data?.data) {
+                allSubmissions = data.data.map(submission => {
                     // Format the submission data
                     return {
                         id: submission.id,
-                        name: submission.data.name || '',
-                        email: submission.data.email || '',
-                        phone: submission.data.phone || '',
-                        attending: submission.data.attending || '',
-                        guestCount: submission.data.guestCount || 1,
-                        additionalGuests: extractAdditionalGuests(submission.data),
+                        name: submission.payload.name || '',
+                        email: submission.payload.email || '',
+                        phone: submission.payload.phone || '',
+                        attending: submission.payload.attending || '',
+                        guestCount: submission.payload.guestCount || 1,
+                        additionalGuests: extractAdditionalGuests(submission.payload),
                         submittedAt: new Date(submission.created_at)
                     };
                 });
@@ -169,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
 
+        // Create and render the attendance chart (Chart.js will attach it to the canvas)
         new Chart(attendanceChartCanvas, {
             type: 'pie',
             data: {
@@ -201,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sortedDates = Object.keys(submissionDates).sort((a, b) => new Date(a) - new Date(b));
         const submissionCounts = sortedDates.map(date => submissionDates[date]);
 
+        // Create and render the timeline chart (Chart.js will attach it to the canvas)
         new Chart(timelineChartCanvas, {
             type: 'line',
             data: {
