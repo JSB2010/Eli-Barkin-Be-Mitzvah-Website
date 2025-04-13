@@ -3,18 +3,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch data from Formcarry API
     fetch(`https://formcarry.com/s/C6atiqnXy-0?api_key=RMug62xr3IvpuwqQniaw5umHTnp7odj8h4YOF7I3DJRJT647A2UlF8yvaFEn8eHq`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             // Parse and display data
             displayData(data);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
-            dashboardContainer.innerHTML = '<p>Error fetching data. Please try again later.</p>';
+            dashboardContainer.innerHTML = `<p>Error fetching data: ${error.message}. Please try again later.</p>`;
         });
 
     function displayData(data) {
-        if (data && data.length > 0) {
+        if (data && data.data && data.data.length > 0) {
             const table = document.createElement('table');
             table.classList.add('dashboard-table');
 
@@ -32,16 +37,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Create table body
             const tbody = document.createElement('tbody');
-            data.forEach(entry => {
+            data.data.forEach(entry => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${entry.name}</td>
-                    <td>${entry.email}</td>
-                    <td>${entry.phone}</td>
-                    <td>${entry.attending}</td>
-                    <td>${entry.guestCount}</td>
-                    <td>${entry.dietaryRestrictions}</td>
-                    <td>${entry.message}</td>
+                    <td>${entry.data.name}</td>
+                    <td>${entry.data.email}</td>
+                    <td>${entry.data.phone}</td>
+                    <td>${entry.data.attending}</td>
+                    <td>${entry.data.guestCount}</td>
+                    <td>${entry.data.dietaryRestrictions}</td>
+                    <td>${entry.data.message}</td>
                 `;
                 tbody.appendChild(row);
             });
