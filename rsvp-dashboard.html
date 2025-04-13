@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP Dashboard - Eli's Sports Be Mitzvah</title>
+    <link rel="icon" href="logo.PNG" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="analytics.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1e88e5;
+            --primary-orange: #ff9800;
+            --dark-blue: #0d47a1;
+            --light-blue: #bbdefb;
+            --dark-orange: #e65100;
+            --light-orange: #ffe0b2;
+            --white: #ffffff;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333333;
+            --black: #000000;
+        }
+        
+        body {
+            background-color: var(--light-gray);
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-title {
+            color: var(--primary-blue);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-card h3 {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .table-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .search-box {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 250px;
+        }
+        
+        .filter-dropdown {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light-blue);
+            color: var(--dark-blue);
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .pagination button {
+            background-color: var(--white);
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+        
+        .pagination button:hover:not(.active) {
+            background-color: var(--light-blue);
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .login-container h2 {
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .login-form input {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .login-form button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .login-form button:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .error-message {
+            color: red;
+            margin-bottom: 1rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .btn.secondary {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            border: 1px solid #ddd;
+        }
+        
+        .btn.secondary:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-section" class="login-container">
+        <h2>RSVP Dashboard</h2>
+        <p>Please enter your credentials to access the RSVP dashboard.</p>
+        <div id="error-message" class="error-message"></div>
+        <form id="login-form" class="login-form">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="dashboard-section" class="hidden">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">RSVP Dashboard</h1>
+                <button id="logout-btn" class="btn secondary">Logout</button>
+            </div>
+            
+            <div id="loading" class="loading">Loading RSVP data...</div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total RSVPs</h3>
+                    <div id="total-submissions" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Attending</h3>
+                    <div id="attending-count" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Not Attending</h3>
+                    <div id="not-attending-count" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Guests</h3>
+                    <div id="total-guests" class="stat-value">0</div>
+                </div>
+            </div>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Attendance Breakdown</h3>
+                    <canvas id="attendance-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Submissions Timeline</h3>
+                    <canvas id="timeline-chart"></canvas>
+                </div>
+            </div>
+            
+            <div id="table-container" class="table-container hidden">
+                <div class="table-header">
+                    <h2>RSVP Submissions</h2>
+                    <div class="table-actions">
+                        <input type="text" id="search-box" class="search-box" placeholder="Search...">
+                        <select id="filter-dropdown" class="filter-dropdown">
+                            <option value="all">All Submissions</option>
+                            <option value="attending">Attending</option>
+                            <option value="not-attending">Not Attending</option>
+                        </select>
+                        <button id="export-btn" class="btn">Export CSV</button>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Attending</th>
+                            <th>Guest Count</th>
+                            <th>Additional Guests</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-body">
+                        <!-- Submissions will be dynamically added here -->
+                    </tbody>
+                </table>
+                
+                <div id="pagination" class="pagination">
+                    <!-- Pagination buttons will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-dashboard.js"></script>
+</body>
+</html>
