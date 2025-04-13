@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "test": "No command available",
+    "build": "echo \"No build process required for this repository.\"",
+    "launch": "npx http-server"
+  }
+}
