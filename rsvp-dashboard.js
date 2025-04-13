@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
     function displayData(data) {
-        if (data && data.data && data.data.length > 0) {
+        if (data && data.submissions && data.submissions.length > 0) {
             const table = document.createElement('table');
             table.classList.add('dashboard-table');
 
@@ -37,16 +37,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Create table body
             const tbody = document.createElement('tbody');
-            data.data.forEach(entry => {
+            data.submissions.forEach(entry => {
                 const row = document.createElement('tr');
+                const fields = entry.fields[0];
                 row.innerHTML = `
-                    <td>${entry.data.name}</td>
-                    <td>${entry.data.email}</td>
-                    <td>${entry.data.phone}</td>
-                    <td>${entry.data.attending}</td>
-                    <td>${entry.data.guestCount}</td>
-                    <td>${entry.data.dietaryRestrictions}</td>
-                    <td>${entry.data.message}</td>
+                    <td>${fields.name}</td>
+                    <td>${fields.email}</td>
+                    <td>${fields.phone}</td>
+                    <td>${fields.attending}</td>
+                    <td>${fields.guestCount}</td>
+                    <td>${fields.dietaryRestrictions}</td>
+                    <td>${fields.message}</td>
                 `;
                 tbody.appendChild(row);
             });
