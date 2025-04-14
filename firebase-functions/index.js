@@ -111,7 +111,7 @@ exports.addRsvpToSheet = functions.firestore
         rsvpData.additionalGuests.join(', ') : '';
 
       // Get the service account credentials from environment
-      const serviceAccountCredentials = JSON.parse(functions.config().sheets.credentials);
+      const serviceAccountCredentials = functions.config().sheets.credentials;
 
       // Get the sheet ID from environment
       const sheetId = functions.config().sheets.sheet_id;
