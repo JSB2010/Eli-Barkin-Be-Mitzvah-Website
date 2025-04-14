@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firebase Email Notifications Setup - Eli's Be Mitzvah</title>
+    <!-- Favicon -->
     <link rel="icon" href="logo.PNG" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="32x32" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="16x16" href="logo.PNG">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="msapplication-TileImage" content="logo.PNG">
+    <meta name="msapplication-TileColor" content="#2b5797">
+    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,40 +25,40 @@
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         h1 {
             color: #2563eb;
             margin-bottom: 1rem;
         }
-        
+
         h2 {
             color: #2563eb;
             margin-top: 2rem;
             margin-bottom: 1rem;
         }
-        
+
         h3 {
             color: #4b5563;
             margin-top: 1.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         h4 {
             color: #4b5563;
             margin-bottom: 0.5rem;
         }
-        
+
         p {
             margin-bottom: 1rem;
         }
-        
+
         code {
             background-color: #f1f5f9;
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
             font-family: monospace;
         }
-        
+
         pre {
             background-color: #f1f5f9;
             padding: 1rem;
@@ -59,7 +67,7 @@
             font-family: monospace;
             margin-bottom: 1rem;
         }
-        
+
         .step {
             background-color: #f8fafc;
             border-left: 4px solid #2563eb;
@@ -67,7 +75,7 @@
             margin-bottom: 1.5rem;
             border-radius: 0 8px 8px 0;
         }
-        
+
         .note {
             background-color: #fffbeb;
             border-left: 4px solid #f59e0b;
@@ -75,7 +83,7 @@
             margin-bottom: 1.5rem;
             border-radius: 0 8px 8px 0;
         }
-        
+
         .warning {
             background-color: #fef2f2;
             border-left: 4px solid #ef4444;
@@ -83,16 +91,16 @@
             margin-bottom: 1.5rem;
             border-radius: 0 8px 8px 0;
         }
-        
+
         ol, ul {
             margin-bottom: 1rem;
             padding-left: 1.5rem;
         }
-        
+
         li {
             margin-bottom: 0.5rem;
         }
-        
+
         .btn {
             display: inline-block;
             background-color: #2563eb;
@@ -103,28 +111,28 @@
             font-weight: 600;
             margin-top: 1rem;
         }
-        
+
         .btn:hover {
             background-color: #1d4ed8;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 1.5rem;
         }
-        
+
         th, td {
             border: 1px solid #e2e8f0;
             padding: 0.75rem;
             text-align: left;
         }
-        
+
         th {
             background-color: #f8fafc;
             font-weight: 600;
         }
-        
+
         tr:nth-child(even) {
             background-color: #f8fafc;
         }
@@ -132,9 +140,9 @@
 </head>
 <body>
     <h1>Setting Up Email Notifications with Firebase Cloud Functions</h1>
-    
+
     <p>This guide explains how to set up automatic email notifications whenever someone submits an RSVP for Eli's Be Mitzvah using Firebase Cloud Functions.</p>
-    
+
     <div class="note">
         <h4>Why Firebase Cloud Functions?</h4>
         <p>Using Firebase Cloud Functions for email notifications provides several advantages:</p>
@@ -146,11 +154,11 @@
             <li>Can be extended to include other functionality (like Google Sheets integration)</li>
         </ul>
     </div>
-    
+
     <h2>Cost and Usage Limits</h2>
-    
+
     <p>Before setting up, it's important to understand the costs and limits:</p>
-    
+
     <table>
         <tr>
             <th>Service</th>
@@ -179,7 +187,7 @@
             <td>N/A (Gmail limits)</td>
         </tr>
     </table>
-    
+
     <div class="note">
         <h4>Will This Be Sufficient for Your Event?</h4>
         <p>For your expected 200-400 RSVPs:</p>
@@ -189,9 +197,9 @@
             <li>For higher volume or more reliable delivery, consider using a dedicated email service like SendGrid or Mailgun</li>
         </ul>
     </div>
-    
+
     <h2>Setup Instructions</h2>
-    
+
     <div class="step">
         <h3>Step 1: Install Firebase CLI</h3>
         <ol>
@@ -204,7 +212,7 @@
             </li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 2: Initialize Firebase Functions</h3>
         <ol>
@@ -225,7 +233,7 @@
             </li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 3: Set Up Gmail for Sending Emails</h3>
         <ol>
@@ -237,7 +245,7 @@
             <li>This password will be used in your Cloud Function</li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 4: Update the Cloud Function Code</h3>
         <ol>
@@ -256,7 +264,7 @@ const transporter = nodemailer.createTransport({
             <li>Save the file</li>
         </ol>
     </div>
-    
+
     <div class="warning">
         <h4>Security Warning</h4>
         <p>Never commit your app password to version control. For a more secure approach, use Firebase environment variables:</p>
@@ -276,7 +284,7 @@ const transporter = nodemailer.createTransport({
             </li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 5: Deploy the Cloud Function</h3>
         <ol>
@@ -287,7 +295,7 @@ const transporter = nodemailer.createTransport({
             <li>You should see a success message with your function URL</li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 6: Test the Email Notification</h3>
         <ol>
@@ -298,11 +306,11 @@ const transporter = nodemailer.createTransport({
             </li>
         </ol>
     </div>
-    
+
     <h2>Adding Google Sheets Integration</h2>
-    
+
     <p>You can also set up a Cloud Function to automatically add RSVP submissions to a Google Sheet:</p>
-    
+
     <div class="step">
         <h3>Step 1: Set Up Google Sheets API</h3>
         <ol>
@@ -311,7 +319,7 @@ const transporter = nodemailer.createTransport({
             <li>Create a service account and download the credentials JSON file</li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 2: Create a Google Sheet</h3>
         <ol>
@@ -320,7 +328,7 @@ const transporter = nodemailer.createTransport({
             <li>Share the sheet with the service account email (with editor permissions)</li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 3: Install Google Sheets Library</h3>
         <ol>
@@ -332,7 +340,7 @@ const transporter = nodemailer.createTransport({
             </li>
         </ol>
     </div>
-    
+
     <div class="step">
         <h3>Step 4: Implement the Cloud Function</h3>
         <ol>
@@ -342,16 +350,16 @@ const transporter = nodemailer.createTransport({
             </li>
         </ol>
     </div>
-    
+
     <div class="note">
         <h4>Need Help?</h4>
         <p>If you need assistance with setting up the Google Sheets integration or troubleshooting any issues with the email notifications, please contact your developer for support.</p>
     </div>
-    
+
     <h2>Monitoring and Maintenance</h2>
-    
+
     <p>To monitor your Firebase Cloud Functions:</p>
-    
+
     <ol>
         <li>Go to the <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
         <li>Select your project</li>
@@ -364,7 +372,7 @@ const transporter = nodemailer.createTransport({
             </ul>
         </li>
     </ol>
-    
+
     <a href="index.html" class="btn">Return to Homepage</a>
 </body>
 </html>
