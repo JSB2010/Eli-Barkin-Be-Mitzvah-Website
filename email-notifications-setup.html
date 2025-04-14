@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Notifications Setup Guide - Eli's Be Mitzvah</title>
+    <!-- Favicon -->
+    <link rel="icon" href="logo.PNG" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="32x32" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="16x16" href="logo.PNG">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="msapplication-TileImage" content="logo.PNG">
+    <meta name="msapplication-TileColor" content="#2b5797">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            color: #2563eb;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        ol, ul {
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .step {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .step h3 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+
+        .note {
+            background-color: #ffedd5;
+            border-left: 4px solid #f97316;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .note h4 {
+            color: #c2410c;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Setting Up Email Notifications for RSVP Submissions</h1>
+
+    <p>This guide will walk you through setting up automatic email notifications whenever someone submits an RSVP for Eli's Be Mitzvah using Zapier - a no-code automation platform.</p>
+
+    <div class="note">
+        <h4>Why Zapier?</h4>
+        <p>Zapier is much easier to set up than Firebase Cloud Functions and doesn't require any coding or deployment. It's free for up to 100 emails per month, which should be sufficient for your expected 200-400 RSVPs.</p>
+    </div>
+
+    <div class="step">
+        <h3>Step 1: Create a Zapier Account</h3>
+        <ol>
+            <li>Go to <a href="https://zapier.com/sign-up" target="_blank">https://zapier.com/sign-up</a></li>
+            <li>Sign up for a free account using your email address (jacobsamuelbarkin@gmail.com)</li>
+            <li>Complete the registration process</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Create a New Zap</h3>
+        <ol>
+            <li>After logging in, click on "Create Zap" in the top navigation</li>
+            <li>For the trigger app, search for and select "Firebase"</li>
+            <li>For the trigger event, select "New Child Added"</li>
+            <li>Connect your Firebase account when prompted</li>
+            <li>Configure the trigger:
+                <ul>
+                    <li>Database URL: <code>https://eli-barkin-be-mitzvah-default-rtdb.firebaseio.com/</code> (or your Firestore URL)</li>
+                    <li>Child Path: <code>rsvps</code></li>
+                </ul>
+            </li>
+            <li>Test the trigger to make sure it's working</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Set Up the Email Action</h3>
+        <ol>
+            <li>For the action app, search for and select "Gmail"</li>
+            <li>For the action event, select "Send Email"</li>
+            <li>Connect your Gmail account (jacobsamuelbarkin@gmail.com)</li>
+            <li>Configure the email:
+                <ul>
+                    <li>To: <code>jacobsamuelbarkin@gmail.com</code></li>
+                    <li>Subject: <code>New RSVP from {{name}}</code></li>
+                    <li>Body:
+                        <pre>
+New RSVP Submission
+
+Name: {{name}}
+Email: {{email}}
+Phone: {{phone}}
+Attending: {{attending}}
+Guest Count: {{guestCount}}
+Additional Guests: {{additionalGuests}}
+Submitted At: {{submittedAt}}
+
+View all RSVPs on your dashboard: https://jsb2010.github.io/Eli-Barkin-Be-Mitzvah-Website/rsvp-dashboard.html
+                        </pre>
+                    </li>
+                </ul>
+            </li>
+            <li>Test the action to make sure it's working</li>
+            <li>Turn on your Zap</li>
+        </ol>
+    </div>
+
+    <div class="note">
+        <h4>Alternative: Use Zapier's Email Service</h4>
+        <p>If you prefer not to connect your Gmail account, you can use Zapier's built-in email service instead. Just select "Email by Zapier" as the action app instead of "Gmail".</p>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Test the Complete Workflow</h3>
+        <ol>
+            <li>Submit a test RSVP through your form</li>
+            <li>Check your email to see if you receive the notification</li>
+            <li>If everything works, you're all set!</li>
+        </ol>
+    </div>
+
+    <h2>Setting Up Google Sheets Integration</h2>
+
+    <p>You can also use Zapier to automatically add RSVP submissions to a Google Sheet:</p>
+
+    <div class="step">
+        <h3>Step 1: Create a Google Sheet</h3>
+        <ol>
+            <li>Go to <a href="https://docs.google.com/spreadsheets" target="_blank">Google Sheets</a></li>
+            <li>Create a new spreadsheet</li>
+            <li>Add the following headers in the first row:
+                <ul>
+                    <li>Submission ID</li>
+                    <li>Name</li>
+                    <li>Email</li>
+                    <li>Phone</li>
+                    <li>Attending</li>
+                    <li>Guest Count</li>
+                    <li>Additional Guests</li>
+                    <li>Submitted At</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Create a New Zap (or Add to Existing)</h3>
+        <ol>
+            <li>Create a new Zap or add a second action to your existing Zap</li>
+            <li>If creating a new Zap, set up the Firebase trigger as described above</li>
+            <li>For the action app, search for and select "Google Sheets"</li>
+            <li>For the action event, select "Create Spreadsheet Row"</li>
+            <li>Connect your Google account</li>
+            <li>Configure the action:
+                <ul>
+                    <li>Drive: Your Google Drive</li>
+                    <li>Spreadsheet: Select the spreadsheet you created</li>
+                    <li>Worksheet: Sheet1 (or whatever your sheet is named)</li>
+                    <li>Map the Firebase data to the appropriate columns</li>
+                </ul>
+            </li>
+            <li>Test the action to make sure it's working</li>
+            <li>Turn on your Zap</li>
+        </ol>
+    </div>
+
+    <div class="note">
+        <h4>Benefits of This Approach</h4>
+        <p>Using Zapier for both email notifications and Google Sheets integration provides several advantages:</p>
+        <ul>
+            <li>No coding required</li>
+            <li>No deployment issues</li>
+            <li>Free for your expected volume</li>
+            <li>Easy to modify or update</li>
+            <li>Reliable service with good support</li>
+        </ul>
+    </div>
+
+    <a href="index.html" class="btn">Return to Homepage</a>
+</body>
+</html>
