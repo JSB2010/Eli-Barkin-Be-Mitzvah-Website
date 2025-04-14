@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle RSVP form submission
     const rsvpForm = document.getElementById('rsvpForm');
     const formConfirmation = document.getElementById('formConfirmation');
-    const resetFormButton = document.getElementById('resetForm');
+    // No longer using reset button
     const guestCountGroup = document.getElementById('guestCountGroup');
 
     // Show/hide guest count based on attendance
@@ -142,17 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Reset form button
-    if (resetFormButton) {
-        resetFormButton.addEventListener('click', function() {
-            formConfirmation.classList.add('hidden');
-            rsvpForm.style.display = 'block';
-            rsvpForm.reset();
-
-            // Scroll back to form
-            rsvpForm.scrollIntoView({ behavior: 'smooth' });
-        });
-    }
+    // Reset form functionality removed
 
     // Add active class to current nav link
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
