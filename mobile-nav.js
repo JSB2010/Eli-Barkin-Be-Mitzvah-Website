@@ -58,11 +58,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (header) {
             const headerHeight = header.offsetHeight;
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+
+            // Also update body padding to match header height
+            document.body.style.paddingTop = `${headerHeight}px`;
         }
     }
 
     // Run on load
     updateHeaderHeight();
+
+    // Also run after a short delay to ensure all assets are loaded
+    setTimeout(updateHeaderHeight, 100);
 
     // Check if we need to switch to mobile view based on nav width
     function checkNavOverflow() {
@@ -98,5 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Also update header height after the page has fully loaded
-    window.addEventListener('load', updateHeaderHeight);
+    window.addEventListener('load', function() {
+        updateHeaderHeight();
+        // Run again after a short delay to account for any layout shifts
+        setTimeout(updateHeaderHeight, 500);
+    });
 });

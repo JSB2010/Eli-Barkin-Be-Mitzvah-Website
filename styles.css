@@ -10,7 +10,7 @@
     --light-gray: #f5f5f5;
     --dark-gray: #333333;
     --black: #000000;
-    --header-height: 80px;
+    --header-height: 90px;
 }
 
 * {
@@ -19,12 +19,19 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     font-family: 'Montserrat', sans-serif;
     line-height: 1.6;
     color: var(--dark-gray);
     background-color: var(--white);
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
     padding-top: var(--header-height);
+    position: relative;
 }
 
 .container {
@@ -78,13 +85,14 @@ header {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
     width: 100%;
     height: var(--header-height);
+    box-sizing: border-box;
 }
 
 .logo {
@@ -215,12 +223,24 @@ body.force-mobile-nav nav ul li a.active {
 
     /* Adjust hero sections for mobile */
     .hero, .rsvp-hero {
-        height: calc(70vh - var(--header-height));
-        margin-top: var(--header-height);
+        min-height: 60vh;
     }
 
     .rsvp-hero {
-        height: calc(50vh - var(--header-height));
+        min-height: 50vh;
+    }
+
+    .hero-content {
+        padding: 1.5rem;
+        max-width: 95%;
+    }
+
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
+
+    .hero-content .tagline {
+        font-size: 1.2rem;
     }
 
     .menu-toggle {
@@ -295,6 +315,23 @@ body.force-mobile-nav nav ul li a.active {
     .logo img {
         max-height: 60px;
     }
+
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-content .tagline {
+        font-size: 1rem;
+    }
+
+    .hero-content {
+        padding: 1rem;
+    }
+
+    .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
 }
 
 nav ul {
@@ -327,19 +364,21 @@ nav ul li a.active {
 /* Hero Section */
 .hero, .rsvp-hero {
     background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
-    height: 70vh;
+    min-height: 70vh;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: var(--white);
     position: relative;
-    padding-top: 0;
-    margin-top: calc(-1 * var(--header-height));
+    margin-top: 0;
+    padding: 0;
+    margin-bottom: 2rem;
 }
 
 .rsvp-hero {
-    height: 50vh;
+    min-height: 50vh;
     background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
 }
 
@@ -357,18 +396,24 @@ nav ul li a.active {
 .hero-content {
     position: relative;
     z-index: 2;
+    padding: 2rem;
+    max-width: 90%;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    backdrop-filter: blur(2px);
 }
 
 .hero-content h1 {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
     text-transform: uppercase;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    line-height: 1.2;
 }
 
 .hero-content .tagline {
     font-size: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
