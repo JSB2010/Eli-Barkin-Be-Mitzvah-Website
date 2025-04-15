@@ -40,14 +40,14 @@ async function syncGuestListFromSheet() {
       const sheetsResponse = await sheets.spreadsheets.get({
         spreadsheetId: sheetId,
       });
-      
+
       const sheetNames = sheetsResponse.data.sheets.map(sheet => sheet.properties.title);
       console.log('Available sheets:', sheetNames);
-      
+
       // Use the first sheet by default
       const sheetName = sheetNames[0] || 'Sheet1';
       console.log('Using sheet name:', sheetName);
-      
+
       // First get the header row to understand column structure
       const headerResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
@@ -90,59 +90,62 @@ async function syncGuestListFromSheet() {
 
       // Log the headers to see what columns are available
       console.log('Sheet headers:', headers);
-      
+
       // Find column indices
-      // First, try to find the name column with various possible names
-      let nameIndex = headers.indexOf('Name Line 1');
+      // First, try to find the name column with the exact column name from the sheet
+      let nameIndex = headers.indexOf('Name Line 1 (First and Last Name)');
+      if (nameIndex === -1) nameIndex = headers.indexOf('Name Line 1');
       if (nameIndex === -1) nameIndex = headers.indexOf('Name');
       if (nameIndex === -1) nameIndex = headers.indexOf('Full Name');
       if (nameIndex === -1) nameIndex = 0; // Default to first column if no match
-      
+
       console.log('Using name column index:', nameIndex, 'with value:', headers[nameIndex]);
-      
+
       if (nameIndex === -1 || !headers[nameIndex]) {
         console.error('Name column not found in sheet');
         return null;
       }
 
       // Find all column indices with fallbacks for different possible column names
-      let additionalNamesIndex = headers.indexOf('Name Line 2');
+      let additionalNamesIndex = headers.indexOf('Name Line 2 (Additional Names)');
+      if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Name Line 2');
       if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Additional Names');
-      
+
       let addressLine1Index = headers.indexOf('Address Line 1');
       if (addressLine1Index === -1) addressLine1Index = headers.indexOf('Address');
-      
-      let addressLine2Index = headers.indexOf('Address Line 2');
+
+      let addressLine2Index = headers.indexOf('Address Line 2 (Apt, Suite)');
+      if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address Line 2');
       if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address 2');
-      
+
       const cityIndex = headers.indexOf('City');
       const stateIndex = headers.indexOf('State');
       const zipIndex = headers.indexOf('Zip');
-      
-      let countryIndex = headers.indexOf('Country');
-      if (countryIndex === -1) countryIndex = headers.indexOf('Country (non-US)');
-      
+
+      let countryIndex = headers.indexOf('Country (non-US)');
+      if (countryIndex === -1) countryIndex = headers.indexOf('Country');
+
       const emailIndex = headers.indexOf('Email');
       const phoneIndex = headers.indexOf('Phone');
-      
+
       let categoryIndex = headers.indexOf('Category');
       if (categoryIndex === -1) categoryIndex = headers.indexOf('Group');
-      
+
       let maxGuestsIndex = headers.indexOf('Max Guests');
       if (maxGuestsIndex === -1) maxGuestsIndex = headers.indexOf('Maximum Guests');
-      
+
       let respondedIndex = headers.indexOf('Responded');
       if (respondedIndex === -1) respondedIndex = headers.indexOf('Has Responded');
-      
+
       let rsvpStatusIndex = headers.indexOf('RSVP Status');
       if (rsvpStatusIndex === -1) rsvpStatusIndex = headers.indexOf('Response');
-      
+
       let guestCountIndex = headers.indexOf('Guest Count');
       if (guestCountIndex === -1) guestCountIndex = headers.indexOf('Number of Guests');
-      
+
       let additionalGuestsIndex = headers.indexOf('Additional Guests');
       if (additionalGuestsIndex === -1) additionalGuestsIndex = headers.indexOf('Guest Names');
-      
+
       // Log the column indices to help with debugging
       console.log('Column indices:', {
         nameIndex,
@@ -187,7 +190,7 @@ async function syncGuestListFromSheet() {
         if (!row[nameIndex]) continue;
 
         const name = row[nameIndex];
-        
+
         // Create guest object with available data
         const guest = {
           name,
@@ -207,7 +210,7 @@ async function syncGuestListFromSheet() {
           hasResponded: respondedIndex >= 0 && row[respondedIndex] ? row[respondedIndex].toLowerCase() === 'yes' : false,
           response: rsvpStatusIndex >= 0 && row[rsvpStatusIndex] ? row[rsvpStatusIndex].toLowerCase() : '',
           actualGuestCount: guestCountIndex >= 0 && row[guestCountIndex] ? parseInt(row[guestCountIndex]) || 0 : 0,
-          additionalGuests: additionalGuestsIndex >= 0 && row[additionalGuestsIndex] ? 
+          additionalGuests: additionalGuestsIndex >= 0 && row[additionalGuestsIndex] ?
             row[additionalGuestsIndex].split(',').map(g => g.trim()).filter(g => g) : [],
           lastUpdated: admin.firestore.FieldValue.serverTimestamp()
         };
@@ -245,10 +248,10 @@ exports.manualSyncSheetChanges = functions.https.onRequest(async (req, res) => {
   try {
     console.log('Manual sync triggered');
     console.log('Service account:', functions.config().sheets.credentials.client_email);
-    
+
     // Call the sync function
     await exports.syncSheetChanges.run();
-    
+
     console.log('Manual sync completed successfully');
     res.status(200).json({
       success: true,
