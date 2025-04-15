@@ -3,32 +3,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debug functionality
     const debugButton = document.getElementById('debugButton');
     const debugOutput = document.getElementById('debugOutput');
-    
+
     if (debugButton && debugOutput) {
         debugButton.addEventListener('click', async function() {
             debugOutput.style.display = 'block';
             debugOutput.textContent = 'Checking guestList collection...';
-            
+
             try {
                 // Check if Firebase is initialized
                 if (typeof firebase === 'undefined') {
                     debugOutput.textContent = 'Error: Firebase SDK not found';
                     return;
                 }
-                
+
                 // Get Firestore instance
                 const db = firebase.firestore();
-                
+
                 // Get the guestList collection
                 const snapshot = await db.collection('guestList').get();
-                
+
                 if (snapshot.empty) {
                     debugOutput.textContent = 'No documents found in guestList collection';
                     return;
                 }
-                
+
                 let result = `Found ${snapshot.size} documents in guestList collection:\n\n`;
-                
+
                 // Show the first 5 documents
                 let count = 0;
                 snapshot.forEach(doc => {
@@ -43,11 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         count++;
                     }
                 });
-                
+
                 if (snapshot.size > 5) {
                     result += `... and ${snapshot.size - 5} more documents`;
                 }
-                
+
                 debugOutput.textContent = result;
             } catch (error) {
                 debugOutput.textContent = `Error: ${error.message}`;
@@ -72,20 +72,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to handle name input
     async function handleNameInput() {
         const searchTerm = nameInput.value.trim();
-        
+
         // Clear previous results
         autocompleteResults.innerHTML = '';
-        
+
         // Hide additional fields if search term is empty
         if (searchTerm.length < 2) {
             autocompleteResults.style.display = 'none';
             return;
         }
-        
+
         try {
             // Search for guests
             const results = await searchGuests(searchTerm);
-            
+
             if (results.length > 0) {
                 // Display results
                 results.forEach(guest => {
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     resultItem.addEventListener('click', () => selectGuest(guest));
                     autocompleteResults.appendChild(resultItem);
                 });
-                
+
                 autocompleteResults.style.display = 'block';
             } else {
                 autocompleteResults.style.display = 'none';
@@ -110,19 +110,19 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedGuest = guest;
         nameInput.value = guest.name;
         autocompleteResults.style.display = 'none';
-        
+
         // Update guest info display
         guestCategoryElement.textContent = guest.category ? `Category: ${guest.category}` : '';
-        guestMaxCountElement.textContent = `Maximum Guests: ${guest.maxAllowedGuests || 1}`;
+        guestMaxCountElement.textContent = `You can add as many guests as needed`;
         guestFoundInfo.style.display = 'block';
-        
-        // Set max value for guest count
-        guestCountInput.max = guest.maxAllowedGuests || 1;
-        
+
+        // Remove max value restriction for guest count
+        guestCountInput.removeAttribute('max');
+
         // Show additional fields
         additionalFields.style.display = 'block';
         submitButtonContainer.style.display = 'block';
-        
+
         // Pre-fill email and phone if available
         if (guest.email) document.getElementById('email').value = guest.email;
         if (guest.phone) document.getElementById('phone').value = guest.phone;
@@ -139,19 +139,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (rsvpForm) {
         rsvpForm.addEventListener('submit', async function(e) {
             // Don't prevent default here, as firebase-rsvp.js will handle that
-            
+
             // If we have a selected guest, update their record
             if (selectedGuest && selectedGuest.id) {
                 try {
                     const db = firebase.firestore();
                     const guestRef = db.collection('guestList').doc(selectedGuest.id);
-                    
+
                     // Get form data
                     const attending = document.querySelector('input[name="attending"]:checked').value === 'yes';
                     const guestCount = parseInt(document.getElementById('guestCount').value) || 1;
                     const email = document.getElementById('email').value;
                     const phone = document.getElementById('phone').value;
-                    
+
                     // Collect additional guest names
                     const additionalGuests = [];
                     if (guestCount > 1) {
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     }
-                    
+
                     // Update guest record
                     await guestRef.update({
                         hasResponded: true,
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         phone: phone,
                         submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
                     });
-                    
+
                     console.log('Guest record updated successfully');
                 } catch (error) {
                     console.error('Error updating guest record:', error);
@@ -186,33 +186,33 @@ document.addEventListener('DOMContentLoaded', function() {
 // Function to search for guests in Firestore
 async function searchGuests(searchTerm) {
     if (!searchTerm || searchTerm.length < 2) return [];
-    
+
     try {
         const db = firebase.firestore();
         const guestListRef = db.collection('guestList');
-        
+
         // Convert search term to lowercase for case-insensitive search
         const searchTermLower = searchTerm.toLowerCase();
-        
+
         // Get all guests (we'll filter client-side)
         const snapshot = await guestListRef.get();
-        
+
         if (snapshot.empty) {
             console.log('No guests found in database');
             return [];
         }
-        
+
         // Filter guests whose names contain the search term
         const results = [];
         snapshot.forEach(doc => {
             const guest = doc.data();
             guest.id = doc.id; // Add document ID to the guest object
-            
+
             if (guest.name && guest.name.toLowerCase().includes(searchTermLower)) {
                 results.push(guest);
             }
         });
-        
+
         return results;
     } catch (error) {
         console.error('Error searching guests:', error);
