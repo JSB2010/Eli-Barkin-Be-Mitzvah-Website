@@ -1,26 +1,36 @@
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab functionality
-    const rsvpTab = document.getElementById('rsvp-tab');
-    const guestListTab = document.getElementById('guest-list-tab');
-    const rsvpContent = document.getElementById('rsvp-content');
-    const guestListContent = document.getElementById('guest-list-content');
+    // Dashboard elements
     const syncSheetBtn = document.getElementById('sync-sheet-btn');
+    const toggleGuestListBtn = document.getElementById('toggle-guest-list-btn');
+    const toggleSubmissionsBtn = document.getElementById('toggle-submissions-btn');
+    const guestListContainer = document.getElementById('guest-list-container');
+    const tableContainer = document.getElementById('table-container');
 
-    // Switch tabs
-    rsvpTab.addEventListener('click', function() {
-        rsvpTab.classList.add('active');
-        guestListTab.classList.remove('active');
-        rsvpContent.classList.add('active');
-        guestListContent.classList.remove('active');
-    });
+    // Toggle sections
+    if (toggleGuestListBtn) {
+        toggleGuestListBtn.addEventListener('click', function() {
+            if (guestListContainer.classList.contains('hidden')) {
+                guestListContainer.classList.remove('hidden');
+                toggleGuestListBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Guest List';
+            } else {
+                guestListContainer.classList.add('hidden');
+                toggleGuestListBtn.innerHTML = '<i class="fas fa-eye"></i> Show Guest List';
+            }
+        });
+    }
 
-    guestListTab.addEventListener('click', function() {
-        guestListTab.classList.add('active');
-        rsvpTab.classList.remove('active');
-        guestListContent.classList.add('active');
-        rsvpContent.classList.remove('active');
-    });
+    if (toggleSubmissionsBtn) {
+        toggleSubmissionsBtn.addEventListener('click', function() {
+            if (tableContainer.classList.contains('hidden')) {
+                tableContainer.classList.remove('hidden');
+                toggleSubmissionsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Submissions';
+            } else {
+                tableContainer.classList.add('hidden');
+                toggleSubmissionsBtn.innerHTML = '<i class="fas fa-eye"></i> Show Submissions';
+            }
+        });
+    }
     // Get DOM elements
     const loginSection = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
@@ -28,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorMessage = document.getElementById('error-message');
     const logoutBtn = document.getElementById('logout-btn');
     const loadingElement = document.getElementById('loading');
-    const tableContainer = document.getElementById('table-container');
+    // tableContainer is already defined above
     const submissionsBody = document.getElementById('submissions-body');
     const totalSubmissionsElement = document.getElementById('total-submissions');
     const attendingCountElement = document.getElementById('attending-count');
@@ -447,6 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Display submissions table
         displaySubmissions();
 
+        // Update activity section
+        updateActivitySection();
+
         // Show table
         loadingElement.style.display = 'none';
         tableContainer.style.display = 'block';
@@ -620,6 +633,67 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('latest-rsvp').textContent = latestRsvp.name || 'Unknown';
             document.getElementById('latest-rsvp-time').textContent =
                 `Submitted on ${formattedDate}`;
+        }
+    }
+
+    // Update activity section
+    function updateActivitySection() {
+        // Update latest RSVP
+        if (allSubmissions.length > 0) {
+            // Find latest RSVP
+            const latestRsvp = allSubmissions.reduce((latest, current) =>
+                current.submittedAt > (latest.submittedAt || new Date(0)) ? current : latest, {});
+
+            // Update latest RSVP card
+            const latestRsvpName = document.getElementById('latest-rsvp-name');
+            const latestRsvpTime = document.getElementById('latest-rsvp-time');
+
+            if (latestRsvpName && latestRsvpTime && latestRsvp.name) {
+                latestRsvpName.textContent = latestRsvp.name;
+
+                try {
+                    const formattedDate = latestRsvp.submittedAt.toLocaleDateString() + ' ' +
+                                        latestRsvp.submittedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    latestRsvpTime.textContent = formattedDate;
+                } catch (e) {
+                    latestRsvpTime.textContent = 'Unknown date';
+                }
+            }
+        }
+
+        // Update last sync time
+        const lastSyncTime = localStorage.getItem('last_sync_time');
+        const lastSyncTimeElement = document.getElementById('last-sync-time');
+        const syncStatusElement = document.getElementById('sync-status');
+
+        if (lastSyncTimeElement && lastSyncTime) {
+            lastSyncTimeElement.textContent = new Date(parseInt(lastSyncTime)).toLocaleString();
+            syncStatusElement.textContent = 'Last synchronized with Google Sheet';
+        }
+
+        // Update response trend
+        const responseTrendElement = document.getElementById('response-trend');
+        if (responseTrendElement && allSubmissions.length > 0) {
+            // Get submissions from the last 7 days
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+            const recentSubmissions = allSubmissions.filter(s => s.submittedAt > oneWeekAgo);
+            const recentCount = recentSubmissions.length;
+
+            if (recentCount > 0) {
+                const attendingCount = recentSubmissions.filter(s => s.attending === 'yes').length;
+                const attendingPercent = Math.round((attendingCount / recentCount) * 100);
+
+                responseTrendElement.innerHTML = `
+                    <span class="status-badge ${attendingPercent >= 70 ? 'status-attending' : 'status-not-attending'}">
+                        ${attendingPercent}% Attending
+                    </span>
+                    <span>(${recentCount} responses)</span>
+                `;
+            } else {
+                responseTrendElement.textContent = 'No recent responses';
+            }
         }
     }
 
@@ -1765,6 +1839,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 successMessage.parentNode.removeChild(successMessage);
                             }
                         }, 3000);
+
+                        // Store sync time
+                        localStorage.setItem('last_sync_time', Date.now().toString());
 
                         // Refresh the data
                         fetchSubmissions();

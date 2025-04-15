@@ -114,10 +114,34 @@ document.addEventListener('DOMContentLoaded', function() {
             // Submit to Firebase using the new collection for this branch
             db.collection('sheetRsvps').add(formData)
                 .then(() => {
-                    // Show success confirmation
-                    form.style.display = 'none';
-                    formConfirmation.classList.remove('hidden');
-                    formConfirmation.scrollIntoView({ behavior: 'smooth' });
+                    // Show success confirmation with animation
+                    form.style.opacity = '1';
+                    form.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    form.style.transform = 'translateY(0)';
+
+                    // Fade out the form
+                    setTimeout(() => {
+                        form.style.opacity = '0';
+                        form.style.transform = 'translateY(-20px)';
+                    }, 100);
+
+                    // Hide form and show confirmation
+                    setTimeout(() => {
+                        form.style.display = 'none';
+
+                        // Prepare confirmation animation
+                        formConfirmation.classList.remove('hidden');
+                        formConfirmation.style.opacity = '0';
+                        formConfirmation.style.transform = 'translateY(20px)';
+
+                        // Animate confirmation in
+                        setTimeout(() => {
+                            formConfirmation.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                            formConfirmation.style.opacity = '1';
+                            formConfirmation.style.transform = 'translateY(0)';
+                            formConfirmation.scrollIntoView({ behavior: 'smooth' });
+                        }, 50);
+                    }, 600);
 
                     // Track successful submission with analytics if available
                     if (window.analytics) {

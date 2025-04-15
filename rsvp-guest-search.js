@@ -1,59 +1,9 @@
 // RSVP Guest Search Functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug functionality
-    const debugButton = document.getElementById('debugButton');
-    const debugOutput = document.getElementById('debugOutput');
-
-    if (debugButton && debugOutput) {
-        debugButton.addEventListener('click', async function() {
-            debugOutput.style.display = 'block';
-            debugOutput.textContent = 'Checking guestList collection...';
-
-            try {
-                // Check if Firebase is initialized
-                if (typeof firebase === 'undefined') {
-                    debugOutput.textContent = 'Error: Firebase SDK not found';
-                    return;
-                }
-
-                // Get Firestore instance
-                const db = firebase.firestore();
-
-                // Get the guestList collection
-                const snapshot = await db.collection('guestList').get();
-
-                if (snapshot.empty) {
-                    debugOutput.textContent = 'No documents found in guestList collection';
-                    return;
-                }
-
-                let result = `Found ${snapshot.size} documents in guestList collection:\n\n`;
-
-                // Show the first 5 documents
-                let count = 0;
-                snapshot.forEach(doc => {
-                    if (count < 5) {
-                        const data = doc.data();
-                        result += `Document ID: ${doc.id}\n`;
-                        result += `Name: ${data.name || 'N/A'}\n`;
-                        result += `Email: ${data.email || 'N/A'}\n`;
-                        result += `Phone: ${data.phone || 'N/A'}\n`;
-                        result += `Has Responded: ${data.hasResponded ? 'Yes' : 'No'}\n`;
-                        result += `\n----------------------------\n\n`;
-                        count++;
-                    }
-                });
-
-                if (snapshot.size > 5) {
-                    result += `... and ${snapshot.size - 5} more documents`;
-                }
-
-                debugOutput.textContent = result;
-            } catch (error) {
-                debugOutput.textContent = `Error: ${error.message}`;
-                console.error('Error checking guestList collection:', error);
-            }
-        });
+    // Initialize Firebase if needed
+    if (typeof firebase === 'undefined') {
+        console.error('Firebase SDK not loaded');
+        return;
     }
 
     // Get DOM elements
@@ -114,18 +64,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update guest info display
         guestCategoryElement.textContent = guest.category ? `Category: ${guest.category}` : '';
         guestMaxCountElement.textContent = `You can add as many guests as needed`;
+
+        // Show guest found info with animation
+        guestFoundInfo.style.opacity = '0';
         guestFoundInfo.style.display = 'block';
+        setTimeout(() => {
+            guestFoundInfo.style.transition = 'opacity 0.5s ease';
+            guestFoundInfo.style.opacity = '1';
+        }, 10);
 
         // Remove max value restriction for guest count
         guestCountInput.removeAttribute('max');
 
-        // Show additional fields
+        // Prepare additional fields for animation
+        additionalFields.style.opacity = '0';
         additionalFields.style.display = 'block';
+        additionalFields.style.maxHeight = '0';
+        additionalFields.style.overflow = 'hidden';
+
+        // Animate additional fields
+        setTimeout(() => {
+            additionalFields.style.transition = 'opacity 0.5s ease, max-height 0.8s ease';
+            additionalFields.style.opacity = '1';
+            additionalFields.style.maxHeight = '2000px'; // Large enough to contain all content
+        }, 100);
+
+        // Show submit button with animation
+        submitButtonContainer.style.opacity = '0';
         submitButtonContainer.style.display = 'block';
+        setTimeout(() => {
+            submitButtonContainer.style.transition = 'opacity 0.5s ease';
+            submitButtonContainer.style.opacity = '1';
+        }, 500);
 
         // Pre-fill email and phone if available
         if (guest.email) document.getElementById('email').value = guest.email;
         if (guest.phone) document.getElementById('phone').value = guest.phone;
+
+        // Scroll to the form
+        setTimeout(() => {
+            additionalFields.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
     }
 
     // Add event listeners
