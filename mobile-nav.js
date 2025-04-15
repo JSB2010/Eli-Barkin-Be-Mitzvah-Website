@@ -54,10 +54,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Adjust header height for content padding
-    if (header) {
-        const headerHeight = header.offsetHeight;
-        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    function updateHeaderHeight() {
+        if (header) {
+            const headerHeight = header.offsetHeight;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        }
     }
+
+    // Run on load
+    updateHeaderHeight();
 
     // Check if we need to switch to mobile view based on nav width
     function checkNavOverflow() {
@@ -89,11 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
     checkNavOverflow();
     window.addEventListener('resize', function() {
         checkNavOverflow();
-
-        // Update header height variable on resize
-        if (header) {
-            const headerHeight = header.offsetHeight;
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-        }
+        updateHeaderHeight();
     });
+
+    // Also update header height after the page has fully loaded
+    window.addEventListener('load', updateHeaderHeight);
 });
