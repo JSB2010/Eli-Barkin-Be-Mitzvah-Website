@@ -9,12 +9,14 @@ admin.initializeApp();
 const { importGuestList } = require('./import-guest-list');
 const { syncGuestToSheet } = require('./sync-guest-list');
 const { syncSheetChanges, manualSyncSheetChanges } = require('./sync-sheet-changes');
+const { removeDuplicateGuests } = require('./remove-duplicates');
 
 // Export guest list functions
 exports.importGuestList = importGuestList;
 exports.syncGuestToSheet = syncGuestToSheet;
 exports.syncSheetChanges = syncSheetChanges;
 exports.manualSyncSheetChanges = manualSyncSheetChanges;
+exports.removeDuplicateGuests = removeDuplicateGuests;
 
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
