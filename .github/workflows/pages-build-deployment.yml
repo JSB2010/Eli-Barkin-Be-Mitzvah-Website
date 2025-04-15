@@ -1,0 +1,32 @@
+name: pages build and deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # This allows manual triggering of the workflow
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip GitHub Pages
+        run: |
+          echo "This repository uses Cloudflare Pages for deployment."
+          echo "GitHub Pages deployment is disabled."
+          echo "This workflow is a placeholder to prevent the default GitHub Pages workflow from running."
+          exit 0
