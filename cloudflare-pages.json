@@ -1,5 +1,5 @@
 {
   "build": {
-    "excludeFiles": ["firebase-functions/**"]
+    "excludeFiles": ["firebase_functions/**"]
   }
 }
