@@ -1,4 +1,3 @@
 [build]
-command = "jekyll build"
-publish = "_site"
-exclude = ["firebase-functions/**", "firebase_functions/**"]
+publish = "./"
+exclude = ["firebase-functions/**", "firebase_functions/**", "functions/**"]
