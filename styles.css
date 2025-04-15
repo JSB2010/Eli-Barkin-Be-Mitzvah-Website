@@ -10,6 +10,7 @@
     --light-gray: #f5f5f5;
     --dark-gray: #333333;
     --black: #000000;
+    --header-height: 80px;
 }
 
 * {
@@ -79,6 +80,7 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
+    width: 100%;
 }
 
 .logo {
@@ -113,21 +115,106 @@ header {
     height: 21px;
     cursor: pointer;
     z-index: 200;
+    margin-right: 10px;
 }
 
 .menu-toggle span {
     display: block;
     height: 3px;
     width: 100%;
-    background-color: var(--dark-gray);
+    background-color: var(--primary-blue);
     border-radius: 3px;
     transition: all 0.3s ease;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .logo img {
-        max-height: 70px;
+/* Hamburger animation */
+.menu-toggle.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Fix for content overlap - add padding to body when menu is open */
+body.menu-open {
+    overflow: hidden;
+}
+
+/* Force mobile nav when tabs don't fit */
+body.force-mobile-nav .menu-toggle {
+    display: flex;
+}
+
+body.force-mobile-nav nav {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--white);
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    z-index: 150;
+    padding-top: 90px;
+    overflow-y: auto;
+}
+
+body.force-mobile-nav nav.active {
+    right: 0;
+}
+
+body.force-mobile-nav nav ul {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+}
+
+body.force-mobile-nav nav ul li {
+    margin: 0;
+    width: 100%;
+}
+
+body.force-mobile-nav nav ul li a {
+    display: block;
+    padding: 16px 24px;
+    width: 100%;
+    border-radius: 0;
+    border-bottom: 1px solid var(--light-gray);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+body.force-mobile-nav nav ul li a:hover,
+body.force-mobile-nav nav ul li a.active {
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+    padding-left: 30px;
+}
+
+/* Adjust header to be fixed for mobile */
+@media (max-width: 1024px) {
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background-color: var(--white);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Add padding to main content to prevent overlap */
+    main {
+        padding-top: 20px;
+    }
+
+    /* Adjust hero sections for mobile */
+    .hero, .rsvp-hero {
+        margin-top: 0;
+        padding-top: var(--header-height);
     }
 
     .menu-toggle {
@@ -138,13 +225,14 @@ header {
         position: fixed;
         top: 0;
         right: -100%;
-        width: 250px;
+        width: 280px;
         height: 100vh;
         background-color: var(--white);
-        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-        transition: right 0.3s ease;
+        box-shadow: -2px 0 15px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
         z-index: 150;
-        padding-top: 80px;
+        padding-top: 90px;
+        overflow-y: auto;
     }
 
     nav.active {
@@ -154,6 +242,7 @@ header {
     nav ul {
         flex-direction: column;
         align-items: flex-start;
+        padding: 0;
     }
 
     nav ul li {
@@ -163,10 +252,18 @@ header {
 
     nav ul li a {
         display: block;
-        padding: 15px 20px;
+        padding: 16px 24px;
         width: 100%;
         border-radius: 0;
         border-bottom: 1px solid var(--light-gray);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    nav ul li a:hover, nav ul li a.active {
+        background-color: var(--light-blue);
+        color: var(--primary-blue);
+        padding-left: 30px;
     }
 
     /* Overlay when menu is open */
@@ -179,6 +276,8 @@ header {
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 100;
+        backdrop-filter: blur(2px);
+        transition: all 0.3s ease;
     }
 
     .menu-overlay.active {
@@ -225,6 +324,7 @@ nav ul li a.active {
     height: 70vh;
     display: flex;
     align-items: center;
+    margin-top: calc(-1 * var(--header-height));
     justify-content: center;
     text-align: center;
     color: var(--white);
