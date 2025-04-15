@@ -9,18 +9,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestFoundInfo = document.getElementById('guestFoundInfo');
     const guestCategoryElement = document.getElementById('guestCategory');
     const guestMaxCountElement = document.getElementById('guestMaxCount');
-    
+
     // State
     let selectedGuest = null;
     let searchResults = [];
     let selectedIndex = -1;
-    
+
     // Check if Firebase and guest list collection are available
     if (!window.guestListCollection) {
         console.warn('Guest list collection not available. Guest search functionality disabled.');
         return;
     }
-    
+
     // Add event listeners for name input
     nameInput.addEventListener('input', debounce(handleNameInput, 300));
     nameInput.addEventListener('keydown', handleKeyNavigation);
@@ -30,20 +30,20 @@ document.addEventListener('DOMContentLoaded', function() {
             autocompleteResults.style.display = 'none';
         }, 200);
     });
-    
+
     // Handle name input changes
     async function handleNameInput() {
         const name = nameInput.value.trim();
-        
+
         if (name.length < 2) {
             autocompleteResults.style.display = 'none';
             return;
         }
-        
+
         try {
             // Search for guests matching the name
             searchResults = await window.searchGuest(name);
-            
+
             // Display results
             if (searchResults.length > 0) {
                 displayAutocompleteResults(searchResults);
@@ -55,40 +55,40 @@ document.addEventListener('DOMContentLoaded', function() {
             autocompleteResults.style.display = 'none';
         }
     }
-    
+
     // Display autocomplete results
     function displayAutocompleteResults(results) {
         // Clear previous results
         autocompleteResults.innerHTML = '';
         selectedIndex = -1;
-        
+
         // Create result items
         results.forEach((guest, index) => {
             const item = document.createElement('div');
             item.className = 'autocomplete-item';
             item.textContent = guest.name;
             item.dataset.index = index;
-            
+
             item.addEventListener('click', () => {
                 selectGuest(guest);
                 autocompleteResults.style.display = 'none';
             });
-            
+
             autocompleteResults.appendChild(item);
         });
-        
+
         // Show results
         autocompleteResults.style.display = 'block';
     }
-    
+
     // Handle keyboard navigation
     function handleKeyNavigation(e) {
         if (!searchResults.length || autocompleteResults.style.display === 'none') {
             return;
         }
-        
+
         const items = autocompleteResults.querySelectorAll('.autocomplete-item');
-        
+
         // Down arrow
         if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -113,12 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
             autocompleteResults.style.display = 'none';
         }
     }
-    
+
     // Update the selected item in the dropdown
     function updateSelectedItem(items) {
         // Remove selected class from all items
         items.forEach(item => item.classList.remove('selected'));
-        
+
         // Add selected class to current item
         if (selectedIndex >= 0) {
             items[selectedIndex].classList.add('selected');
@@ -126,64 +126,97 @@ document.addEventListener('DOMContentLoaded', function() {
             items[selectedIndex].scrollIntoView({ block: 'nearest' });
         }
     }
-    
+
     // Select a guest and fill in their information
     function selectGuest(guest) {
         selectedGuest = guest;
-        
+
         // Fill in the form with guest information
         nameInput.value = guest.name;
-        
+
         if (guest.email) {
             emailInput.value = guest.email;
         }
-        
+
         if (guest.phone) {
             phoneInput.value = guest.phone;
         }
-        
+
         // Set max guest count
         if (guest.maxAllowedGuests) {
             guestCountInput.max = guest.maxAllowedGuests;
-            
+
             // If current value exceeds max, adjust it
             if (parseInt(guestCountInput.value) > guest.maxAllowedGuests) {
                 guestCountInput.value = guest.maxAllowedGuests;
-                
+
                 // Trigger the change event to update additional guest fields
                 const event = new Event('change');
                 guestCountInput.dispatchEvent(event);
             }
         }
-        
+
         // Show guest information
         guestFoundInfo.style.display = 'block';
         guestCategoryElement.textContent = `Category: ${guest.category || 'General'}`;
         guestMaxCountElement.textContent = `Maximum Guests: ${guest.maxAllowedGuests || 1}`;
-        
+
+        // Show additional fields and submit button with smooth transition
+        const additionalFields = document.getElementById('additionalFields');
+        const submitButtonContainer = document.getElementById('submitButtonContainer');
+
+        // Add transition styles
+        additionalFields.style.transition = 'opacity 0.5s, max-height 0.5s';
+        additionalFields.style.opacity = '0';
+        additionalFields.style.maxHeight = '0';
+        additionalFields.style.overflow = 'hidden';
+
+        // Show the elements
+        additionalFields.style.display = 'block';
+
+        // Trigger reflow
+        void additionalFields.offsetWidth;
+
+        // Apply transitions
+        additionalFields.style.opacity = '1';
+        additionalFields.style.maxHeight = '2000px'; // A large value to accommodate all content
+
+        // Show submit button after a slight delay
+        setTimeout(() => {
+            submitButtonContainer.style.transition = 'opacity 0.5s';
+            submitButtonContainer.style.opacity = '0';
+            submitButtonContainer.style.display = 'block';
+
+            // Trigger reflow
+            void submitButtonContainer.offsetWidth;
+
+            // Apply transition
+            submitButtonContainer.style.opacity = '1';
+        }, 300);
+
         // If the guest has already responded, show a message
         if (guest.hasResponded) {
             const responseDate = guest.submittedAt ? new Date(guest.submittedAt.seconds * 1000).toLocaleDateString() : 'previously';
-            
+
             // Add a message to the guest info box
             const responseMessage = document.createElement('p');
             responseMessage.innerHTML = `<strong>Note:</strong> You've already responded ${responseDate}. Your previous response will be updated.`;
             responseMessage.style.color = '#e67e22';
             guestFoundInfo.appendChild(responseMessage);
-            
+
             // Pre-fill the attending radio buttons
             if (guest.response === 'yes') {
                 document.getElementById('attendingYes').checked = true;
                 document.getElementById('guestCountGroup').style.display = 'block';
-                
+
                 // Set guest count if available
                 if (guest.actualGuestCount) {
                     guestCountInput.value = guest.actualGuestCount;
-                    
+
                     // Trigger the change event to update additional guest fields
                     const event = new Event('change');
                     guestCountInput.dispatchEvent(event);
-                    
+
                     // Pre-fill additional guest names if available
                     if (guest.additionalGuests && guest.additionalGuests.length > 0) {
                         setTimeout(() => {
@@ -202,17 +235,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
+
     // Modify the form submission to update the guest record
     const rsvpForm = document.getElementById('rsvpForm');
     if (rsvpForm) {
         // Store the original submit handler
         const originalSubmitHandler = rsvpForm.onsubmit;
-        
+
         // Override the submit handler
         rsvpForm.onsubmit = async function(e) {
             e.preventDefault();
-            
+
             // Get form data
             const formData = {
                 name: rsvpForm.name.value,
@@ -223,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 additionalGuests: [],
                 submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
             };
-            
+
             // Collect additional guest names if any
             if (formData.guestCount > 1) {
                 for (let i = 2; i <= formData.guestCount; i++) {
@@ -233,13 +266,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
-            
+
             // If a guest was selected from the list, update their record
             if (selectedGuest) {
                 try {
                     // Update the guest's RSVP status
                     await window.updateGuestRsvp(selectedGuest.id, formData);
-                    
+
                     // Continue with the original submission to the rsvps collection
                     // This ensures backward compatibility with the existing system
                     if (typeof originalSubmitHandler === 'function') {
@@ -257,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
-    
+
     // Utility function to debounce input events
     function debounce(func, wait) {
         let timeout;
