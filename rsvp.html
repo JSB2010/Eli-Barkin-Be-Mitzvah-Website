@@ -23,6 +23,57 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
     <!-- Firebase Config -->
     <script src="firebase-config.js"></script>
+    <!-- Guest List Management -->
+    <script src="firebase-guest-list.js"></script>
+    <style>
+        /* Autocomplete styles */
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-results {
+            position: absolute;
+            z-index: 999;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .autocomplete-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .autocomplete-item:hover {
+            background-color: #f9f9f9;
+        }
+        .autocomplete-item.selected {
+            background-color: #f0f0f0;
+        }
+        .guest-found-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f7ff;
+            border-radius: 4px;
+            border-left: 3px solid #4a89dc;
+            display: none;
+        }
+        .guest-found-info p {
+            margin: 5px 0;
+        }
+        .search-message {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
 
 </head>
 <body>
@@ -63,7 +114,17 @@
                 <form id="rsvpForm">
                     <div class="form-group">
                         <label for="name">Full Name:</label>
-                        <input type="text" id="name" name="name" required>
+                        <div class="autocomplete-container">
+                            <input type="text" id="name" name="name" required autocomplete="off">
+                            <div id="autocompleteResults" class="autocomplete-results"></div>
+                        </div>
+                        <div class="search-message">Start typing your name to find your invitation</div>
+                    </div>
+
+                    <div id="guestFoundInfo" class="guest-found-info">
+                        <p><strong>We found your invitation!</strong></p>
+                        <p id="guestCategory"></p>
+                        <p id="guestMaxCount"></p>
                     </div>
 
                     <div class="form-group">
@@ -134,5 +195,6 @@
     </footer>
 
     <script src="firebase-rsvp.js"></script>
+    <script src="rsvp-guest-search.js"></script>
 </body>
 </html>

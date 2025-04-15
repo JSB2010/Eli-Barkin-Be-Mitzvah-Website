@@ -5,6 +5,14 @@ const { google } = require('googleapis');
 
 admin.initializeApp();
 
+// Import guest list functions
+const { importGuestList } = require('./import-guest-list');
+const { syncGuestToSheet } = require('./sync-guest-list');
+
+// Export guest list functions
+exports.importGuestList = importGuestList;
+exports.syncGuestToSheet = syncGuestToSheet;
+
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
 // See: https://support.google.com/accounts/answer/185833
