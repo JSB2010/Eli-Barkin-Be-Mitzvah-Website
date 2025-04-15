@@ -111,9 +111,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Submit to Firebase using the new collection for this branch
-            db.collection('sheetRsvps').add(formData)
-                .then(() => {
+            // Check if this is an update or a new submission
+            const isUpdate = window.selectedGuest && window.selectedGuest.hasResponded;
+            let savePromise;
+
+            if (isUpdate) {
+                // Update existing RSVP
+                console.log('Updating existing RSVP for:', formData.name);
+                savePromise = db.collection('sheetRsvps')
+                    .where('name', '==', formData.name)
+                    .get()
+                    .then(snapshot => {
+                        if (!snapshot.empty) {
+                            // Update the first matching document
+                            return snapshot.docs[0].ref.update(formData);
+                        } else {
+                            // If no matching document found, create a new one
+                            return db.collection('sheetRsvps').add(formData);
+                        }
+                    });
+            } else {
+                // Create new RSVP
+                console.log('Creating new RSVP for:', formData.name);
+                savePromise = db.collection('sheetRsvps').add(formData);
+            }
+
+            savePromise.then(() => {
                     // Show success confirmation with animation
                     form.style.opacity = '1';
                     form.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
@@ -133,6 +156,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         formConfirmation.classList.remove('hidden');
                         formConfirmation.style.opacity = '0';
                         formConfirmation.style.transform = 'translateY(20px)';
+
+                        // Update confirmation message based on whether it was an update or new submission
+                        const confirmationMessage = document.getElementById('confirmation-message');
+                        if (confirmationMessage) {
+                            if (isUpdate) {
+                                confirmationMessage.textContent = 'Your RSVP has been updated successfully. Thank you for keeping us informed!';
+                            } else {
+                                confirmationMessage.textContent = 'Your RSVP has been received. We look forward to celebrating with you!';
+                            }
+                        }
 
                         // Animate confirmation in
                         setTimeout(() => {

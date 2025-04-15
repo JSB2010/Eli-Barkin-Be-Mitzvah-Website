@@ -75,6 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate inputs
         if (!email || !password) {
             errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter both email and password`;
+            errorMessage.style.animation = 'none';
+            setTimeout(() => {
+                errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
+            }, 10);
             errorMessage.style.display = 'block';
             return;
         }
@@ -127,6 +131,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
+                    errorMessage.style.animation = 'none';
+                    setTimeout(() => {
+                        errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
+                    }, 10);
                     errorMessage.style.display = 'block';
                 })
                 .finally(() => {

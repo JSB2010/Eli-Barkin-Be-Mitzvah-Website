@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestCountInput = document.getElementById('guestCount');
 
     // Variables to store selected guest data
-    let selectedGuest = null;
+    // Make it accessible to other scripts
+    window.selectedGuest = null;
+    let selectedGuest = window.selectedGuest;
 
     // Function to handle name input
     async function handleNameInput() {
@@ -58,12 +60,57 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to select a guest
     function selectGuest(guest) {
         selectedGuest = guest;
+        window.selectedGuest = guest; // Make it accessible globally
         nameInput.value = guest.name;
         autocompleteResults.style.display = 'none';
 
         // Update guest info display
         guestCategoryElement.textContent = guest.category ? `Category: ${guest.category}` : '';
-        guestMaxCountElement.textContent = `You can add as many guests as needed`;
+
+        // Check if guest has already responded
+        const hasResponded = guest.hasResponded === true;
+        const submitButton = document.querySelector('#submitButtonContainer button');
+
+        if (hasResponded) {
+            // Update info message for returning guests
+            guestFoundInfo.innerHTML = `
+                <p><strong>Welcome back, ${guest.name.split(' ')[0]}!</strong></p>
+                <p>We found your previous RSVP. You can update your response below.</p>
+                <p id="guestCategory">${guest.category ? `Category: ${guest.category}` : ''}</p>
+            `;
+
+            // Update button text for updates
+            submitButton.textContent = 'Update RSVP';
+
+            // Pre-fill form with existing data
+            if (guest.email) document.getElementById('email').value = guest.email;
+            if (guest.phone) document.getElementById('phone').value = guest.phone;
+
+            // Set attendance radio button
+            if (guest.response === 'attending') {
+                document.getElementById('attendingYes').checked = true;
+                // Show guest count section
+                guestCountGroup.style.display = 'block';
+                // Set guest count
+                guestCountInput.value = guest.actualGuestCount || 1;
+                // Update additional guest fields
+                updateGuestFields();
+                // Pre-fill additional guest names if available
+                if (guest.additionalGuests && guest.additionalGuests.length > 0) {
+                    guest.additionalGuests.forEach((guestName, index) => {
+                        const guestField = document.getElementById(`guestName${index + 2}`);
+                        if (guestField) guestField.value = guestName;
+                    });
+                }
+            } else if (guest.response === 'declined') {
+                document.getElementById('attendingNo').checked = true;
+                guestCountGroup.style.display = 'none';
+            }
+        } else {
+            // First time RSVP
+            guestMaxCountElement.textContent = `You can add as many guests as needed`;
+            submitButton.textContent = 'Submit RSVP';
+        }
 
         // Show guest found info with animation
         guestFoundInfo.style.opacity = '0';
@@ -96,10 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButtonContainer.style.transition = 'opacity 0.5s ease';
             submitButtonContainer.style.opacity = '1';
         }, 500);
-
-        // Pre-fill email and phone if available
-        if (guest.email) document.getElementById('email').value = guest.email;
-        if (guest.phone) document.getElementById('phone').value = guest.phone;
 
         // Scroll to the form
         setTimeout(() => {
