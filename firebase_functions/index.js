@@ -33,7 +33,7 @@ const transporter = nodemailer.createTransport({
  * Cloud Function that sends an email notification when a new RSVP is submitted
  */
 exports.sendRsvpNotification = functions.firestore
-  .document('rsvps/{rsvpId}')
+  .document('sheetRsvps/{rsvpId}')
   .onCreate(async (snapshot, context) => {
     // Get the RSVP data
     const rsvpData = snapshot.data();
@@ -107,7 +107,7 @@ ${rsvpData.additionalGuests && rsvpData.additionalGuests.length > 0 ?
  * Cloud Function to add RSVP data to a Google Sheet and update guest list
  */
 exports.addRsvpToSheet = functions.firestore
-  .document('rsvps/{rsvpId}')
+  .document('sheetRsvps/{rsvpId}')
   .onCreate(async (snapshot, context) => {
     try {
       // Get the RSVP data

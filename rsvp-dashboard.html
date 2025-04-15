@@ -290,6 +290,11 @@
             border-bottom: 1px solid var(--medium-gray);
         }
 
+        .dashboard-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
         .dashboard-title {
             color: var(--primary-blue);
             font-size: 2rem;
@@ -1043,10 +1048,11 @@
         <div class="dashboard-container">
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">RSVP Dashboard</h1>
-                    <p class="dashboard-subtitle">Track and manage event responses for Eli's Be Mitzvah</p>
+                    <h1 class="dashboard-title">Guest Management Dashboard</h1>
+                    <p class="dashboard-subtitle">Track and manage guest list and RSVPs for Eli's Be Mitzvah</p>
                 </div>
-                <div>
+                <div class="dashboard-actions">
+                    <button id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
                     <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </div>

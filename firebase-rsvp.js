@@ -111,8 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Submit to Firebase
-            db.collection('rsvps').add(formData)
+            // Submit to Firebase using the new collection for this branch
+            db.collection('sheetRsvps').add(formData)
                 .then(() => {
                     // Show success confirmation
                     form.style.display = 'none';

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestListTab = document.getElementById('guest-list-tab');
     const rsvpContent = document.getElementById('rsvp-content');
     const guestListContent = document.getElementById('guest-list-content');
+    const syncSheetBtn = document.getElementById('sync-sheet-btn');
 
     // Switch tabs
     rsvpTab.addEventListener('click', function() {
@@ -52,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let guestListPage = 1;
     let guestListSort = { field: 'name', direction: 'asc' };
     let guestCategories = new Set(); // Unique categories
-    let rsvpSubmissionsByName = {}; // Map of guest name to RSVP submission
 
     // Handle login form submission
     loginForm.addEventListener('submit', function(e) {
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const maxRetries = 3;
 
         function attemptFetch() {
-            db.collection('rsvps').orderBy('submittedAt', 'desc').get()
+            db.collection('sheetRsvps').orderBy('submittedAt', 'desc').get()
                 .then((querySnapshot) => {
                     allSubmissions = querySnapshot.docs.map(doc => {
                         // Safely extract data
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 guestCount: s.guestCount,
                                 submittedAt: s.submittedAt.getTime() // Store as timestamp
                             }));
-                            localStorage.setItem('rsvp_backup_data', JSON.stringify(essentialData));
+                            localStorage.setItem('sheet_rsvp_backup_data', JSON.stringify(essentialData));
                         } catch (e) {
                             console.warn('Could not save backup data to localStorage', e);
                         }
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadingElement.innerHTML = '<p><i class="fas fa-exclamation-triangle"></i> Error loading submissions from server.</p>';
 
                         try {
-                            const backupData = localStorage.getItem('rsvp_backup_data');
+                            const backupData = localStorage.getItem('sheet_rsvp_backup_data');
                             if (backupData) {
                                 const parsedData = JSON.parse(backupData);
                                 // Convert timestamp back to Date objects
@@ -1681,6 +1681,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 exportGuestListBtn.innerHTML = originalButtonText;
                 exportGuestListBtn.disabled = false;
             }
+        });
+    }
+
+    // Handle sync with Google Sheet button
+    if (syncSheetBtn) {
+        syncSheetBtn.addEventListener('click', function() {
+            // Store original button text and disable button during sync
+            const originalButtonText = syncSheetBtn.innerHTML;
+            syncSheetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+            syncSheetBtn.disabled = true;
+
+            // Call the manual sync function
+            fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChanges')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Sync response:', data);
+
+                    if (data.success) {
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'export-success';
+                        successMessage.innerHTML = `<i class="fas fa-check-circle"></i> Synced successfully`;
+                        syncSheetBtn.parentNode.appendChild(successMessage);
+
+                        // Remove success message after 3 seconds
+                        setTimeout(() => {
+                            if (successMessage.parentNode) {
+                                successMessage.parentNode.removeChild(successMessage);
+                            }
+                        }, 3000);
+
+                        // Refresh the data
+                        fetchSubmissions();
+                        fetchGuestList();
+                    } else {
+                        alert('Error syncing with Google Sheet: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error syncing with Google Sheet:', error);
+                    alert('Error syncing with Google Sheet. Please try again.');
+                })
+                .finally(() => {
+                    // Restore button state
+                    syncSheetBtn.innerHTML = originalButtonText;
+                    syncSheetBtn.disabled = false;
+                });
         });
     }
 
