@@ -58,9 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (header) {
             const headerHeight = header.offsetHeight;
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-
-            // Also update body padding to match header height
-            document.body.style.paddingTop = `${headerHeight}px`;
         }
     }
 

@@ -30,7 +30,6 @@ html, body {
 }
 
 body {
-    padding-top: var(--header-height);
     position: relative;
 }
 
@@ -222,14 +221,12 @@ body.force-mobile-nav nav ul li a.active {
         min-height: var(--header-height);
     }
 
-    /* Add padding to main content to prevent overlap */
-    main {
-        padding-top: 20px;
-    }
+    /* No extra padding needed for main content */
 
     /* Adjust hero sections for mobile */
     .hero, .rsvp-hero {
         min-height: 60vh;
+        margin-top: var(--header-height);
     }
 
     .rsvp-hero {
@@ -384,6 +381,7 @@ nav ul li a.active {
     position: relative;
     margin: 0;
     padding: 0;
+    margin-top: var(--header-height);
 }
 
 .rsvp-hero {
