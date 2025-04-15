@@ -1,103 +1,108 @@
-// Firebase Guest List Management
-// This file handles the guest list collection in Firebase
+// Initialize Firestore
+let db;
 
-// Wait for the DOM to be fully loaded
+// Wait for Firebase to initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if Firebase is initialized
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not found. Make sure firebase-config.js is loaded first.');
-        return;
+    // Initialize Firebase if not already initialized
+    if (typeof firebase !== 'undefined') {
+        // Initialize Firestore
+        db = firebase.firestore();
+        console.log('Firestore initialized');
+    } else {
+        console.error('Firebase SDK not found');
     }
+});
 
-    // Reference to the guest list collection
-    const guestListCollection = firebase.firestore().collection('guestList');
-
-    // Export the collection reference for use in other files
-    window.guestListCollection = guestListCollection;
-
-    /**
-     * Search for a guest by name
-     * @param {string} name - The name to search for
-     * @returns {Promise<Array>} - Array of matching guests
-     */
-    window.searchGuest = async function(name) {
-        if (!name || name.trim().length < 2) {
+// Function to search for guests in Firestore
+async function searchGuests(searchTerm) {
+    if (!searchTerm || searchTerm.length < 2) return [];
+    
+    try {
+        if (!db) {
+            console.error('Firestore not initialized');
             return [];
         }
-
-        const searchName = name.trim().toLowerCase();
         
-        try {
-            // Search for guests where name contains the search term
-            // Note: Firestore doesn't support native contains/substring queries
-            // So we'll fetch all guests and filter client-side for now
-            // For production with large lists, consider using a search service like Algolia
-            const snapshot = await guestListCollection.get();
-            
-            const results = [];
-            snapshot.forEach(doc => {
-                const guest = doc.data();
-                const guestName = (guest.name || '').toLowerCase();
-                
-                if (guestName.includes(searchName)) {
-                    results.push({
-                        id: doc.id,
-                        ...guest
-                    });
-                }
-            });
-            
-            return results;
-        } catch (error) {
-            console.error('Error searching for guest:', error);
+        const guestListRef = db.collection('guestList');
+        
+        // Convert search term to lowercase for case-insensitive search
+        const searchTermLower = searchTerm.toLowerCase();
+        
+        // Get all guests (we'll filter client-side)
+        const snapshot = await guestListRef.get();
+        
+        if (snapshot.empty) {
+            console.log('No guests found in database');
             return [];
         }
-    };
+        
+        // Filter guests whose names contain the search term
+        const results = [];
+        snapshot.forEach(doc => {
+            const guest = doc.data();
+            guest.id = doc.id; // Add document ID to the guest object
+            
+            if (guest.name && guest.name.toLowerCase().includes(searchTermLower)) {
+                results.push(guest);
+            }
+        });
+        
+        return results;
+    } catch (error) {
+        console.error('Error searching guests:', error);
+        return [];
+    }
+}
 
-    /**
-     * Update a guest's RSVP status
-     * @param {string} guestId - The guest document ID
-     * @param {Object} rsvpData - The RSVP data
-     * @returns {Promise<boolean>} - Success status
-     */
-    window.updateGuestRsvp = async function(guestId, rsvpData) {
-        try {
-            await guestListCollection.doc(guestId).update({
-                hasResponded: true,
-                response: rsvpData.attending,
-                actualGuestCount: rsvpData.guestCount,
-                additionalGuests: rsvpData.additionalGuests || [],
-                submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-                email: rsvpData.email,
-                phone: rsvpData.phone
-            });
-            return true;
-        } catch (error) {
-            console.error('Error updating guest RSVP:', error);
+// Function to get a guest by ID
+async function getGuestById(guestId) {
+    if (!guestId) return null;
+    
+    try {
+        if (!db) {
+            console.error('Firestore not initialized');
+            return null;
+        }
+        
+        const guestDoc = await db.collection('guestList').doc(guestId).get();
+        
+        if (!guestDoc.exists) {
+            console.log('No guest found with ID:', guestId);
+            return null;
+        }
+        
+        const guest = guestDoc.data();
+        guest.id = guestDoc.id;
+        return guest;
+    } catch (error) {
+        console.error('Error getting guest by ID:', error);
+        return null;
+    }
+}
+
+// Function to update a guest's RSVP status
+async function updateGuestRsvp(guestId, rsvpData) {
+    if (!guestId) return false;
+    
+    try {
+        if (!db) {
+            console.error('Firestore not initialized');
             return false;
         }
-    };
-
-    /**
-     * Get all guests with their RSVP status
-     * @returns {Promise<Array>} - Array of all guests with RSVP status
-     */
-    window.getAllGuests = async function() {
-        try {
-            const snapshot = await guestListCollection.get();
-            const guests = [];
-            
-            snapshot.forEach(doc => {
-                guests.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            return guests;
-        } catch (error) {
-            console.error('Error getting all guests:', error);
-            return [];
-        }
-    };
-});
+        
+        await db.collection('guestList').doc(guestId).update({
+            hasResponded: true,
+            response: rsvpData.attending ? 'attending' : 'declined',
+            actualGuestCount: rsvpData.attending ? rsvpData.guestCount : 0,
+            additionalGuests: rsvpData.additionalGuests || [],
+            email: rsvpData.email || '',
+            phone: rsvpData.phone || '',
+            submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Error updating guest RSVP:', error);
+        return false;
+    }
+}
