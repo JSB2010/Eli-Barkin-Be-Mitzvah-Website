@@ -15,7 +15,7 @@ exports.syncGuestToSheet = functions.firestore
       // Get the updated guest data
       const guestData = change.after.data();
       const guestId = context.params.guestId;
-      
+
       // Only sync if the RSVP status has changed
       const oldData = change.before.data();
       if (oldData.hasResponded === guestData.hasResponded &&
@@ -25,12 +25,8 @@ exports.syncGuestToSheet = functions.firestore
         return null;
       }
 
-      // Get the sheet ID from environment
-      const sheetId = functions.config().sheets.sheet_id;
-      if (!sheetId) {
-        console.error('Sheet ID not configured');
-        return null;
-      }
+      // Use the specific Google Sheet ID
+      const sheetId = '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
 
       // Get the service account credentials from environment
       const serviceAccountCredentials = functions.config().sheets.credentials;
@@ -78,22 +74,112 @@ exports.syncGuestToSheet = functions.firestore
       const submittedDate = guestData.submittedAt ?
         new Date(guestData.submittedAt.toDate()).toLocaleString() : '';
 
-      // Update the RSVP status columns in the sheet
-      // Assuming columns: Name, Email, Phone, Category, Max Guests, Has Responded, Response, Guest Count, Additional Guests, Submitted At
-      await sheets.spreadsheets.values.update({
+      // Add new columns to the sheet if they don't exist
+      // First, get the header row to see what columns exist
+      const headerResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: `Sheet1!F${rowIndex}:J${rowIndex}`,
-        valueInputOption: 'RAW',
-        resource: {
-          values: [[
-            guestData.hasResponded ? 'Yes' : 'No',
-            guestData.response === 'yes' ? 'Attending' : (guestData.response === 'no' ? 'Not Attending' : ''),
-            guestData.actualGuestCount || '',
-            additionalGuestsText,
-            submittedDate
-          ]]
-        }
+        range: 'Sheet1!1:1', // Get the header row
       });
+
+      let headers = headerResponse.data.values[0] || [];
+
+      // Check if we need to add RSVP columns
+      const requiredColumns = ['Email', 'Phone', 'RSVP Status', 'Guest Count', 'Additional Guests', 'Submitted At'];
+      let columnsToAdd = [];
+
+      for (const column of requiredColumns) {
+        if (!headers.includes(column)) {
+          columnsToAdd.push(column);
+        }
+      }
+
+      // Add missing columns if needed
+      if (columnsToAdd.length > 0) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: sheetId,
+          resource: {
+            requests: [{
+              appendDimension: {
+                sheetId: 0, // Assuming first sheet
+                dimension: 'COLUMNS',
+                length: columnsToAdd.length
+              }
+            }]
+          }
+        });
+
+        // Update the header row with new column names
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `Sheet1!${String.fromCharCode(65 + headers.length)}1:${String.fromCharCode(65 + headers.length + columnsToAdd.length - 1)}1`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [columnsToAdd]
+          }
+        });
+
+        // Refresh headers
+        const updatedHeaderResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: sheetId,
+          range: 'Sheet1!1:1',
+        });
+        headers = updatedHeaderResponse.data.values[0] || [];
+      }
+
+      // Find column indices
+      const emailIndex = headers.indexOf('Email');
+      const phoneIndex = headers.indexOf('Phone');
+      const rsvpStatusIndex = headers.indexOf('RSVP Status');
+      const guestCountIndex = headers.indexOf('Guest Count');
+      const additionalGuestsIndex = headers.indexOf('Additional Guests');
+      const submittedAtIndex = headers.indexOf('Submitted At');
+
+      // Prepare update data
+      const updates = {};
+
+      if (emailIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + emailIndex)}${rowIndex}`] = [[guestData.email || '']];
+      }
+
+      if (phoneIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + phoneIndex)}${rowIndex}`] = [[guestData.phone || '']];
+      }
+
+      if (rsvpStatusIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + rsvpStatusIndex)}${rowIndex}`] = [[
+          guestData.response === 'yes' ? 'Attending' : (guestData.response === 'no' ? 'Not Attending' : '')
+        ]];
+      }
+
+      if (guestCountIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + guestCountIndex)}${rowIndex}`] = [[
+          guestData.actualGuestCount || ''
+        ]];
+      }
+
+      if (additionalGuestsIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + additionalGuestsIndex)}${rowIndex}`] = [[
+          additionalGuestsText
+        ]];
+      }
+
+      if (submittedAtIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + submittedAtIndex)}${rowIndex}`] = [[
+          submittedDate
+        ]];
+      }
+
+      // Apply all updates in a batch
+      for (const range in updates) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: range,
+          valueInputOption: 'RAW',
+          resource: {
+            values: updates[range]
+          }
+        });
+      }
 
       console.log(`Successfully updated RSVP status for ${guestData.name} in Google Sheet`);
       return null;

@@ -708,13 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Import from Google Sheets
     if (importBtn) {
         importBtn.addEventListener('click', async function() {
-            const sheetId = sheetIdInput.value.trim();
             const clearExisting = clearExistingCheckbox.checked;
-
-            if (!sheetId) {
-                alert('Please enter a Google Sheet ID');
-                return;
-            }
 
             // Show loading state
             importBtn.disabled = true;
@@ -731,7 +725,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        sheetId,
                         clearExisting
                     })
                 });

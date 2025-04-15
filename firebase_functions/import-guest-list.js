@@ -16,12 +16,8 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
             return;
         }
 
-        // Get the sheet ID from environment or request
-        const sheetId = functions.config().sheets.sheet_id || req.body.sheetId;
-        if (!sheetId) {
-            res.status(400).send('Sheet ID is required');
-            return;
-        }
+        // Use the specific Google Sheet ID
+        const sheetId = '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
 
         // Get the service account credentials from environment
         const serviceAccountCredentials = functions.config().sheets.credentials;
@@ -43,7 +39,7 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
         // Assuming the first sheet contains the guest list
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: 'Sheet1!A2:F', // Adjust range as needed, skipping header row
+            range: 'Sheet1!A2:H', // Get columns A-H, skipping header row
         });
 
         const rows = response.data.values || [];
@@ -60,30 +56,38 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
         if (req.body.clearExisting) {
             const existingGuests = await guestListRef.get();
             const batch = db.batch();
-            
+
             existingGuests.forEach(doc => {
                 batch.delete(doc.ref);
             });
-            
+
             await batch.commit();
             console.log('Cleared existing guest list');
         }
 
         // Process each row and add to Firestore
-        // Assuming columns: Name, Email, Phone, Category, Max Guests, Notes
+        // Columns: Name Line 1, Name Line 2, Address Line 1, Address Line 2, City, State, Zip, Country
         const batch = db.batch();
         let importCount = 0;
 
         rows.forEach((row, index) => {
             if (!row[0]) return; // Skip rows without a name
-            
+
             const guestData = {
-                name: row[0] || '',
-                email: row[1] || '',
-                phone: row[2] || '',
-                category: row[3] || 'General',
-                maxAllowedGuests: parseInt(row[4] || '2', 10),
-                notes: row[5] || '',
+                name: row[0] || '', // Name Line 1 (First and Last Name)
+                additionalNames: row[1] || '', // Name Line 2 (Additional Names)
+                address: {
+                    line1: row[2] || '', // Address Line 1
+                    line2: row[3] || '', // Address Line 2
+                    city: row[4] || '', // City
+                    state: row[5] || '', // State
+                    zip: row[6] || '', // Zip
+                    country: row[7] || 'USA' // Country
+                },
+                email: '', // Will be collected from RSVP form
+                phone: '', // Will be collected from RSVP form
+                category: 'Guest', // Default category
+                maxAllowedGuests: 4, // Default max guests
                 hasResponded: false,
                 response: null,
                 actualGuestCount: null,
@@ -91,7 +95,7 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
                 submittedAt: null,
                 importedAt: admin.firestore.FieldValue.serverTimestamp()
             };
-            
+
             // Create a new document with auto-generated ID
             const docRef = guestListRef.doc();
             batch.set(docRef, guestData);
