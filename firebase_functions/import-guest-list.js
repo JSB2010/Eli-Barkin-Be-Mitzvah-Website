@@ -35,18 +35,28 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
         const client = await auth.getClient();
         const sheets = google.sheets({ version: 'v4', auth: client });
 
-        // Get the sheet data
-        // Assuming the first sheet contains the guest list
-        const response = await sheets.spreadsheets.values.get({
+        // First get the header row to understand column structure
+        const headerResponse = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: 'Sheet1!A2:H', // Get columns A-H, skipping header row
+            range: 'Sheet1!1:1', // Get header row
         });
 
-        const rows = response.data.values || [];
-        if (rows.length === 0) {
+        const headers = headerResponse.data.values[0] || [];
+
+        // Get all data including headers
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: sheetId,
+            range: 'Sheet1', // Get all data
+        });
+
+        const allRows = response.data.values || [];
+        if (allRows.length <= 1) { // Only header or empty
             res.status(404).send('No data found in sheet');
             return;
         }
+
+        // Skip the header row
+        const rows = allRows.slice(1);
 
         // Get Firestore reference
         const db = admin.firestore();
@@ -65,34 +75,86 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
             console.log('Cleared existing guest list');
         }
 
+        // Find column indices
+        const nameIndex = headers.indexOf('Name Line 1');
+        const additionalNamesIndex = headers.indexOf('Name Line 2');
+        const addressLine1Index = headers.indexOf('Address Line 1');
+        const addressLine2Index = headers.indexOf('Address Line 2');
+        const cityIndex = headers.indexOf('City');
+        const stateIndex = headers.indexOf('State');
+        const zipIndex = headers.indexOf('Zip');
+        const countryIndex = headers.indexOf('Country');
+        const emailIndex = headers.indexOf('Email');
+        const phoneIndex = headers.indexOf('Phone');
+        const categoryIndex = headers.indexOf('Category');
+        const maxGuestsIndex = headers.indexOf('Max Guests');
+        const respondedIndex = headers.indexOf('Responded');
+        const rsvpStatusIndex = headers.indexOf('RSVP Status');
+        const guestCountIndex = headers.indexOf('Guest Count');
+        const additionalGuestsIndex = headers.indexOf('Additional Guests');
+
         // Process each row and add to Firestore
-        // Columns: Name Line 1, Name Line 2, Address Line 1, Address Line 2, City, State, Zip, Country
         const batch = db.batch();
         let importCount = 0;
 
         rows.forEach((row, index) => {
-            if (!row[0]) return; // Skip rows without a name
+            if (!row[nameIndex] || nameIndex === -1) return; // Skip rows without a name
+
+            // Parse RSVP status from sheet if available
+            let hasResponded = false;
+            let response = null;
+            let actualGuestCount = null;
+            let additionalGuests = [];
+
+            // Check if responded column exists and has a value
+            if (respondedIndex !== -1 && row[respondedIndex]) {
+                const respondedValue = row[respondedIndex].toString().toUpperCase();
+                hasResponded = respondedValue === 'TRUE' || respondedValue === 'YES' || respondedValue === '1';
+            }
+
+            // Check if RSVP status column exists and has a value
+            if (rsvpStatusIndex !== -1 && row[rsvpStatusIndex]) {
+                const status = row[rsvpStatusIndex].toString().toLowerCase();
+                if (status.includes('attend') || status === 'yes') {
+                    response = 'yes';
+                } else if (status.includes('not') || status === 'no') {
+                    response = 'no';
+                }
+            }
+
+            // Check if guest count column exists and has a value
+            if (guestCountIndex !== -1 && row[guestCountIndex]) {
+                const count = parseInt(row[guestCountIndex]);
+                if (!isNaN(count)) {
+                    actualGuestCount = count;
+                }
+            }
+
+            // Check if additional guests column exists and has a value
+            if (additionalGuestsIndex !== -1 && row[additionalGuestsIndex]) {
+                additionalGuests = row[additionalGuestsIndex].split(',').map(name => name.trim()).filter(name => name);
+            }
 
             const guestData = {
-                name: row[0] || '', // Name Line 1 (First and Last Name)
-                additionalNames: row[1] || '', // Name Line 2 (Additional Names)
+                name: row[nameIndex] || '', // Name Line 1 (First and Last Name)
+                additionalNames: additionalNamesIndex !== -1 ? (row[additionalNamesIndex] || '') : '', // Name Line 2
                 address: {
-                    line1: row[2] || '', // Address Line 1
-                    line2: row[3] || '', // Address Line 2
-                    city: row[4] || '', // City
-                    state: row[5] || '', // State
-                    zip: row[6] || '', // Zip
-                    country: row[7] || 'USA' // Country
+                    line1: addressLine1Index !== -1 ? (row[addressLine1Index] || '') : '', // Address Line 1
+                    line2: addressLine2Index !== -1 ? (row[addressLine2Index] || '') : '', // Address Line 2
+                    city: cityIndex !== -1 ? (row[cityIndex] || '') : '', // City
+                    state: stateIndex !== -1 ? (row[stateIndex] || '') : '', // State
+                    zip: zipIndex !== -1 ? (row[zipIndex] || '') : '', // Zip
+                    country: countryIndex !== -1 ? (row[countryIndex] || 'USA') : 'USA' // Country
                 },
-                email: '', // Will be collected from RSVP form
-                phone: '', // Will be collected from RSVP form
-                category: 'Guest', // Default category
-                maxAllowedGuests: 4, // Default max guests
-                hasResponded: false,
-                response: null,
-                actualGuestCount: null,
-                additionalGuests: [],
-                submittedAt: null,
+                email: emailIndex !== -1 ? (row[emailIndex] || '') : '', // Email if available
+                phone: phoneIndex !== -1 ? (row[phoneIndex] || '') : '', // Phone if available
+                category: categoryIndex !== -1 ? (row[categoryIndex] || 'Guest') : 'Guest', // Category
+                maxAllowedGuests: maxGuestsIndex !== -1 ? (parseInt(row[maxGuestsIndex]) || 4) : 4, // Max guests
+                hasResponded: hasResponded,
+                response: response,
+                actualGuestCount: actualGuestCount,
+                additionalGuests: additionalGuests,
+                submittedAt: hasResponded ? admin.firestore.FieldValue.serverTimestamp() : null,
                 importedAt: admin.firestore.FieldValue.serverTimestamp()
             };
 

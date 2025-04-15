@@ -84,7 +84,7 @@ exports.syncGuestToSheet = functions.firestore
       let headers = headerResponse.data.values[0] || [];
 
       // Check if we need to add RSVP columns
-      const requiredColumns = ['Email', 'Phone', 'RSVP Status', 'Guest Count', 'Additional Guests', 'Submitted At'];
+      const requiredColumns = ['Email', 'Phone', 'Responded', 'RSVP Status', 'Guest Count', 'Additional Guests', 'Submitted At'];
       let columnsToAdd = [];
 
       for (const column of requiredColumns) {
@@ -129,6 +129,7 @@ exports.syncGuestToSheet = functions.firestore
       // Find column indices
       const emailIndex = headers.indexOf('Email');
       const phoneIndex = headers.indexOf('Phone');
+      const respondedIndex = headers.indexOf('Responded');
       const rsvpStatusIndex = headers.indexOf('RSVP Status');
       const guestCountIndex = headers.indexOf('Guest Count');
       const additionalGuestsIndex = headers.indexOf('Additional Guests');
@@ -143,6 +144,12 @@ exports.syncGuestToSheet = functions.firestore
 
       if (phoneIndex >= 0) {
         updates[`Sheet1!${String.fromCharCode(65 + phoneIndex)}${rowIndex}`] = [[guestData.phone || '']];
+      }
+
+      if (respondedIndex >= 0) {
+        updates[`Sheet1!${String.fromCharCode(65 + respondedIndex)}${rowIndex}`] = [[
+          guestData.hasResponded ? 'TRUE' : 'FALSE'
+        ]];
       }
 
       if (rsvpStatusIndex >= 0) {

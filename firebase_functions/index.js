@@ -8,10 +8,13 @@ admin.initializeApp();
 // Import guest list functions
 const { importGuestList } = require('./import-guest-list');
 const { syncGuestToSheet } = require('./sync-guest-list');
+const { syncSheetChanges, manualSyncSheetChanges } = require('./sync-sheet-changes');
 
 // Export guest list functions
 exports.importGuestList = importGuestList;
 exports.syncGuestToSheet = syncGuestToSheet;
+exports.syncSheetChanges = syncSheetChanges;
+exports.manualSyncSheetChanges = manualSyncSheetChanges;
 
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
@@ -99,7 +102,7 @@ ${rsvpData.additionalGuests && rsvpData.additionalGuests.length > 0 ?
   });
 
 /**
- * Cloud Function to add RSVP data to a Google Sheet
+ * Cloud Function to add RSVP data to a Google Sheet and update guest list
  */
 exports.addRsvpToSheet = functions.firestore
   .document('rsvps/{rsvpId}')
@@ -159,6 +162,37 @@ exports.addRsvpToSheet = functions.firestore
       });
 
       console.log('RSVP data added to Google Sheet successfully:', rsvpId);
+
+      // Now try to find and update the corresponding guest in the guest list
+      try {
+        const db = admin.firestore();
+        const guestListRef = db.collection('guestList');
+
+        // Search for a guest with the same name
+        const guestQuery = await guestListRef.where('name', '==', rsvpData.name).get();
+
+        if (!guestQuery.empty) {
+          // Found a matching guest, update their RSVP status
+          const guestDoc = guestQuery.docs[0];
+          await guestDoc.ref.update({
+            hasResponded: true,
+            response: rsvpData.attending,
+            actualGuestCount: rsvpData.guestCount || 1,
+            additionalGuests: rsvpData.additionalGuests || [],
+            email: rsvpData.email,
+            phone: rsvpData.phone || '',
+            submittedAt: rsvpData.submittedAt || admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          console.log('Updated guest list entry for:', rsvpData.name);
+        } else {
+          console.log('No matching guest found in guest list for:', rsvpData.name);
+        }
+      } catch (guestError) {
+        console.error('Error updating guest list:', guestError);
+        // Continue even if guest list update fails
+      }
+
       return null;
     } catch (error) {
       console.error('Error adding RSVP data to Google Sheet:', error);
