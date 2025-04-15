@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add retry functionality
         let retryCount = 0;
-        const maxRetries = 3;
+        const maxRetries = 5; // Increase max retries from 3 to 5
 
         function attemptFetch() {
             db.collection('sheetRsvps').orderBy('submittedAt', 'desc').get()
@@ -264,20 +264,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch((error) => {
                     console.error('Error fetching submissions:', error);
 
+                    // Check if it's a network error
+                    const isNetworkError = error.code === 'unavailable' ||
+                                          error.message.includes('network') ||
+                                          error.message.includes('connection') ||
+                                          error.name === 'FirebaseError';
+
                     if (retryCount < maxRetries) {
                         // Retry with exponential backoff
                         retryCount++;
-                        const delay = Math.pow(2, retryCount) * 1000; // 2s, 4s, 8s
+                        // Longer delay for network errors
+                        const delay = Math.pow(2, retryCount) * (isNetworkError ? 1500 : 1000); // 3s, 6s, 12s, 24s, 48s for network errors
 
+                        // Show more detailed error message
                         loadingElement.innerHTML = `
                             <div class="loading-spinner"></div>
-                            <p>Connection issue. Retrying in ${delay/1000} seconds... (Attempt ${retryCount}/${maxRetries})</p>
+                            <p>${isNetworkError ? 'Network connection issue' : 'Error connecting to database'}.
+                               Retrying in ${Math.round(delay/1000)} seconds... (Attempt ${retryCount}/${maxRetries})</p>
+                            <p class="error-details">${error.message || 'Unknown error'}</p>
                         `;
 
                         setTimeout(attemptFetch, delay);
                     } else {
                         // Max retries reached, try to load from backup
-                        loadingElement.innerHTML = '<p><i class="fas fa-exclamation-triangle"></i> Error loading submissions from server.</p>';
+                        loadingElement.innerHTML = `
+                            <p><i class="fas fa-exclamation-triangle"></i> Error loading submissions from server after ${maxRetries} attempts.</p>
+                            <p class="error-details">${error.message || 'Unknown error'}</p>
+                            <button id="retry-fetch-btn" class="btn secondary"><i class="fas fa-sync-alt"></i> Try Again</button>
+                        `;
+
+                        // Add event listener to retry button
+                        const retryButton = document.getElementById('retry-fetch-btn');
+                        if (retryButton) {
+                            retryButton.addEventListener('click', function() {
+                                retryCount = 0; // Reset retry count
+                                loadingElement.innerHTML = `
+                                    <div class="loading-spinner"></div>
+                                    <p>Retrying connection...</p>
+                                `;
+                                setTimeout(attemptFetch, 1000);
+                            });
+                        }
 
                         try {
                             const backupData = localStorage.getItem('sheet_rsvp_backup_data');
@@ -292,11 +319,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 loadingElement.innerHTML += '<p><i class="fas fa-info-circle"></i> Loaded data from local backup.</p>';
                                 processSubmissions();
                             } else {
-                                loadingElement.innerHTML += '<p>No backup data available. Please try again later.</p>';
+                                loadingElement.innerHTML += '<p>No backup data available.</p>';
                             }
                         } catch (e) {
                             console.error('Error loading from backup:', e);
-                            loadingElement.innerHTML += '<p>Could not load backup data. Please try refreshing the page.</p>';
+                            loadingElement.innerHTML += '<p>Could not load backup data.</p>';
                         }
                     }
                 });
@@ -314,40 +341,67 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Get guest list from Firestore
-        db.collection('guestList').get()
-            .then((querySnapshot) => {
-                allGuests = querySnapshot.docs.map(doc => {
-                    const data = doc.data() || {};
-                    return {
-                        id: doc.id,
-                        name: data.name || '',
-                        category: data.category || '',
-                        maxAllowedGuests: data.maxAllowedGuests || 1,
-                        hasResponded: data.hasResponded || false,
-                        response: data.response || '',
-                        actualGuestCount: data.actualGuestCount || 0,
-                        additionalGuests: data.additionalGuests || [],
-                        email: data.email || '',
-                        phone: data.phone || '',
-                        address: data.address || {},
-                        submittedAt: data.submittedAt ? new Date(data.submittedAt.seconds * 1000) : null
-                    };
-                });
+        // Add retry functionality
+        let retryCount = 0;
+        const maxRetries = 5;
 
-                // Extract unique categories
-                allGuests.forEach(guest => {
-                    if (guest.category) {
-                        guestCategories.add(guest.category);
+        function attemptGuestFetch() {
+            // Get guest list from Firestore
+            db.collection('guestList').get()
+                .then((querySnapshot) => {
+                    allGuests = querySnapshot.docs.map(doc => {
+                        const data = doc.data() || {};
+                        return {
+                            id: doc.id,
+                            name: data.name || '',
+                            category: data.category || '',
+                            maxAllowedGuests: data.maxAllowedGuests || 1,
+                            hasResponded: data.hasResponded || false,
+                            response: data.response || '',
+                            actualGuestCount: data.actualGuestCount || 0,
+                            additionalGuests: data.additionalGuests || [],
+                            email: data.email || '',
+                            phone: data.phone || '',
+                            address: data.address || {},
+                            submittedAt: data.submittedAt ? new Date(data.submittedAt.seconds * 1000) : null
+                        };
+                    });
+
+                    // Extract unique categories
+                    allGuests.forEach(guest => {
+                        if (guest.category) {
+                            guestCategories.add(guest.category);
+                        }
+                    });
+
+                    // Process guest list
+                    processGuestList();
+                })
+                .catch((error) => {
+                    console.error('Error fetching guest list:', error);
+
+                    // Check if it's a network error
+                    const isNetworkError = error.code === 'unavailable' ||
+                                          error.message.includes('network') ||
+                                          error.message.includes('connection') ||
+                                          error.name === 'FirebaseError';
+
+                    if (retryCount < maxRetries) {
+                        // Retry with exponential backoff
+                        retryCount++;
+                        // Longer delay for network errors
+                        const delay = Math.pow(2, retryCount) * (isNetworkError ? 1500 : 1000);
+
+                        console.log(`Retrying guest list fetch in ${Math.round(delay/1000)} seconds... (Attempt ${retryCount}/${maxRetries})`);
+                        setTimeout(attemptGuestFetch, delay);
+                    } else {
+                        console.error(`Failed to fetch guest list after ${maxRetries} attempts`);
                     }
                 });
+        }
 
-                // Process guest list
-                processGuestList();
-            })
-            .catch((error) => {
-                console.error('Error fetching guest list:', error);
-            });
+        // Start the fetch process
+        attemptGuestFetch();
     }
 
     // Process and display guest list
