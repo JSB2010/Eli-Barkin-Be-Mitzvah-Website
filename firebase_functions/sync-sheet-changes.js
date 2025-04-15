@@ -13,9 +13,11 @@ exports.syncSheetChanges = functions.pubsub
   .onRun(async (context) => {
     try {
       console.log('Starting Google Sheet sync check');
+      console.log('Service account:', functions.config().sheets.credentials.client_email);
 
       // Use the specific Google Sheet ID
       const sheetId = '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
+      console.log('Using Google Sheet ID:', sheetId);
 
       // Get the service account credentials from environment
       const serviceAccountCredentials = functions.config().sheets.credentials;
@@ -33,19 +35,43 @@ exports.syncSheetChanges = functions.pubsub
       const client = await auth.getClient();
       const sheets = google.sheets({ version: 'v4', auth: client });
 
+      // First, get the sheet names to find the correct sheet
+      console.log('Getting sheet names...');
+      const sheetsResponse = await sheets.spreadsheets.get({
+        spreadsheetId: sheetId,
+      });
+
+      const sheetNames = sheetsResponse.data.sheets.map(sheet => sheet.properties.title);
+      console.log('Available sheets:', sheetNames);
+
+      // Use the first sheet by default
+      const sheetName = sheetNames[0] || 'Sheet1';
+      console.log('Using sheet name:', sheetName);
+
       // First get the header row to understand column structure
       const headerResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!1:1', // Get header row
+        range: `${sheetName}!1:1`, // Get header row
       });
 
       const headers = headerResponse.data.values[0] || [];
 
       // Get all data including headers
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: sheetId,
-        range: 'Sheet1', // Get all data
-      });
+      console.log('Fetching data from Google Sheet...');
+      let response;
+      try {
+        response = await sheets.spreadsheets.values.get({
+          spreadsheetId: sheetId,
+          range: sheetName, // Get all data
+        });
+        console.log(`Successfully fetched data from Google Sheet. Found ${response.data.values ? response.data.values.length : 0} rows.`);
+      } catch (error) {
+        console.error('Error fetching data from Google Sheet:', error.message);
+        if (error.message.includes('permission')) {
+          console.error('This might be a permissions issue. Make sure the service account has access to the Google Sheet.');
+        }
+        throw error;
+      }
 
       const allRows = response.data.values || [];
       if (allRows.length <= 1) { // Only header or empty
@@ -56,10 +82,20 @@ exports.syncSheetChanges = functions.pubsub
       // Skip the header row
       const rows = allRows.slice(1);
 
+      // Log the headers to see what columns are available
+      console.log('Sheet headers:', headers);
+
       // Find column indices
-      const nameIndex = headers.indexOf('Name Line 1');
-      if (nameIndex === -1) {
-        console.error('Name Line 1 column not found in sheet');
+      // First, try to find the name column with various possible names
+      let nameIndex = headers.indexOf('Name Line 1');
+      if (nameIndex === -1) nameIndex = headers.indexOf('Name');
+      if (nameIndex === -1) nameIndex = headers.indexOf('Full Name');
+      if (nameIndex === -1) nameIndex = 0; // Default to first column if no match
+
+      console.log('Using name column index:', nameIndex, 'with value:', headers[nameIndex]);
+
+      if (nameIndex === -1 || !headers[nameIndex]) {
+        console.error('Name column not found in sheet');
         return null;
       }
 
@@ -83,22 +119,63 @@ exports.syncSheetChanges = functions.pubsub
       let updatedCount = 0;
       let addedCount = 0;
 
-      // Find all column indices
-      const additionalNamesIndex = headers.indexOf('Name Line 2');
-      const addressLine1Index = headers.indexOf('Address Line 1');
-      const addressLine2Index = headers.indexOf('Address Line 2');
+      // Find all column indices with fallbacks for different possible column names
+      let additionalNamesIndex = headers.indexOf('Name Line 2');
+      if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Additional Names');
+
+      let addressLine1Index = headers.indexOf('Address Line 1');
+      if (addressLine1Index === -1) addressLine1Index = headers.indexOf('Address');
+
+      let addressLine2Index = headers.indexOf('Address Line 2');
+      if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address 2');
+
       const cityIndex = headers.indexOf('City');
       const stateIndex = headers.indexOf('State');
       const zipIndex = headers.indexOf('Zip');
-      const countryIndex = headers.indexOf('Country');
+
+      let countryIndex = headers.indexOf('Country');
+      if (countryIndex === -1) countryIndex = headers.indexOf('Country (non-US)');
+
       const emailIndex = headers.indexOf('Email');
       const phoneIndex = headers.indexOf('Phone');
-      const categoryIndex = headers.indexOf('Category');
-      const maxGuestsIndex = headers.indexOf('Max Guests');
-      const respondedIndex = headers.indexOf('Responded');
-      const rsvpStatusIndex = headers.indexOf('RSVP Status');
-      const guestCountIndex = headers.indexOf('Guest Count');
-      const additionalGuestsIndex = headers.indexOf('Additional Guests');
+
+      let categoryIndex = headers.indexOf('Category');
+      if (categoryIndex === -1) categoryIndex = headers.indexOf('Group');
+
+      let maxGuestsIndex = headers.indexOf('Max Guests');
+      if (maxGuestsIndex === -1) maxGuestsIndex = headers.indexOf('Maximum Guests');
+
+      let respondedIndex = headers.indexOf('Responded');
+      if (respondedIndex === -1) respondedIndex = headers.indexOf('Has Responded');
+
+      let rsvpStatusIndex = headers.indexOf('RSVP Status');
+      if (rsvpStatusIndex === -1) rsvpStatusIndex = headers.indexOf('Response');
+
+      let guestCountIndex = headers.indexOf('Guest Count');
+      if (guestCountIndex === -1) guestCountIndex = headers.indexOf('Number of Guests');
+
+      let additionalGuestsIndex = headers.indexOf('Additional Guests');
+      if (additionalGuestsIndex === -1) additionalGuestsIndex = headers.indexOf('Guest Names');
+
+      // Log the column indices to help with debugging
+      console.log('Column indices:', {
+        nameIndex,
+        additionalNamesIndex,
+        addressLine1Index,
+        addressLine2Index,
+        cityIndex,
+        stateIndex,
+        zipIndex,
+        countryIndex,
+        emailIndex,
+        phoneIndex,
+        categoryIndex,
+        maxGuestsIndex,
+        respondedIndex,
+        rsvpStatusIndex,
+        guestCountIndex,
+        additionalGuestsIndex
+      });
 
       // Create a batch for updates
       const batch = db.batch();
@@ -252,9 +329,13 @@ exports.syncSheetChanges = functions.pubsub
  */
 exports.manualSyncSheetChanges = functions.https.onRequest(async (req, res) => {
   try {
+    console.log('Manual sync triggered');
+    console.log('Service account:', functions.config().sheets.credentials.client_email);
+
     // Call the sync function
     await exports.syncSheetChanges.run();
 
+    console.log('Manual sync completed successfully');
     res.status(200).json({
       success: true,
       message: 'Google Sheet to Firebase sync completed successfully'
