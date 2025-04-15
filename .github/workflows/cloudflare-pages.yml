@@ -1,0 +1,17 @@
+name: Cloudflare Pages Deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  skip-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip GitHub Pages
+        run: |
+          echo "This repository uses Cloudflare Pages for deployment."
+          echo "GitHub Pages deployment is disabled."
+          exit 0
