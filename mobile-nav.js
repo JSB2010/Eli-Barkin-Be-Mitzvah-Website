@@ -53,11 +53,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Adjust header height for content padding
+    // Adjust header height for content padding (no body padding needed)
     function updateHeaderHeight() {
         if (header) {
             const headerHeight = header.offsetHeight;
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+            // We removed the body padding line that was causing the white space
         }
     }
 
