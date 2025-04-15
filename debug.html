@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Firebase</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <h1>Debug Firebase</h1>
+    <button id="checkButton">Check guestList Collection</button>
+    <pre id="output">Click the button to check the guestList collection</pre>
+
+    <script>
+        document.getElementById('checkButton').addEventListener('click', async function() {
+            const output = document.getElementById('output');
+            output.textContent = 'Checking guestList collection...';
+            
+            try {
+                // Check if Firebase is initialized
+                if (typeof firebase === 'undefined') {
+                    output.textContent = 'Error: Firebase SDK not found';
+                    return;
+                }
+                
+                // Get Firestore instance
+                const db = firebase.firestore();
+                
+                // Get the guestList collection
+                const snapshot = await db.collection('guestList').get();
+                
+                if (snapshot.empty) {
+                    output.textContent = 'No documents found in guestList collection';
+                    return;
+                }
+                
+                let result = `Found ${snapshot.size} documents in guestList collection:\n\n`;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    result += `Document ID: ${doc.id}\n`;
+                    result += `Name: ${data.name || 'N/A'}\n`;
+                    result += `Email: ${data.email || 'N/A'}\n`;
+                    result += `Phone: ${data.phone || 'N/A'}\n`;
+                    result += `Has Responded: ${data.hasResponded ? 'Yes' : 'No'}\n`;
+                    result += `\n----------------------------\n\n`;
+                });
+                
+                output.textContent = result;
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+                console.error('Error checking guestList collection:', error);
+            }
+        });
+    </script>
+</body>
+</html>
