@@ -773,6 +773,145 @@
             border-top: 1px solid var(--medium-gray);
         }
 
+        /* Tab styles */
+        .dashboard-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--medium-gray);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .dashboard-tabs::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge */
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Guest list styles */
+        .guest-list-container {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--card-shadow);
+            overflow-x: auto;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+        }
+
+        .guest-list-container:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .guest-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .guest-list-header h2 {
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .guest-list-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .category-filter {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background-color: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .category-filter:focus {
+            outline: none;
+            border-color: var(--primary-blue-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .response-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            gap: 0.35rem;
+        }
+
+        .status-responded {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-not-responded {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        /* Response rate by category chart */
+        .category-chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
         /* Responsive styles */
         @media (max-width: 768px) {
             .dashboard-container {
@@ -908,18 +1047,23 @@
                     <p class="dashboard-subtitle">Track and manage event responses for Eli's Be Mitzvah</p>
                 </div>
                 <div>
-                    <a href="guest-list-dashboard.html" class="btn secondary" style="margin-right: 10px;">
-                        <i class="fas fa-users"></i> Guest List Dashboard
-                    </a>
                     <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </div>
 
-            <div id="loading" class="loading">
-                <div class="loading-spinner"></div>
-                <p>Loading RSVP data...</p>
+            <!-- Dashboard Tabs -->
+            <div class="dashboard-tabs">
+                <button id="rsvp-tab" class="tab-btn active"><i class="fas fa-envelope-open-text"></i> RSVP Submissions</button>
+                <button id="guest-list-tab" class="tab-btn"><i class="fas fa-users"></i> Guest List</button>
             </div>
 
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading data...</p>
+            </div>
+
+            <!-- RSVP Tab Content -->
+            <div id="rsvp-content" class="tab-content active">
             <div class="stats-container">
                 <div class="stat-card">
                     <h3>Total RSVPs</h3>
@@ -1012,6 +1156,94 @@
                     <!-- Pagination buttons will be dynamically added here -->
                 </div>
             </div>
+            </div>
+
+            <!-- Guest List Tab Content -->
+            <div id="guest-list-content" class="tab-content">
+                <!-- Category Response Rate Charts -->
+                <div class="category-chart-container">
+                    <div class="chart-card">
+                        <h3>Response Rate by Category</h3>
+                        <canvas id="category-response-chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Guest Distribution by Category</h3>
+                        <canvas id="category-distribution-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Guest List Stats -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Total Guests</h3>
+                        <div id="total-guests-count" class="stat-value">0</div>
+                        <div class="stat-subtext">From guest list</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Responded</h3>
+                        <div id="responded-count" class="stat-value">0</div>
+                        <div id="responded-percent" class="stat-subtext">0% of total</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Not Responded</h3>
+                        <div id="not-responded-count" class="stat-value">0</div>
+                        <div id="not-responded-percent" class="stat-subtext">0% of total</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Attending</h3>
+                        <div id="attending-guests-count" class="stat-value">0</div>
+                        <div id="attending-guests-percent" class="stat-subtext">0% of responded</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Not Attending</h3>
+                        <div id="not-attending-guests-count" class="stat-value">0</div>
+                        <div id="not-attending-guests-percent" class="stat-subtext">0% of responded</div>
+                    </div>
+                </div>
+
+                <!-- Guest List Table -->
+                <div id="guest-list-container" class="guest-list-container">
+                    <div class="guest-list-header">
+                        <h2>Complete Guest List</h2>
+                        <div class="guest-list-actions">
+                            <input type="text" id="guest-search-box" class="search-box" placeholder="Search guests...">
+                            <select id="category-filter" class="category-filter">
+                                <option value="all">All Categories</option>
+                                <!-- Categories will be dynamically added -->
+                            </select>
+                            <select id="response-filter" class="category-filter">
+                                <option value="all">All Responses</option>
+                                <option value="responded">Responded</option>
+                                <option value="not-responded">Not Responded</option>
+                                <option value="attending">Attending</option>
+                                <option value="not-attending">Not Attending</option>
+                            </select>
+                            <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
+                                <th>Category</th>
+                                <th>Max Guests</th>
+                                <th>Status</th>
+                                <th>Response</th>
+                                <th>Actual Guests</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guest-list-body">
+                            <!-- Guest list will be dynamically added here -->
+                        </tbody>
+                    </table>
+
+                    <div id="guest-list-pagination" class="pagination">
+                        <!-- Pagination buttons will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1024,6 +1256,22 @@
             </div>
             <div class="modal-body" id="modal-body">
                 <!-- Details will be dynamically added here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest Details Modal -->
+    <div id="guest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Guest Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="guest-modal-body">
+                <!-- Guest details will be dynamically added here -->
             </div>
             <div class="modal-footer">
                 <button class="btn secondary modal-close">Close</button>
