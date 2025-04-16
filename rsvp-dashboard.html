@@ -1357,6 +1357,64 @@
             background-color: transparent;
         }
 
+        /* Form styles for add guest modal */
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        #add-guest-form .form-group {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+            text-align: left;
+        }
+
+        #add-guest-form .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-blue-dark);
+            font-size: 0.9rem;
+        }
+
+        #add-guest-form .form-group input,
+        #add-guest-form .form-group select,
+        #add-guest-form .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        #add-guest-form .form-group input:focus,
+        #add-guest-form .form-group select:focus,
+        #add-guest-form .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        #add-guest-error {
+            color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #add-guest-error i {
+            color: var(--danger);
+        }
+
         @keyframes slideDown {
             from {
                 transform: translateY(-50px);
@@ -1610,6 +1668,7 @@
                                         </select>
                                     </div>
                                 </div>
+                                <button id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
                                 <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
                             </div>
                         </div>
@@ -1753,6 +1812,73 @@
             </div>
             <div class="modal-footer">
                 <button class="btn secondary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Guest Modal -->
+    <div id="add-guest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Guest</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-guest-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-name">Name (First and Last) *</label>
+                            <input type="text" id="guest-name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-address-line1">Address Line 1</label>
+                            <input type="text" id="guest-address-line1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-address-line2">Address Line 2 (Apt, Suite)</label>
+                            <input type="text" id="guest-address-line2">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-city">City</label>
+                            <input type="text" id="guest-city">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-state">State</label>
+                            <input type="text" id="guest-state">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-zip">Zip Code</label>
+                            <input type="text" id="guest-zip">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-country">Country (non-US)</label>
+                            <input type="text" id="guest-country">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-email">Email</label>
+                            <input type="email" id="guest-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-phone">Phone</label>
+                            <input type="tel" id="guest-phone">
+                        </div>
+                    </div>
+                    <div id="add-guest-error" class="error-message" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary modal-close">Cancel</button>
+                <button id="add-guest-submit" class="btn primary">Add Guest</button>
             </div>
         </div>
     </div>

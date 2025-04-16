@@ -175,6 +175,22 @@ const RSVPSystem = {
             });
         }
 
+        // Set up add guest button
+        const addGuestBtn = document.getElementById('add-guest-btn');
+        if (addGuestBtn) {
+            addGuestBtn.addEventListener('click', () => {
+                this.showAddGuestModal();
+            });
+        }
+
+        // Set up add guest form submission
+        const addGuestSubmitBtn = document.getElementById('add-guest-submit');
+        if (addGuestSubmitBtn) {
+            addGuestSubmitBtn.addEventListener('click', () => {
+                this.submitAddGuestForm();
+            });
+        }
+
         // Set up logout button
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -1489,6 +1505,144 @@ const RSVPSystem = {
         } else {
             return '';
         }
+    },
+
+    // Show add guest modal
+    showAddGuestModal: function() {
+        console.log('Showing add guest modal');
+
+        // Get the modal
+        const modal = document.getElementById('add-guest-modal');
+        if (!modal) return;
+
+        // Clear the form
+        const form = document.getElementById('add-guest-form');
+        if (form) form.reset();
+
+        // Clear any error messages
+        const errorElement = document.getElementById('add-guest-error');
+        if (errorElement) errorElement.style.display = 'none';
+
+        // Show the modal
+        modal.style.display = 'block';
+    },
+
+    // Submit add guest form
+    submitAddGuestForm: function() {
+        console.log('Submitting add guest form');
+
+        // Get form values
+        const name = document.getElementById('guest-name').value.trim();
+        const addressLine1 = document.getElementById('guest-address-line1').value.trim();
+        const addressLine2 = document.getElementById('guest-address-line2').value.trim();
+        const city = document.getElementById('guest-city').value.trim();
+        const state = document.getElementById('guest-state').value.trim();
+        const zip = document.getElementById('guest-zip').value.trim();
+        const country = document.getElementById('guest-country').value.trim();
+        const email = document.getElementById('guest-email').value.trim();
+        const phone = document.getElementById('guest-phone').value.trim();
+
+        // Validate form
+        if (!name) {
+            this.showAddGuestError('Please enter a name');
+            return;
+        }
+
+        // Show loading state
+        const submitButton = document.getElementById('add-guest-submit');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        }
+
+        // Clear any error messages
+        this.clearAddGuestError();
+
+        // Create guest object
+        const guest = {
+            name: name,
+            address: {
+                line1: addressLine1,
+                line2: addressLine2,
+                city: city,
+                state: state,
+                zip: zip,
+                country: country
+            },
+            email: email,
+            phone: phone,
+            hasResponded: false,
+            createdAt: new Date()
+        };
+
+        // Call Cloud Function to add guest to Google Sheet
+        const addGuestFunction = firebase.functions().httpsCallable('addGuestToSheet');
+
+        addGuestFunction(guest)
+            .then(result => {
+                console.log('Add guest result:', result);
+
+                if (result.data && result.data.success) {
+                    // Close the modal
+                    const modal = document.getElementById('add-guest-modal');
+                    if (modal) modal.style.display = 'none';
+
+                    // Show success message
+                    this.showAddGuestSuccess();
+
+                    // Refresh the guest list
+                    this.fetchGuestList();
+                } else {
+                    // Show error message
+                    this.showAddGuestError(result.data.message || 'Failed to add guest');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding guest:', error);
+                this.showAddGuestError(error.message || 'An error occurred');
+            })
+            .finally(() => {
+                // Reset button state
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Add Guest';
+                }
+            });
+    },
+
+    // Show add guest error
+    showAddGuestError: function(message) {
+        const errorElement = document.getElementById('add-guest-error');
+        if (errorElement) {
+            errorElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            errorElement.style.display = 'flex';
+        }
+    },
+
+    // Clear add guest error
+    clearAddGuestError: function() {
+        const errorElement = document.getElementById('add-guest-error');
+        if (errorElement) {
+            errorElement.style.display = 'none';
+        }
+    },
+
+    // Show add guest success message
+    showAddGuestSuccess: function() {
+        // Create success message element
+        const successMessage = document.createElement('div');
+        successMessage.className = 'sync-success notification';
+        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Guest added successfully!';
+
+        // Add to body
+        document.body.appendChild(successMessage);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (successMessage.parentNode === document.body) {
+                document.body.removeChild(successMessage);
+            }
+        }, 3000);
     },
 
     // Show submission details in modal
