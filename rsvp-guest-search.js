@@ -152,11 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 guestCategoryElement.textContent = '';
             }
 
-            if (selectedGuest.maxAllowedGuests) {
-                guestMaxCountElement.textContent = `Maximum Guests: ${selectedGuest.maxAllowedGuests}`;
-            } else {
-                guestMaxCountElement.textContent = '';
-            }
+            // No maximum guest limit
+            guestMaxCountElement.textContent = '';
 
             // Check if guest has already submitted an RSVP
             await checkExistingSubmission(selectedGuest.name);
@@ -165,9 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
             additionalFields.style.display = 'block';
             submitButtonContainer.style.display = 'block';
 
-            // Update guest count inputs based on max allowed
-            const maxGuests = selectedGuest.maxAllowedGuests || 1;
-            adultCountInput.max = maxGuests;
+            // No maximum guest limit
+            adultCountInput.removeAttribute('max');
 
             // Update guest fields
             updateGuestFields();

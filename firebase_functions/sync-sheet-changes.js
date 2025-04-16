@@ -206,7 +206,7 @@ async function syncGuestListFromSheet() {
           email: emailIndex >= 0 && row[emailIndex] ? row[emailIndex] : '',
           phone: phoneIndex >= 0 && row[phoneIndex] ? row[phoneIndex] : '',
           category: categoryIndex >= 0 && row[categoryIndex] ? row[categoryIndex] : '',
-          maxAllowedGuests: maxGuestsIndex >= 0 && row[maxGuestsIndex] ? parseInt(row[maxGuestsIndex]) || 1 : 1,
+          // maxAllowedGuests removed
           hasResponded: respondedIndex >= 0 && row[respondedIndex] ? row[respondedIndex].toLowerCase() === 'yes' : false,
           response: rsvpStatusIndex >= 0 && row[rsvpStatusIndex] ? row[rsvpStatusIndex].toLowerCase() : '',
           actualGuestCount: guestCountIndex >= 0 && row[guestCountIndex] ? parseInt(row[guestCountIndex]) || 0 : 0,

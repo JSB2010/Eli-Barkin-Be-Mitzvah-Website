@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             id: doc.id,
                             name: data.name || '',
                             category: data.category || '',
-                            maxAllowedGuests: data.maxAllowedGuests || 1,
+
                             hasResponded: data.hasResponded || false,
                             response: data.response || '',
                             actualGuestCount: data.actualGuestCount || 0,
@@ -1185,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>${guest.name || ''}</td>
                 <td>${category}</td>
-                <td>${guest.maxAllowedGuests || 1}</td>
+                <td>No limit</td>
                 <td>${responseStatus}</td>
                 <td>${rsvpResponse}</td>
                 <td>${guest.hasResponded ? (guest.actualGuestCount || 0) : '-'}</td>
@@ -1370,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${guest.hasResponded && guest.response === 'attending' ? `
             <div class="detail-group">
                 <div class="detail-label">Guest Count:</div>
-                <div class="detail-value">${guest.actualGuestCount || 1} of ${guest.maxAllowedGuests || 1} maximum</div>
+                <div class="detail-value">${guest.actualGuestCount || 1}</div>
             </div>
             ` : ''}
             ${additionalGuestsHtml}
@@ -1467,10 +1467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     valueA = a.category || '';
                     valueB = b.category || '';
                     break;
-                case 'maxAllowedGuests':
-                    valueA = a.maxAllowedGuests || 0;
-                    valueB = b.maxAllowedGuests || 0;
-                    break;
+                // maxAllowedGuests case removed
                 case 'actualGuestCount':
                     valueA = a.actualGuestCount || 0;
                     valueB = b.actualGuestCount || 0;
