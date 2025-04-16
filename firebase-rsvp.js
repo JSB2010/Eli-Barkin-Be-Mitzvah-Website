@@ -73,15 +73,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize Firestore
         db = firebase.firestore();
 
-        // Test connection
-        db.collection('sheetRsvps').limit(1).get()
+        // Test connection using guestList collection which allows public read access
+        db.collection('guestList').limit(1).get()
+            .then(() => {
+                console.log('Firebase connection test successful');
+                // Clear any connection error messages if they exist
+                clearErrorMessage();
+            })
             .catch(error => {
                 console.error('Firebase connection test failed:', error);
-                showErrorMessage(
-                    'Database Connection Issue',
-                    'We\'re having trouble connecting to our database. This might be due to network issues or a configuration problem. Please try again in a few moments.',
-                    true
-                );
+                // Only show error if it's not a permission error
+                if (error.code !== 'permission-denied') {
+                    showErrorMessage(
+                        'Database Connection Issue',
+                        'We\'re having trouble connecting to our database. This might be due to network issues or a configuration problem. Please try again in a few moments.',
+                        true
+                    );
+                }
             });
     } catch (error) {
         console.error('Firebase initialization error:', error);
@@ -213,6 +221,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const isUpdate = window.selectedGuest && window.selectedGuest.hasResponded;
             let savePromise;
 
+            // Add response data to the guest list as well
+            const updateGuestList = (name) => {
+                try {
+                    // Find the guest in the guest list and update their response
+                    return db.collection('guestList')
+                        .where('name', '==', name)
+                        .get()
+                        .then(snapshot => {
+                            if (!snapshot.empty) {
+                                // Update the guest's response
+                                return snapshot.docs[0].ref.update({
+                                    hasResponded: true,
+                                    response: formData.attending === 'yes' ? 'attending' : 'declined',
+                                    actualGuestCount: formData.guestCount || 1,
+                                    additionalGuests: formData.additionalGuests || [],
+                                    email: formData.email,
+                                    phone: formData.phone || '',
+                                    submittedAt: formData.submittedAt
+                                });
+                            }
+                            return Promise.resolve();
+                        })
+                        .catch(error => {
+                            // Log but don't fail the whole submission if guest list update fails
+                            console.warn('Failed to update guest list, but RSVP was saved:', error);
+                            return Promise.resolve();
+                        });
+                } catch (error) {
+                    console.warn('Error in updateGuestList:', error);
+                    return Promise.resolve();
+                }
+            };
+
             if (isUpdate) {
                 // Update existing RSVP
                 console.log('Updating existing RSVP for:', formData.name);
@@ -251,6 +292,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             savePromise.then(() => {
+                    // Also update the guest list entry
+                    return updateGuestList(formData.name);
+                })
+                .then(() => {
                     // Show success confirmation with animation
                     form.style.opacity = '1';
                     form.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
