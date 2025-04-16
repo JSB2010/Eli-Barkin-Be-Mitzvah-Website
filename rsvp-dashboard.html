@@ -1570,6 +1570,7 @@
                     <p class="dashboard-subtitle">Track and manage guest list and RSVPs for Eli's Be Mitzvah</p>
                 </div>
                 <div class="dashboard-actions">
+                    <button id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
                     <button id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
                     <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
@@ -1622,6 +1623,16 @@
                             <div id="not-attending-guests-count" class="stat-value">0</div>
                             <div id="not-attending-guests-percent" class="stat-subtext">0% of responded</div>
                         </div>
+                        <div class="stat-card">
+                            <h3>Adults Attending</h3>
+                            <div id="adults-count" class="stat-value">0</div>
+                            <div id="adults-percent" class="stat-subtext">0% of total attending</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Children Attending</h3>
+                            <div id="children-count" class="stat-value">0</div>
+                            <div id="children-percent" class="stat-subtext">0% of total attending</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1634,6 +1645,11 @@
                         <div class="chart-card">
                             <h3>Attendance Breakdown</h3>
                             <canvas id="attendance-chart"></canvas>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Adults vs. Children</h3>
+                            <canvas id="age-breakdown-chart"></canvas>
                         </div>
 
                         <div class="chart-card">
@@ -1731,8 +1747,10 @@
                                         <th class="sortable" data-sort="email">Email <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="phone">Phone <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="attending">Attending <span class="sort-icon">↕</span></th>
-                                        <th class="sortable" data-sort="guestCount">Guest Count <span class="sort-icon">↕</span></th>
-                                        <th>Additional Guests</th>
+                                        <th class="sortable" data-sort="guestCount">Total Guests <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="adultCount">Adults <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="childCount">Children <span class="sort-icon">↕</span></th>
+                                        <th>Guest Names</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1776,6 +1794,14 @@
                                 <h4>Response Trend</h4>
                                 <p id="response-trend">-</p>
                                 <p class="activity-status">Based on last 7 days</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-child"></i></div>
+                            <div class="activity-content">
+                                <h4>Age Distribution</h4>
+                                <p id="age-distribution">-</p>
+                                <p class="activity-status">Adults vs. Children</p>
                             </div>
                         </div>
                     </div>

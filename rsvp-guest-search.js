@@ -198,8 +198,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show existing submission info
                 existingSubmissionInfo.style.display = 'block';
 
-                // Update button text
+                // Update button text and style
                 submitButton.textContent = 'Update RSVP';
+                submitButton.classList.add('update-mode');
 
                 // Pre-fill form with existing data
                 prefillFormWithExistingData(submission);
@@ -211,8 +212,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Hide existing submission info
                 existingSubmissionInfo.style.display = 'none';
 
-                // Reset button text
+                // Reset button text and style
                 submitButton.textContent = 'Submit RSVP';
+                submitButton.classList.remove('update-mode');
             }
         } catch (error) {
             console.error('Error checking existing submission:', error);
@@ -295,8 +297,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update guest fields based on adult and child counts
     function updateGuestFields() {
-        const adultCount = parseInt(adultCountInput.value) || 1;
+        let adultCount = parseInt(adultCountInput.value) || 0;
         const childCount = parseInt(childCountInput.value) || 0;
+
+        // Ensure at least one guest (adult or child) is selected
+        if (adultCount === 0 && childCount === 0) {
+            // Default to 1 adult if both are 0
+            adultCountInput.value = 1;
+            adultCount = 1;
+        }
 
         // Update adult guest fields
         adultGuestsContainer.innerHTML = '';
@@ -345,8 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
             childGuestsContainer.appendChild(guestField);
         }
 
-        // Show/hide child section based on child count
+        // Show/hide sections based on counts
         childGuestSection.style.display = childCount > 0 ? 'block' : 'none';
+
+        // Get the adults section
+        const adultGuestSection = adultGuestsContainer.closest('.guest-section');
+        if (adultGuestSection) {
+            adultGuestSection.style.display = adultCount > 0 ? 'block' : 'none';
+        }
     }
 
     // Listen for changes to guest counts

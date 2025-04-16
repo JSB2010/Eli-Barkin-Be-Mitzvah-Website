@@ -16,7 +16,7 @@ async function getAuthenticatedClient() {
     try {
         // Get service account credentials from environment
         const serviceAccountKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-        
+
         // Create JWT client
         const jwtClient = new google.auth.JWT(
             serviceAccountKey.client_email,
@@ -24,10 +24,10 @@ async function getAuthenticatedClient() {
             serviceAccountKey.private_key,
             SCOPES
         );
-        
+
         // Authenticate
         await jwtClient.authorize();
-        
+
         // Return sheets client
         return google.sheets({ version: 'v4', auth: jwtClient });
     } catch (error) {
@@ -45,7 +45,7 @@ exports.addGuestToSheet = functions.https.onCall(async (data, context) => {
             'You must be logged in to add a guest'
         );
     }
-    
+
     try {
         // Validate required fields
         if (!data.name) {
@@ -54,13 +54,13 @@ exports.addGuestToSheet = functions.https.onCall(async (data, context) => {
                 'Name is required'
             );
         }
-        
+
         // Get authenticated sheets client
         const sheets = await getAuthenticatedClient();
-        
+
         // Format address
         const address = data.address || {};
-        
+
         // Prepare row data
         const rowData = [
             data.name || '',                                // Name Line 1 (First and Last Name)
@@ -81,7 +81,7 @@ exports.addGuestToSheet = functions.https.onCall(async (data, context) => {
             '',                                             // Additional Guests
             ''                                              // Submitted At
         ];
-        
+
         // Append row to sheet
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SHEET_ID,
@@ -92,9 +92,9 @@ exports.addGuestToSheet = functions.https.onCall(async (data, context) => {
                 values: [rowData]
             }
         });
-        
+
         // Add guest to Firebase collection
-        const guestRef = await admin.firestore().collection('guests').add({
+        const guestRef = await admin.firestore().collection('guestList').add({
             name: data.name,
             address: data.address || {},
             email: data.email || '',
@@ -102,7 +102,7 @@ exports.addGuestToSheet = functions.https.onCall(async (data, context) => {
             hasResponded: false,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
-        
+
         // Return success response
         return {
             success: true,

@@ -175,6 +175,37 @@ const RSVPSystem = {
             });
         }
 
+        // Set up refresh data button
+        const refreshDataBtn = document.getElementById('refresh-data-btn');
+        if (refreshDataBtn) {
+            refreshDataBtn.addEventListener('click', () => {
+                // Show loading state
+                refreshDataBtn.disabled = true;
+                refreshDataBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+
+                // Refresh data
+                this.fetchGuestList();
+                this.fetchSubmissions();
+
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'sync-success notification';
+                successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Data refreshed successfully!';
+                document.body.appendChild(successMessage);
+
+                // Remove success message after 3 seconds
+                setTimeout(() => {
+                    if (successMessage.parentNode === document.body) {
+                        document.body.removeChild(successMessage);
+                    }
+
+                    // Reset button state
+                    refreshDataBtn.disabled = false;
+                    refreshDataBtn.innerHTML = '<i class="fas fa-redo"></i> Refresh Data';
+                }, 3000);
+            });
+        }
+
         // Set up add guest button
         const addGuestBtn = document.getElementById('add-guest-btn');
         if (addGuestBtn) {
@@ -1206,6 +1237,37 @@ const RSVPSystem = {
 
             responseTrendElem.textContent = trendText;
         }
+
+        // Update age distribution
+        const ageDistributionElem = document.getElementById('age-distribution');
+        if (ageDistributionElem) {
+            // Calculate adults and children
+            let totalAdults = 0;
+            let totalChildren = 0;
+
+            this.state.submissions
+                .filter(submission => submission.attending === 'yes')
+                .forEach(submission => {
+                    // Count adults
+                    if (submission.adultCount !== undefined) {
+                        totalAdults += parseInt(submission.adultCount) || 0;
+                    } else {
+                        // For backward compatibility
+                        totalAdults += parseInt(submission.guestCount) || 1;
+                    }
+
+                    // Count children
+                    if (submission.childCount !== undefined) {
+                        totalChildren += parseInt(submission.childCount) || 0;
+                    }
+                });
+
+            const totalGuests = totalAdults + totalChildren;
+            const adultsPercent = totalGuests > 0 ? Math.round((totalAdults / totalGuests) * 100) : 0;
+            const childrenPercent = totalGuests > 0 ? Math.round((totalChildren / totalGuests) * 100) : 0;
+
+            ageDistributionElem.textContent = `${adultsPercent}% Adults, ${childrenPercent}% Children`;
+        }
     },
 
     // Export guest list to CSV
@@ -1572,13 +1634,24 @@ const RSVPSystem = {
             email: email,
             phone: phone,
             hasResponded: false,
+            maxAllowedGuests: 4, // Default max allowed guests
+            category: 'guest', // Default category
             createdAt: new Date()
         };
 
-        // Call Cloud Function to add guest to Google Sheet
-        const addGuestFunction = firebase.functions().httpsCallable('addGuestToSheet');
+        // First check if a guest with this name already exists
+        this.state.db.collection('guestList')
+            .where('name', '==', name)
+            .get()
+            .then(snapshot => {
+                if (!snapshot.empty) {
+                    throw new Error('A guest with this name already exists');
+                }
 
-        addGuestFunction(guest)
+                // Call Cloud Function to add guest to Google Sheet
+                const addGuestFunction = firebase.functions().httpsCallable('addGuestToSheet');
+                return addGuestFunction(guest);
+            })
             .then(result => {
                 console.log('Add guest result:', result);
 
