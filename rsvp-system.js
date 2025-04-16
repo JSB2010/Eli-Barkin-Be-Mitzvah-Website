@@ -166,6 +166,28 @@ const RSVPSystem = {
                 this.exportSubmissionsToCSV();
             });
         }
+
+        // Set up sync with Google Sheets button
+        const syncSheetBtn = document.getElementById('sync-sheet-btn');
+        if (syncSheetBtn) {
+            syncSheetBtn.addEventListener('click', () => {
+                this.syncWithGoogleSheet();
+            });
+        }
+
+        // Set up logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                firebase.auth().signOut().then(() => {
+                    console.log('User signed out');
+                    document.getElementById('login-section').classList.remove('hidden');
+                    document.getElementById('dashboard-section').classList.add('hidden');
+                }).catch((error) => {
+                    console.error('Error signing out:', error);
+                });
+            });
+        }
     },
 
     // Show loading state
@@ -567,6 +589,9 @@ const RSVPSystem = {
             return;
         }
 
+        // Update guest response status based on submissions
+        this.updateGuestResponseStatus();
+
         // Apply search filter
         if (this.state.guestSearchTerm) {
             this.state.filteredGuests = this.state.guests.filter(guest => {
@@ -642,6 +667,37 @@ const RSVPSystem = {
 
         // Display guest list
         this.displayGuestList();
+    },
+
+    // Update guest response status based on submissions
+    updateGuestResponseStatus: function() {
+        // Skip if no submissions or guests
+        if (!this.state.submissions.length || !this.state.guests.length) return;
+
+        // Create a map of submissions by name for quick lookup
+        const submissionsByName = new Map();
+        this.state.submissions.forEach(submission => {
+            if (submission.name) {
+                submissionsByName.set(submission.name.toLowerCase(), submission);
+            }
+        });
+
+        // Update guest response status based on matching submissions
+        this.state.guests.forEach(guest => {
+            if (guest.name) {
+                const matchingSubmission = submissionsByName.get(guest.name.toLowerCase());
+                if (matchingSubmission) {
+                    // Update guest response status
+                    guest.hasResponded = true;
+                    guest.response = matchingSubmission.attending === 'yes' ? 'attending' : 'declined';
+                    guest.actualGuestCount = matchingSubmission.guestCount || 1;
+                    guest.additionalGuests = matchingSubmission.additionalGuests || [];
+                    guest.email = matchingSubmission.email || guest.email;
+                    guest.phone = matchingSubmission.phone || guest.phone;
+                    guest.submittedAt = matchingSubmission.submittedAt;
+                }
+            }
+        });
     },
 
     // Update statistics
@@ -1138,7 +1194,7 @@ const RSVPSystem = {
                 guest.email || '',
                 guest.phone || '',
                 guest.hasResponded ? 'Responded' : 'Not Responded',
-                guest.response === 'attending' ? 'Attending' : (guest.response === 'declined' ? 'Not Attending' : ''),
+                this.formatGuestResponse(guest.response),
                 guest.hasResponded ? (guest.actualGuestCount || 0) : '',
                 additionalGuests,
                 address,
@@ -1261,6 +1317,137 @@ const RSVPSystem = {
                     actionsContainer.removeChild(successMessage);
                 }
             }, 3000);
+        }
+    },
+
+    // Sync with Google Sheet
+    syncWithGoogleSheet: function() {
+        console.log('Syncing with Google Sheet...');
+
+        // Get the sync button and update its state
+        const syncButton = document.getElementById('sync-sheet-btn');
+        if (syncButton) {
+            // Disable the button and show loading state
+            syncButton.disabled = true;
+            syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        }
+
+        // Update sync status in the activity section
+        const syncStatusElem = document.getElementById('sync-status');
+        if (syncStatusElem) {
+            syncStatusElem.textContent = 'Syncing with Google Sheet...';
+            syncStatusElem.className = 'activity-status status-pending';
+        }
+
+        // Call the Cloud Function to sync with Google Sheet
+        const functionUrl = 'https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChanges';
+
+        fetch(functionUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Sync response:', data);
+
+                if (data.success) {
+                    // Update sync status
+                    if (syncStatusElem) {
+                        syncStatusElem.textContent = 'Sync completed successfully';
+                        syncStatusElem.className = 'activity-status status-success';
+                    }
+
+                    // Update last sync time
+                    const lastSyncTimeElem = document.getElementById('last-sync-time');
+                    if (lastSyncTimeElem) {
+                        const now = new Date();
+                        const formattedTime = now.toLocaleDateString() + ' ' +
+                                           now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        lastSyncTimeElem.textContent = formattedTime;
+                    }
+
+                    // Show success message
+                    this.showSyncSuccess();
+
+                    // Refresh the data
+                    this.fetchGuestList();
+                    this.fetchSubmissions();
+                } else {
+                    // Show error
+                    if (syncStatusElem) {
+                        syncStatusElem.textContent = `Sync failed: ${data.message || 'Unknown error'}`;
+                        syncStatusElem.className = 'activity-status status-error';
+                    }
+                    this.showSyncError(data.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Error syncing with Google Sheet:', error);
+
+                // Update sync status
+                if (syncStatusElem) {
+                    syncStatusElem.textContent = `Sync failed: ${error.message}`;
+                    syncStatusElem.className = 'activity-status status-error';
+                }
+
+                // Show error message
+                this.showSyncError(error.message);
+            })
+            .finally(() => {
+                // Re-enable the sync button
+                if (syncButton) {
+                    syncButton.disabled = false;
+                    syncButton.innerHTML = '<i class="fas fa-sync-alt"></i> Sync with Google Sheet';
+                }
+            });
+    },
+
+    // Show sync success message
+    showSyncSuccess: function() {
+        // Create success message element
+        const successMessage = document.createElement('div');
+        successMessage.className = 'sync-success notification';
+        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Sync with Google Sheet successful!';
+
+        // Add to body
+        document.body.appendChild(successMessage);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (successMessage.parentNode === document.body) {
+                document.body.removeChild(successMessage);
+            }
+        }, 3000);
+    },
+
+    // Show sync error message
+    showSyncError: function(message) {
+        // Create error message element
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'sync-error notification';
+        errorMessage.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Sync failed: ${message}`;
+
+        // Add to body
+        document.body.appendChild(errorMessage);
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+            if (errorMessage.parentNode === document.body) {
+                document.body.removeChild(errorMessage);
+            }
+        }, 5000);
+    },
+
+    // Format guest response for display
+    formatGuestResponse: function(response) {
+        if (response === 'attending') {
+            return 'Attending';
+        } else if (response === 'declined') {
+            return 'Not Attending';
+        } else {
+            return '';
         }
     }
 };
