@@ -549,12 +549,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const responseRateElem = document.getElementById('response-rate');
         if (responseRateElem) responseRateElem.textContent = `${responseRate}%`;
 
-        // Update latest RSVP info
+        // Update latest RSVP info with null checks
         if (latestRsvp.submittedAt) {
             const formattedDate = latestRsvp.submittedAt.toLocaleDateString();
-            document.getElementById('latest-rsvp').textContent = latestRsvp.name || 'Unknown';
-            document.getElementById('latest-rsvp-time').textContent =
-                `Submitted on ${formattedDate}`;
+            const latestRsvpNameElem = document.getElementById('latest-rsvp-name');
+            const latestRsvpTimeElem = document.getElementById('latest-rsvp-time');
+
+            if (latestRsvpNameElem) latestRsvpNameElem.textContent = latestRsvp.name || 'Unknown';
+            if (latestRsvpTimeElem) latestRsvpTimeElem.textContent = `Submitted on ${formattedDate}`;
         }
     }
 
@@ -761,11 +763,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create charts
     function createCharts() {
+        console.log('Creating charts...');
+
         // Clear existing charts
         const attendanceChartCanvas = document.getElementById('attendance-chart');
         const timelineChartCanvas = document.getElementById('timeline-chart');
         const guestCountChartCanvas = document.getElementById('guest-count-chart');
         const cumulativeGuestsChartCanvas = document.getElementById('cumulative-guests-chart');
+
+        // Check if chart canvases exist
+        if (!attendanceChartCanvas) {
+            console.error('Attendance chart canvas not found');
+        }
+
+        if (!timelineChartCanvas) {
+            console.error('Timeline chart canvas not found');
+        }
 
         // Destroy existing charts if they exist
         if (window.attendanceChart instanceof Chart) {
@@ -785,7 +798,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
 
-        window.attendanceChart = new Chart(attendanceChartCanvas, {
+        // Only create chart if canvas exists
+        if (attendanceChartCanvas) {
+            console.log('Creating attendance chart');
+            window.attendanceChart = new Chart(attendanceChartCanvas, {
             type: 'pie',
             data: {
                 labels: ['Attending', 'Not Attending'],
@@ -836,7 +852,9 @@ document.addEventListener('DOMContentLoaded', function() {
             cumulativeCounts.push(runningTotal);
         });
 
-        window.timelineChart = new Chart(timelineChartCanvas, {
+        if (timelineChartCanvas) {
+            console.log('Creating timeline chart');
+            window.timelineChart = new Chart(timelineChartCanvas, {
             type: 'line',
             data: {
                 labels: sortedDates,
@@ -896,6 +914,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        }
 
         // Guest count distribution chart
         const guestCountDistribution = {};
@@ -909,7 +928,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const guestCounts = Object.keys(guestCountDistribution).sort((a, b) => parseInt(a) - parseInt(b));
         const guestCountValues = guestCounts.map(count => guestCountDistribution[count]);
 
-        window.guestCountChart = new Chart(guestCountChartCanvas, {
+        if (guestCountChartCanvas) {
+            console.log('Creating guest count chart');
+            window.guestCountChart = new Chart(guestCountChartCanvas, {
             type: 'bar',
             data: {
                 labels: guestCounts.map(count => `${count} ${parseInt(count) === 1 ? 'Guest' : 'Guests'}`),
@@ -949,6 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        }
 
         // Cumulative guests chart
         // First, sort submissions by date
@@ -970,7 +992,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const guestDates = Object.keys(guestsByDate).sort((a, b) => new Date(a) - new Date(b));
         const guestTotals = guestDates.map(date => guestsByDate[date]);
 
-        window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
+        if (cumulativeGuestsChartCanvas) {
+            console.log('Creating cumulative guests chart');
+            window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
             type: 'line',
             data: {
                 labels: guestDates,
@@ -1013,6 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        }
     }
 
     // Display submissions in table
