@@ -19,8 +19,20 @@
     <script src="mobile-nav.js" defer></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Wait for Firebase SDK to load -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+          console.error('Firebase SDK not loaded');
+          alert('Firebase SDK not loaded. Please refresh the page and try again.');
+        } else {
+          console.log('Firebase SDK loaded successfully');
+        }
+      });
+    </script>
     <!-- Firebase Config -->
     <script src="firebase-config.js"></script>
     <!-- Chart.js for visualizations -->

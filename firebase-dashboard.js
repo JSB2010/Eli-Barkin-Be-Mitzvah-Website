@@ -91,9 +91,18 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         errorMessage.textContent = '';
         errorMessage.style.display = 'none';
 
+        // Check if Firebase Auth is available
+        if (!firebase.auth) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Authentication is not available. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
+            submitButton.classList.remove('loading');
+            return;
+        }
+
         // Add a small delay to show the loading state (better UX)
         setTimeout(() => {
             // Sign in with Firebase Authentication
+            console.log('Attempting to sign in with Firebase Auth...');
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     // Login successful
@@ -117,6 +126,8 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 })
                 .catch((error) => {
                     console.error('Login error:', error);
+                    console.error('Error code:', error.code);
+                    console.error('Error message:', error.message);
 
                     // Show appropriate error message
                     let errorMsg = 'Invalid email or password';
@@ -127,6 +138,12 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                         errorMsg = 'Too many failed login attempts. Please try again later.';
                     } else if (error.code === 'auth/network-request-failed') {
                         errorMsg = 'Network error. Please check your internet connection.';
+                    } else if (error.code === 'auth/invalid-credential') {
+                        errorMsg = 'Invalid login credentials. Please check your email and password.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMsg = 'Invalid email format. Please enter a valid email address.';
+                    } else if (error.code === 'auth/internal-error') {
+                        errorMsg = 'An internal error occurred. Please try again later.';
                     } else if (error.message) {
                         errorMsg = error.message;
                     }

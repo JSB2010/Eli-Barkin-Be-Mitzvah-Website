@@ -10,17 +10,24 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+try {
+  firebase.initializeApp(firebaseConfig);
 
-// Get Firestore instance
-const db = firebase.firestore();
+  // Get Firestore instance
+  const db = firebase.firestore();
 
-// Initialize Analytics if available
-let analytics = null;
-if (firebase.analytics) {
-  analytics = firebase.analytics();
+  // Initialize Analytics if available
+  let analytics = null;
+  if (firebase.analytics) {
+    analytics = firebase.analytics();
+  }
+
+  // Export the db for use in other files
+  window.db = db;
+  window.analytics = analytics;
+
+  console.log('Firebase initialized successfully');
+} catch (error) {
+  console.error('Error initializing Firebase:', error);
+  alert('Error initializing Firebase. Please refresh the page and try again.');
 }
-
-// Export the db for use in other files
-window.db = db;
-window.analytics = analytics;
