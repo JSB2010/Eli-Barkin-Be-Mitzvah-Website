@@ -209,6 +209,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
+            } catch (error) {
+                console.error('Exception during fetch operation:', error);
+                if (loadingElement) {
+                    loadingElement.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> Error: ${error.message || 'Unknown error'}</p>`;
+                }
+            }
         }
 
         // Start the fetch process
