@@ -1,5 +1,9 @@
+// Indicate that the dashboard script is loaded
+console.log('Firebase dashboard script loaded');
+
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard DOM content loaded');
     // Dashboard elements
     const syncSheetBtn = document.getElementById('sync-sheet-btn');
     const toggleGuestListBtn = document.getElementById('toggle-guest-list-btn');
@@ -1873,4 +1877,18 @@ document.addEventListener('DOMContentLoaded', function() {
             exportBtn.disabled = false;
         }
     });
+
+    // Make the fetch functions globally available
+    window.fetchSubmissions = fetchSubmissions;
+    window.fetchGuestList = fetchGuestList;
+    console.log('Dashboard functions exposed globally');
+
+    // Check if user is already logged in and fetch data
+    if (firebase.auth().currentUser) {
+        console.log('User is already logged in, fetching data directly');
+        fetchSubmissions();
+        fetchGuestList();
+    } else {
+        console.log('No user is logged in yet, waiting for login');
+    }
 });
