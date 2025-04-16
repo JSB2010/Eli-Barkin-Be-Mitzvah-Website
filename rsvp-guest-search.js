@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestFoundInfo = document.getElementById('guestFoundInfo');
     const existingSubmissionInfo = document.getElementById('existingSubmissionInfo');
     const guestCategoryElement = document.getElementById('guestCategory');
-    const guestMaxCountElement = document.getElementById('guestMaxCount');
+    // guestMaxCountElement removed
+    // const guestMaxCountElement = document.getElementById('guestMaxCount');
     const adultCountInput = document.getElementById('adultCount');
     const childCountInput = document.getElementById('childCount');
     const adultGuestsContainer = document.getElementById('adultGuestsContainer');
@@ -152,8 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 guestCategoryElement.textContent = '';
             }
 
-            // No maximum guest limit
-            guestMaxCountElement.textContent = '';
+            // No maximum guest limit - element removed
 
             // Check if guest has already submitted an RSVP
             await checkExistingSubmission(selectedGuest.name);
