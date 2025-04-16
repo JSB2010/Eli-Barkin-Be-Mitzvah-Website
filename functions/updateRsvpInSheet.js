@@ -16,7 +16,7 @@ async function getAuthenticatedClient() {
     try {
         // Get service account credentials from environment
         const serviceAccountKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-        
+
         // Create JWT client
         const jwtClient = new google.auth.JWT(
             serviceAccountKey.client_email,
@@ -24,10 +24,10 @@ async function getAuthenticatedClient() {
             serviceAccountKey.private_key,
             SCOPES
         );
-        
+
         // Authenticate
         await jwtClient.authorize();
-        
+
         // Return sheets client
         return google.sheets({ version: 'v4', auth: jwtClient });
     } catch (error) {
@@ -44,24 +44,24 @@ exports.updateRsvpInSheet = functions.firestore
             // Get submission data
             const submission = snapshot.data();
             const submissionId = context.params.submissionId;
-            
+
             // Validate submission data
             if (!submission || !submission.name) {
                 console.error('Invalid submission data:', submission);
                 return null;
             }
-            
+
             // Get authenticated sheets client
             const sheets = await getAuthenticatedClient();
-            
+
             // Get all rows from the sheet
             const response = await sheets.spreadsheets.values.get({
                 spreadsheetId: SHEET_ID,
                 range: 'Sheet1!A:H', // Get the guest list columns
             });
-            
+
             const rows = response.data.values || [];
-            
+
             // Find the matching row by name
             let rowIndex = -1;
             for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
@@ -71,19 +71,45 @@ exports.updateRsvpInSheet = functions.firestore
                     break;
                 }
             }
-            
+
             if (rowIndex === -1) {
                 console.log('No matching guest found for:', submission.name);
                 return null;
             }
-            
-            // Format additional guests
+
+            // Format guests
+            const adultGuests = submission.adultGuests || [];
+            const childGuests = submission.childGuests || [];
             const additionalGuests = submission.additionalGuests || [];
-            const formattedGuests = additionalGuests.join(', ');
-            
+
+            // Format all guests for display
+            let formattedGuests = '';
+
+            // If we have adult/child guests, use those
+            if (adultGuests.length > 0 || childGuests.length > 0) {
+                const allGuests = [];
+
+                // Skip the first adult (primary guest)
+                if (adultGuests.length > 1) {
+                    for (let i = 1; i < adultGuests.length; i++) {
+                        allGuests.push(adultGuests[i]);
+                    }
+                }
+
+                // Add all children
+                childGuests.forEach(child => {
+                    allGuests.push(child);
+                });
+
+                formattedGuests = allGuests.join(', ');
+            } else {
+                // Fall back to additional guests
+                formattedGuests = additionalGuests.join(', ');
+            }
+
             // Format submission date
             const submittedAt = submission.submittedAt ? new Date(submission.submittedAt.toDate()).toISOString() : new Date().toISOString();
-            
+
             // Update the RSVP columns (I-Q)
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SHEET_ID,
@@ -103,7 +129,7 @@ exports.updateRsvpInSheet = functions.firestore
                     ]]
                 }
             });
-            
+
             console.log('Updated RSVP for:', submission.name, 'at row:', rowIndex);
             return { success: true };
         } catch (error) {
@@ -121,19 +147,19 @@ exports.manualUpdateAllRsvps = functions.https.onCall(async (data, context) => {
             'You must be logged in to update RSVPs'
         );
     }
-    
+
     try {
         // Get all submissions
         const submissionsSnapshot = await admin.firestore().collection('submissions').get();
         const submissions = [];
-        
+
         submissionsSnapshot.forEach(doc => {
             submissions.push({
                 id: doc.id,
                 ...doc.data()
             });
         });
-        
+
         if (submissions.length === 0) {
             return {
                 success: true,
@@ -141,19 +167,19 @@ exports.manualUpdateAllRsvps = functions.https.onCall(async (data, context) => {
                 updatedCount: 0
             };
         }
-        
+
         // Get authenticated sheets client
         const sheets = await getAuthenticatedClient();
-        
+
         // Get all rows from the sheet
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             range: 'Sheet1!A:H', // Get the guest list columns
         });
-        
+
         const rows = response.data.values || [];
         let updatedCount = 0;
-        
+
         // Process each submission
         for (const submission of submissions) {
             // Find the matching row by name
@@ -165,23 +191,49 @@ exports.manualUpdateAllRsvps = functions.https.onCall(async (data, context) => {
                     break;
                 }
             }
-            
+
             if (rowIndex === -1) {
                 console.log('No matching guest found for:', submission.name);
                 continue;
             }
-            
-            // Format additional guests
+
+            // Format guests
+            const adultGuests = submission.adultGuests || [];
+            const childGuests = submission.childGuests || [];
             const additionalGuests = submission.additionalGuests || [];
-            const formattedGuests = additionalGuests.join(', ');
-            
+
+            // Format all guests for display
+            let formattedGuests = '';
+
+            // If we have adult/child guests, use those
+            if (adultGuests.length > 0 || childGuests.length > 0) {
+                const allGuests = [];
+
+                // Skip the first adult (primary guest)
+                if (adultGuests.length > 1) {
+                    for (let i = 1; i < adultGuests.length; i++) {
+                        allGuests.push(adultGuests[i]);
+                    }
+                }
+
+                // Add all children
+                childGuests.forEach(child => {
+                    allGuests.push(child);
+                });
+
+                formattedGuests = allGuests.join(', ');
+            } else {
+                // Fall back to additional guests
+                formattedGuests = additionalGuests.join(', ');
+            }
+
             // Format submission date
-            const submittedAt = submission.submittedAt ? 
-                (typeof submission.submittedAt.toDate === 'function' ? 
-                    new Date(submission.submittedAt.toDate()).toISOString() : 
-                    new Date(submission.submittedAt).toISOString()) : 
+            const submittedAt = submission.submittedAt ?
+                (typeof submission.submittedAt.toDate === 'function' ?
+                    new Date(submission.submittedAt.toDate()).toISOString() :
+                    new Date(submission.submittedAt).toISOString()) :
                 new Date().toISOString();
-            
+
             // Update the RSVP columns (I-Q)
             await sheets.spreadsheets.values.update({
                 spreadsheetId: SHEET_ID,
@@ -201,11 +253,11 @@ exports.manualUpdateAllRsvps = functions.https.onCall(async (data, context) => {
                     ]]
                 }
             });
-            
+
             updatedCount++;
             console.log('Updated RSVP for:', submission.name, 'at row:', rowIndex);
         }
-        
+
         return {
             success: true,
             message: `Updated ${updatedCount} submissions in the sheet`,

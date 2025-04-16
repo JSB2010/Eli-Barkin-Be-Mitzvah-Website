@@ -106,70 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle RSVP form submission
     const rsvpForm = document.getElementById('rsvpForm');
     const formConfirmation = document.getElementById('formConfirmation');
-    // No longer using reset button
-    const guestCountGroup = document.getElementById('guestCountGroup');
+    // Get guest count sections
+    const guestCountsSection = document.getElementById('guestCountsSection');
+    const guestsContainer = document.getElementById('guestsContainer');
 
     // Show/hide guest count based on attendance
     if (rsvpForm) {
-        const attendingRadios = rsvpForm.querySelectorAll('input[name="attending"]');
-        const additionalGuestsContainer = document.getElementById('additionalGuestsContainer');
-        const guestCountInput = document.getElementById('guestCount');
-
-        // Function to update additional guest name fields
-        function updateGuestFields() {
-            const guestCount = parseInt(guestCountInput.value) || 1;
-            additionalGuestsContainer.innerHTML = '';
-
-            // Only add additional guest fields if count > 1
-            if (guestCount > 1) {
-                // Add a heading for additional guests
-                const heading = document.createElement('h3');
-                heading.textContent = 'Additional Guest Names';
-                heading.style.marginTop = '20px';
-                heading.style.marginBottom = '10px';
-                additionalGuestsContainer.appendChild(heading);
-
-                // Add name fields for additional guests (excluding the primary guest)
-                for (let i = 2; i <= guestCount; i++) {
-                    const guestFieldDiv = document.createElement('div');
-                    guestFieldDiv.className = 'form-group';
-
-                    const label = document.createElement('label');
-                    label.setAttribute('for', `guestName${i}`);
-                    label.textContent = `Guest ${i} Name:`;
-
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.id = `guestName${i}`;
-                    input.name = `guestName${i}`;
-                    input.required = true;
-
-                    guestFieldDiv.appendChild(label);
-                    guestFieldDiv.appendChild(input);
-                    additionalGuestsContainer.appendChild(guestFieldDiv);
-                }
-            }
-        }
-
-        // Listen for changes to guest count
-        guestCountInput.addEventListener('change', updateGuestFields);
-        guestCountInput.addEventListener('input', updateGuestFields);
-
-        // Show/hide guest count based on attendance
-        attendingRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'yes') {
-                    guestCountGroup.style.display = 'block';
-                    updateGuestFields(); // Update guest fields when showing the section
-                } else {
-                    guestCountGroup.style.display = 'none';
-                    additionalGuestsContainer.innerHTML = ''; // Clear additional guest fields
-                }
-            });
-        });
-
-        // Initialize guest fields on page load
-        updateGuestFields();
+        // Note: The guest fields are now handled by rsvp-guest-search.js
 
         // Handle form submission (for Firebase)
         rsvpForm.addEventListener('submit', function(e) {
@@ -193,19 +136,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 email: form.email.value,
                 phone: form.phone.value,
                 attending: form.attending.value,
-                guestCount: parseInt(form.guestCount.value) || 1,
-                additionalGuests: [],
                 submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
             };
 
-            // Collect additional guest names if any
-            if (formData.guestCount > 1) {
-                for (let i = 2; i <= formData.guestCount; i++) {
-                    const guestNameField = form[`guestName${i}`];
-                    if (guestNameField) {
-                        formData.additionalGuests.push(guestNameField.value);
+            // Check if attending
+            if (formData.attending === 'yes') {
+                // Get adult and child counts
+                const adultCount = parseInt(form.adultCount?.value) || 1;
+                const childCount = parseInt(form.childCount?.value) || 0;
+
+                // Set total guest count
+                formData.guestCount = adultCount + childCount;
+                formData.adultCount = adultCount;
+                formData.childCount = childCount;
+
+                // Collect adult guest names
+                formData.adultGuests = [];
+                for (let i = 1; i <= adultCount; i++) {
+                    const adultNameField = form[`adultName${i}`];
+                    if (adultNameField) {
+                        formData.adultGuests.push(adultNameField.value);
                     }
                 }
+
+                // Collect child guest names
+                formData.childGuests = [];
+                for (let i = 1; i <= childCount; i++) {
+                    const childNameField = form[`childName${i}`];
+                    if (childNameField) {
+                        formData.childGuests.push(childNameField.value);
+                    }
+                }
+
+                // For backward compatibility
+                formData.additionalGuests = [];
+                if (adultCount > 1) {
+                    // Skip the first adult (primary guest)
+                    for (let i = 1; i < formData.adultGuests.length; i++) {
+                        formData.additionalGuests.push(formData.adultGuests[i]);
+                    }
+                }
+                // Add all children to additional guests
+                formData.additionalGuests = formData.additionalGuests.concat(formData.childGuests);
+            } else {
+                // Not attending
+                formData.guestCount = 0;
+                formData.adultCount = 0;
+                formData.childCount = 0;
+                formData.adultGuests = [];
+                formData.childGuests = [];
+                formData.additionalGuests = [];
             }
 
             // Check if Firestore is available
@@ -234,7 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return snapshot.docs[0].ref.update({
                                     hasResponded: true,
                                     response: formData.attending === 'yes' ? 'attending' : 'declined',
-                                    actualGuestCount: formData.guestCount || 1,
+                                    actualGuestCount: formData.guestCount || 0,
+                                    adultCount: formData.adultCount || 0,
+                                    childCount: formData.childCount || 0,
+                                    adultGuests: formData.adultGuests || [],
+                                    childGuests: formData.childGuests || [],
                                     additionalGuests: formData.additionalGuests || [],
                                     email: formData.email,
                                     phone: formData.phone || '',

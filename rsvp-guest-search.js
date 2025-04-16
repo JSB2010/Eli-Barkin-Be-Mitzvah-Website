@@ -1,6 +1,6 @@
-// RSVP Guest Search Functionality
+// RSVP Guest Search and Form Handling
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Firebase if needed
+    // Initialize Firebase if not already initialized
     if (typeof firebase === 'undefined') {
         console.error('Firebase SDK not loaded');
         return;
@@ -11,198 +11,377 @@ document.addEventListener('DOMContentLoaded', function() {
     const autocompleteResults = document.getElementById('autocompleteResults');
     const additionalFields = document.getElementById('additionalFields');
     const submitButtonContainer = document.getElementById('submitButtonContainer');
+    const submitButton = document.getElementById('submitButton');
     const guestFoundInfo = document.getElementById('guestFoundInfo');
+    const existingSubmissionInfo = document.getElementById('existingSubmissionInfo');
     const guestCategoryElement = document.getElementById('guestCategory');
     const guestMaxCountElement = document.getElementById('guestMaxCount');
-    const guestCountInput = document.getElementById('guestCount');
+    const adultCountInput = document.getElementById('adultCount');
+    const childCountInput = document.getElementById('childCount');
+    const adultGuestsContainer = document.getElementById('adultGuestsContainer');
+    const childGuestsContainer = document.getElementById('childGuestsContainer');
+    const childGuestSection = document.getElementById('childGuestSection');
 
     // Variables to store selected guest data
     // Make it accessible to other scripts
     window.selectedGuest = null;
+    window.existingSubmission = null;
     let selectedGuest = window.selectedGuest;
+    let existingSubmission = window.existingSubmission;
+    let debounceTimer;
 
-    // Function to handle name input
-    async function handleNameInput() {
-        const searchTerm = nameInput.value.trim();
+    // Set up autocomplete for name input
+    if (nameInput) {
+        nameInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
 
-        // Clear previous results
+            // Clear previous timer
+            clearTimeout(debounceTimer);
+
+            // Hide results if search term is too short
+            if (searchTerm.length < 2) {
+                autocompleteResults.style.display = 'none';
+                return;
+            }
+
+            // Debounce search to avoid too many requests
+            debounceTimer = setTimeout(() => {
+                searchGuests(searchTerm).then(results => {
+                    displayAutocompleteResults(results);
+                });
+            }, 300);
+        });
+
+        // Handle keyboard navigation in autocomplete
+        nameInput.addEventListener('keydown', function(e) {
+            if (autocompleteResults.style.display === 'none') return;
+
+            const items = autocompleteResults.querySelectorAll('.autocomplete-item');
+            const selectedItem = autocompleteResults.querySelector('.selected');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!selectedItem) {
+                    items[0].classList.add('selected');
+                } else {
+                    const nextItem = selectedItem.nextElementSibling;
+                    if (nextItem) {
+                        selectedItem.classList.remove('selected');
+                        nextItem.classList.add('selected');
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (selectedItem) {
+                    const prevItem = selectedItem.previousElementSibling;
+                    if (prevItem) {
+                        selectedItem.classList.remove('selected');
+                        prevItem.classList.add('selected');
+                    }
+                }
+            } else if (e.key === 'Enter' && selectedItem) {
+                e.preventDefault();
+                selectGuest(selectedItem.getAttribute('data-id'));
+            } else if (e.key === 'Escape') {
+                autocompleteResults.style.display = 'none';
+            }
+        });
+
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!nameInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                autocompleteResults.style.display = 'none';
+            }
+        });
+    }
+
+    // Display autocomplete results
+    function displayAutocompleteResults(results) {
         autocompleteResults.innerHTML = '';
 
-        // Hide additional fields if search term is empty
-        if (searchTerm.length < 2) {
+        if (results.length === 0) {
             autocompleteResults.style.display = 'none';
             return;
         }
 
+        results.forEach(guest => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.textContent = guest.name;
+            item.setAttribute('data-id', guest.id);
+
+            item.addEventListener('click', function() {
+                selectGuest(guest.id);
+            });
+
+            autocompleteResults.appendChild(item);
+        });
+
+        autocompleteResults.style.display = 'block';
+    }
+
+    // Select a guest from the autocomplete results
+    async function selectGuest(guestId) {
         try {
-            // Search for guests
-            const results = await searchGuests(searchTerm);
+            const db = firebase.firestore();
+            const guestDoc = await db.collection('guestList').doc(guestId).get();
 
-            if (results.length > 0) {
-                // Display results
-                results.forEach(guest => {
-                    const resultItem = document.createElement('div');
-                    resultItem.className = 'autocomplete-item';
-                    resultItem.textContent = guest.name;
-                    resultItem.addEventListener('click', () => selectGuest(guest));
-                    autocompleteResults.appendChild(resultItem);
-                });
+            if (!guestDoc.exists) {
+                console.error('Guest not found');
+                return;
+            }
 
-                autocompleteResults.style.display = 'block';
+            // Store the selected guest
+            selectedGuest = guestDoc.data();
+            selectedGuest.id = guestId;
+            window.selectedGuest = selectedGuest;
+
+            // Set the name input value
+            nameInput.value = selectedGuest.name;
+
+            // Hide autocomplete results
+            autocompleteResults.style.display = 'none';
+
+            // Show guest info
+            guestFoundInfo.style.display = 'block';
+
+            // Set guest category and max count
+            if (selectedGuest.category) {
+                guestCategoryElement.textContent = `Category: ${selectedGuest.category}`;
             } else {
-                autocompleteResults.style.display = 'none';
+                guestCategoryElement.textContent = '';
+            }
+
+            if (selectedGuest.maxAllowedGuests) {
+                guestMaxCountElement.textContent = `Maximum Guests: ${selectedGuest.maxAllowedGuests}`;
+            } else {
+                guestMaxCountElement.textContent = '';
+            }
+
+            // Check if guest has already submitted an RSVP
+            await checkExistingSubmission(selectedGuest.name);
+
+            // Show additional fields
+            additionalFields.style.display = 'block';
+            submitButtonContainer.style.display = 'block';
+
+            // Update guest count inputs based on max allowed
+            const maxGuests = selectedGuest.maxAllowedGuests || 1;
+            adultCountInput.max = maxGuests;
+
+            // Update guest fields
+            updateGuestFields();
+        } catch (error) {
+            console.error('Error selecting guest:', error);
+        }
+    }
+
+    // Check if guest has already submitted an RSVP
+    async function checkExistingSubmission(guestName) {
+        try {
+            const db = firebase.firestore();
+            const submissionsSnapshot = await db.collection('sheetRsvps')
+                .where('name', '==', guestName)
+                .orderBy('submittedAt', 'desc')
+                .limit(1)
+                .get();
+
+            if (!submissionsSnapshot.empty) {
+                // Get the most recent submission
+                const submission = submissionsSnapshot.docs[0].data();
+                submission.id = submissionsSnapshot.docs[0].id;
+
+                // Store the existing submission
+                existingSubmission = submission;
+                window.existingSubmission = existingSubmission;
+
+                // Show existing submission info
+                existingSubmissionInfo.style.display = 'block';
+
+                // Update button text
+                submitButton.textContent = 'Update RSVP';
+
+                // Pre-fill form with existing data
+                prefillFormWithExistingData(submission);
+            } else {
+                // No existing submission
+                existingSubmission = null;
+                window.existingSubmission = null;
+
+                // Hide existing submission info
+                existingSubmissionInfo.style.display = 'none';
+
+                // Reset button text
+                submitButton.textContent = 'Submit RSVP';
             }
         } catch (error) {
-            console.error('Error searching guests:', error);
+            console.error('Error checking existing submission:', error);
         }
     }
 
-    // Function to select a guest
-    function selectGuest(guest) {
-        selectedGuest = guest;
-        window.selectedGuest = guest; // Make it accessible globally
-        nameInput.value = guest.name;
-        autocompleteResults.style.display = 'none';
+    // Pre-fill form with existing submission data
+    function prefillFormWithExistingData(submission) {
+        // Set email and phone
+        document.getElementById('email').value = submission.email || '';
+        document.getElementById('phone').value = submission.phone || '';
 
-        // Update guest info display
-        guestCategoryElement.textContent = guest.category ? `Category: ${guest.category}` : '';
+        // Set attending radio button
+        const attendingYes = document.getElementById('attendingYes');
+        const attendingNo = document.getElementById('attendingNo');
 
-        // Check if guest has already responded
-        const hasResponded = guest.hasResponded === true;
-        const submitButton = document.querySelector('#submitButtonContainer button');
+        if (submission.attending === 'yes') {
+            attendingYes.checked = true;
 
-        if (hasResponded) {
-            // Update info message for returning guests
-            guestFoundInfo.innerHTML = `
-                <p><strong>Welcome back, ${guest.name.split(' ')[0]}!</strong></p>
-                <p>We found your previous RSVP. You can update your response below.</p>
-                <p id="guestCategory">${guest.category ? `Category: ${guest.category}` : ''}</p>
-            `;
+            // Parse guest counts
+            let adultCount = 1; // Default to 1 adult
+            let childCount = 0; // Default to 0 children
 
-            // Update button text for updates
-            submitButton.textContent = 'Update RSVP';
+            if (submission.adultCount) {
+                adultCount = submission.adultCount;
+            } else if (submission.guestCount) {
+                // For backward compatibility
+                adultCount = submission.guestCount;
+            }
 
-            // Pre-fill form with existing data
-            if (guest.email) document.getElementById('email').value = guest.email;
-            if (guest.phone) document.getElementById('phone').value = guest.phone;
+            if (submission.childCount) {
+                childCount = submission.childCount;
+            }
 
-            // Set attendance radio button
-            if (guest.response === 'attending') {
-                document.getElementById('attendingYes').checked = true;
-                // Show guest count section
-                guestCountGroup.style.display = 'block';
-                // Set guest count
-                guestCountInput.value = guest.actualGuestCount || 1;
-                // Update additional guest fields
-                updateGuestFields();
-                // Pre-fill additional guest names if available
-                if (guest.additionalGuests && guest.additionalGuests.length > 0) {
-                    guest.additionalGuests.forEach((guestName, index) => {
-                        const guestField = document.getElementById(`guestName${index + 2}`);
-                        if (guestField) guestField.value = guestName;
-                    });
-                }
-            } else if (guest.response === 'declined') {
-                document.getElementById('attendingNo').checked = true;
-                guestCountGroup.style.display = 'none';
+            // Set guest counts
+            adultCountInput.value = adultCount;
+            childCountInput.value = childCount;
+
+            // Update guest fields
+            updateGuestFields();
+
+            // Pre-fill guest names
+            if (submission.adultGuests && submission.adultGuests.length > 0) {
+                const adultInputs = adultGuestsContainer.querySelectorAll('input');
+                submission.adultGuests.forEach((name, index) => {
+                    if (adultInputs[index]) {
+                        adultInputs[index].value = name;
+                    }
+                });
+            } else if (submission.additionalGuests && submission.additionalGuests.length > 0) {
+                // For backward compatibility
+                const adultInputs = adultGuestsContainer.querySelectorAll('input');
+                submission.additionalGuests.forEach((name, index) => {
+                    if (adultInputs[index + 1]) { // +1 to skip the first input (self)
+                        adultInputs[index + 1].value = name;
+                    }
+                });
+            }
+
+            if (submission.childGuests && submission.childGuests.length > 0) {
+                const childInputs = childGuestsContainer.querySelectorAll('input');
+                submission.childGuests.forEach((name, index) => {
+                    if (childInputs[index]) {
+                        childInputs[index].value = name;
+                    }
+                });
             }
         } else {
-            // First time RSVP
-            guestMaxCountElement.textContent = `You can add as many guests as needed`;
-            submitButton.textContent = 'Submit RSVP';
+            attendingNo.checked = true;
         }
 
-        // Show guest found info with animation
-        guestFoundInfo.style.opacity = '0';
-        guestFoundInfo.style.display = 'block';
-        setTimeout(() => {
-            guestFoundInfo.style.transition = 'opacity 0.5s ease';
-            guestFoundInfo.style.opacity = '1';
-        }, 10);
-
-        // Remove max value restriction for guest count
-        guestCountInput.removeAttribute('max');
-
-        // Prepare additional fields for animation
-        additionalFields.style.opacity = '0';
-        additionalFields.style.display = 'block';
-        additionalFields.style.maxHeight = '0';
-        additionalFields.style.overflow = 'hidden';
-
-        // Animate additional fields
-        setTimeout(() => {
-            additionalFields.style.transition = 'opacity 0.5s ease, max-height 0.8s ease';
-            additionalFields.style.opacity = '1';
-            additionalFields.style.maxHeight = '2000px'; // Large enough to contain all content
-        }, 100);
-
-        // Show submit button with animation
-        submitButtonContainer.style.opacity = '0';
-        submitButtonContainer.style.display = 'block';
-        setTimeout(() => {
-            submitButtonContainer.style.transition = 'opacity 0.5s ease';
-            submitButtonContainer.style.opacity = '1';
-        }, 500);
-
-        // Scroll to the form
-        setTimeout(() => {
-            additionalFields.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
+        // Trigger change event to update form visibility
+        const event = new Event('change');
+        if (attendingYes.checked) {
+            attendingYes.dispatchEvent(event);
+        } else {
+            attendingNo.dispatchEvent(event);
+        }
     }
 
-    // Add event listeners
-    if (nameInput) {
-        nameInput.addEventListener('input', handleNameInput);
-        nameInput.addEventListener('focus', handleNameInput);
-    }
+    // Update guest fields based on adult and child counts
+    function updateGuestFields() {
+        const adultCount = parseInt(adultCountInput.value) || 1;
+        const childCount = parseInt(childCountInput.value) || 0;
 
-    // Handle form submission to update guest data
-    const rsvpForm = document.getElementById('rsvpForm');
-    if (rsvpForm) {
-        rsvpForm.addEventListener('submit', async function(e) {
-            // Don't prevent default here, as firebase-rsvp.js will handle that
+        // Update adult guest fields
+        adultGuestsContainer.innerHTML = '';
+        for (let i = 0; i < adultCount; i++) {
+            const guestField = document.createElement('div');
+            guestField.className = 'guest-field';
 
-            // If we have a selected guest, update their record
-            if (selectedGuest && selectedGuest.id) {
-                try {
-                    const db = firebase.firestore();
-                    const guestRef = db.collection('guestList').doc(selectedGuest.id);
+            const label = document.createElement('label');
+            label.setAttribute('for', `adultName${i+1}`);
+            label.textContent = i === 0 ? 'Your Name:' : `Adult Guest ${i}:`;
 
-                    // Get form data
-                    const attending = document.querySelector('input[name="attending"]:checked').value === 'yes';
-                    const guestCount = parseInt(document.getElementById('guestCount').value) || 1;
-                    const email = document.getElementById('email').value;
-                    const phone = document.getElementById('phone').value;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `adultName${i+1}`;
+            input.name = `adultName${i+1}`;
+            input.required = true;
 
-                    // Collect additional guest names
-                    const additionalGuests = [];
-                    if (guestCount > 1) {
-                        for (let i = 2; i <= guestCount; i++) {
-                            const guestNameField = document.getElementById(`guestName${i}`);
-                            if (guestNameField) {
-                                additionalGuests.push(guestNameField.value);
-                            }
-                        }
-                    }
-
-                    // Update guest record
-                    await guestRef.update({
-                        hasResponded: true,
-                        response: attending ? 'attending' : 'declined',
-                        actualGuestCount: attending ? guestCount : 0,
-                        additionalGuests: additionalGuests,
-                        email: email,
-                        phone: phone,
-                        submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
-                    });
-
-                    console.log('Guest record updated successfully');
-                } catch (error) {
-                    console.error('Error updating guest record:', error);
-                }
+            // Pre-fill the first field with the selected guest's name
+            if (i === 0 && selectedGuest) {
+                input.value = selectedGuest.name;
             }
+
+            guestField.appendChild(label);
+            guestField.appendChild(input);
+            adultGuestsContainer.appendChild(guestField);
+        }
+
+        // Update child guest fields
+        childGuestsContainer.innerHTML = '';
+        for (let i = 0; i < childCount; i++) {
+            const guestField = document.createElement('div');
+            guestField.className = 'guest-field';
+
+            const label = document.createElement('label');
+            label.setAttribute('for', `childName${i+1}`);
+            label.textContent = `Child ${i+1}:`;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `childName${i+1}`;
+            input.name = `childName${i+1}`;
+            input.required = true;
+
+            guestField.appendChild(label);
+            guestField.appendChild(input);
+            childGuestsContainer.appendChild(guestField);
+        }
+
+        // Show/hide child section based on child count
+        childGuestSection.style.display = childCount > 0 ? 'block' : 'none';
+    }
+
+    // Listen for changes to guest counts
+    if (adultCountInput) {
+        adultCountInput.addEventListener('change', updateGuestFields);
+        adultCountInput.addEventListener('input', updateGuestFields);
+    }
+
+    if (childCountInput) {
+        childCountInput.addEventListener('change', updateGuestFields);
+        childCountInput.addEventListener('input', updateGuestFields);
+    }
+
+    // Show/hide guest count based on attendance
+    const attendingRadios = document.querySelectorAll('input[name="attending"]');
+    if (attendingRadios.length) {
+        attendingRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const guestCountsSection = document.getElementById('guestCountsSection');
+                const guestsContainer = document.getElementById('guestsContainer');
+
+                if (this.value === 'yes') {
+                    guestCountsSection.style.display = 'flex';
+                    guestsContainer.style.display = 'block';
+                    updateGuestFields(); // Update guest fields when showing the section
+                } else {
+                    guestCountsSection.style.display = 'none';
+                    guestsContainer.style.display = 'none';
+                }
+            });
         });
     }
+
+    // Initialize guest fields on page load
+    updateGuestFields();
 });
 
 // Function to search for guests in Firestore

@@ -242,6 +242,105 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* New styles for guest sections */
+        #guestCountsSection {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        #guestCountsSection .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .guest-section {
+            margin-bottom: 30px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .guest-section:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .guest-section h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #4a89dc;
+            font-size: 1.1rem;
+        }
+
+        .guest-field {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .guest-field:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .guest-field label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .guest-field input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .guest-field input:focus {
+            border-color: #4a89dc;
+            box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.15);
+            outline: none;
+        }
+
+        /* Existing submission styles */
+        .existing-submission {
+            background-color: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .existing-submission p {
+            margin: 5px 0;
+            color: #2f855a;
+        }
     </style>
 
 </head>
@@ -297,6 +396,11 @@
                         <p id="guestMaxCount"></p>
                     </div>
 
+                    <div id="existingSubmissionInfo" class="existing-submission" style="display: none;">
+                        <p><strong>You've already submitted an RSVP!</strong></p>
+                        <p>We've filled in your previous responses. Feel free to make any changes and submit again to update your RSVP.</p>
+                    </div>
+
                     <div id="additionalFields" style="display: none;">
                         <div class="form-group">
                             <label for="email">Email:</label>
@@ -320,18 +424,37 @@
                             </div>
                         </div>
 
-                        <div class="form-group" id="guestCountGroup">
-                            <label for="guestCount">Number of guests (including yourself):</label>
-                            <input type="number" id="guestCount" name="guestCount" min="1" value="1">
+                        <div id="guestCountsSection">
+                            <div class="form-group" id="adultCountGroup">
+                                <label for="adultCount">Number of adults:</label>
+                                <input type="number" id="adultCount" name="adultCount" min="1" value="1">
+                                <div class="input-hint">Include yourself and any adult guests</div>
+                            </div>
+
+                            <div class="form-group" id="childCountGroup">
+                                <label for="childCount">Number of children:</label>
+                                <input type="number" id="childCount" name="childCount" min="0" value="0">
+                                <div class="input-hint">Children under 13 years old</div>
+                            </div>
                         </div>
 
                         <!-- Guest names will be dynamically added here -->
-                        <div id="additionalGuestsContainer"></div>
+                        <div id="guestsContainer">
+                            <h3 class="section-title">Guest Information</h3>
+                            <div class="guest-section">
+                                <h4>Adults</h4>
+                                <div id="adultGuestsContainer"></div>
+                            </div>
+                            <div class="guest-section" id="childGuestSection">
+                                <h4>Children</h4>
+                                <div id="childGuestsContainer"></div>
+                            </div>
+                        </div>
                     </div>
 
 
                     <div class="form-actions" id="submitButtonContainer" style="display: none;">
-                        <button type="submit" class="btn">Submit RSVP</button>
+                        <button type="submit" id="submitButton" class="btn">Submit RSVP</button>
                     </div>
                 </form>
                 <div id="formConfirmation" class="hidden">
