@@ -1,258 +1,5 @@
-// Function to display error directly on the page
-function showError(message, error = null) {
-    console.error(message, error || '');
-
-    // Create error container if it doesn't exist
-    let errorContainer = document.getElementById('direct-error-container');
-    if (!errorContainer) {
-        errorContainer = document.createElement('div');
-        errorContainer.id = 'direct-error-container';
-        errorContainer.style.position = 'fixed';
-        errorContainer.style.top = '10px';
-        errorContainer.style.left = '10px';
-        errorContainer.style.right = '10px';
-        errorContainer.style.backgroundColor = '#f44336';
-        errorContainer.style.color = 'white';
-        errorContainer.style.padding = '15px';
-        errorContainer.style.borderRadius = '5px';
-        errorContainer.style.zIndex = '9999';
-        errorContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-        document.body.appendChild(errorContainer);
-    }
-
-    // Add error message
-    const errorMsg = document.createElement('div');
-    errorMsg.style.marginBottom = '10px';
-    errorMsg.innerHTML = `<strong>${message}</strong>`;
-    if (error) {
-        const errorDetails = document.createElement('pre');
-        errorDetails.style.marginTop = '5px';
-        errorDetails.style.fontSize = '12px';
-        errorDetails.style.whiteSpace = 'pre-wrap';
-        errorDetails.style.maxHeight = '100px';
-        errorDetails.style.overflow = 'auto';
-        errorDetails.textContent = typeof error === 'object' ? JSON.stringify(error, null, 2) : error.toString();
-        errorMsg.appendChild(errorDetails);
-    }
-    errorContainer.appendChild(errorMsg);
-
-    // Also try to show in error message element
-    const errorMessage = document.getElementById('error-message');
-    if (errorMessage) {
-        errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-        errorMessage.style.display = 'block';
-    }
-}
-
-// Debug logging function
-function logDebug(message, data = null, isError = false) {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] ${message}`;
-
-    if (isError) {
-        console.error(logMessage, data || '');
-    } else {
-        console.log(logMessage, data || '');
-    }
-
-    // Add to debug panel if it exists
-    const debugInfo = document.getElementById('debug-info');
-    if (debugInfo) {
-        const logEntry = document.createElement('div');
-        logEntry.style.marginBottom = '8px';
-        logEntry.style.borderLeft = isError ? '3px solid #f44336' : '3px solid #ccc';
-        logEntry.style.paddingLeft = '8px';
-        logEntry.innerHTML = `<strong>${timestamp}</strong>: <span style="${isError ? 'color: #f44336; font-weight: bold;' : ''}">${message}</span>`;
-        if (data) {
-            const pre = document.createElement('pre');
-            pre.style.background = '#f5f5f5';
-            pre.style.padding = '5px';
-            pre.style.borderRadius = '4px';
-            pre.style.marginTop = '5px';
-            pre.style.overflowX = 'auto';
-            pre.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data.toString();
-            logEntry.appendChild(pre);
-        }
-        debugInfo.appendChild(logEntry);
-        debugInfo.scrollTop = debugInfo.scrollHeight;
-
-        // Also show in error message if it's an error
-        if (isError) {
-            const errorMessage = document.getElementById('error-message');
-            if (errorMessage) {
-                errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-                errorMessage.style.display = 'block';
-            }
-        }
-    }
-}
-
-// Function to test Firebase Auth directly
-function testFirebaseAuth() {
-    try {
-        showError('Testing Firebase Auth...');
-
-        // Check if Firebase is loaded
-        if (typeof firebase === 'undefined') {
-            showError('Firebase SDK is not loaded');
-            return;
-        }
-
-        showError('Firebase SDK is loaded');
-
-        // Check if Auth is available
-        if (typeof firebase.auth === 'undefined') {
-            showError('Firebase Auth is not available');
-            return;
-        }
-
-        showError('Firebase Auth is available');
-
-        // Try to get auth instance
-        try {
-            const auth = firebase.auth();
-            showError('Firebase Auth instance created successfully');
-
-            // Try to get current user
-            const user = auth.currentUser;
-            showError('Current user: ' + (user ? user.email : 'No user signed in'));
-
-            // Try a sign in operation
-            auth.signInWithEmailAndPassword('test@example.com', 'password')
-                .then(result => {
-                    showError('Sign in attempt succeeded (unexpected)');
-                })
-                .catch(error => {
-                    showError('Sign in attempt failed as expected', error);
-                });
-        } catch (error) {
-            showError('Error creating Firebase Auth instance', error);
-        }
-    } catch (error) {
-        showError('Unexpected error in testFirebaseAuth', error);
-    }
-}
-
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    logDebug('DOM fully loaded');
-
-    // Setup debug panel toggle buttons
-    const showDebugBtn = document.getElementById('show-debug-btn');
-    const toggleDebugBtn = document.getElementById('toggle-debug-btn');
-    const debugPanel = document.getElementById('debug-panel');
-    const directLoginBtn = document.getElementById('direct-login-btn');
-    const testAuthBtn = document.getElementById('test-auth-btn');
-
-    if (showDebugBtn && debugPanel) {
-        showDebugBtn.addEventListener('click', function() {
-            debugPanel.style.display = 'block';
-            logDebug('Debug panel opened');
-        });
-    }
-
-    if (toggleDebugBtn && debugPanel) {
-        toggleDebugBtn.addEventListener('click', function() {
-            if (debugPanel.style.display === 'none') {
-                debugPanel.style.display = 'block';
-                toggleDebugBtn.textContent = 'Hide Debug Info';
-                logDebug('Debug panel opened');
-            } else {
-                debugPanel.style.display = 'none';
-                toggleDebugBtn.textContent = 'Show Debug Info';
-                logDebug('Debug panel closed');
-            }
-        });
-    }
-
-    // Setup test auth button
-    if (testAuthBtn) {
-        testAuthBtn.addEventListener('click', function() {
-            logDebug('Test Auth button clicked');
-            testFirebaseAuth();
-        });
-    }
-
-    // Setup direct login button
-    if (directLoginBtn) {
-        directLoginBtn.addEventListener('click', function() {
-            logDebug('Direct login button clicked');
-
-            // Check Firebase availability
-            if (typeof firebase === 'undefined') {
-                logDebug('ERROR: Firebase SDK not available for direct login', null, true);
-                return;
-            }
-
-            if (typeof firebase.auth === 'undefined') {
-                logDebug('ERROR: Firebase Auth not available for direct login', null, true);
-                return;
-            }
-
-            try {
-                // Get email and password from form
-                const email = document.getElementById('email')?.value?.trim() || 'admin@elibarkin.com';
-                const password = document.getElementById('password')?.value || 'password123';
-
-                logDebug('Attempting direct login with Firebase Auth...', { email });
-
-                // Create a direct reference to auth
-                const auth = firebase.auth();
-
-                // Sign in directly
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        logDebug('Direct login successful', { uid: userCredential.user.uid });
-
-                        // Show dashboard
-                        if (loginSection && dashboardSection) {
-                            loginSection.style.display = 'none';
-                            dashboardSection.style.display = 'block';
-                            logDebug('Dashboard displayed after direct login');
-                        } else {
-                            logDebug('ERROR: Could not find login or dashboard sections', null, true);
-                        }
-                    })
-                    .catch((error) => {
-                        logDebug('Direct login error', error, true);
-                    });
-            } catch (error) {
-                logDebug('Unexpected error during direct login', error, true);
-            }
-        });
-    }
-
-    // Check Firebase availability
-    if (typeof firebase === 'undefined') {
-        logDebug('ERROR: Firebase SDK not loaded', null, true);
-        return;
-    }
-
-    logDebug('Firebase SDK loaded', { version: firebase.SDK_VERSION || 'unknown' });
-
-    // Check Firebase Auth availability
-    if (typeof firebase.auth === 'undefined') {
-        logDebug('ERROR: Firebase Auth not available', null, true);
-        return;
-    }
-
-    logDebug('Firebase Auth available');
-
-    // Check Firestore availability
-    if (typeof firebase.firestore === 'undefined') {
-        logDebug('ERROR: Firebase Firestore not available', null, true);
-        return;
-    }
-
-    logDebug('Firebase Firestore available');
-
-    // Check if db is available
-    if (typeof db === 'undefined') {
-        logDebug('ERROR: Firestore db instance not available', null, true);
-        return;
-    }
-
-    logDebug('Firestore db instance available');
     // Dashboard elements
     const syncSheetBtn = document.getElementById('sync-sheet-btn');
     const toggleGuestListBtn = document.getElementById('toggle-guest-list-btn');
@@ -285,16 +32,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     // Get DOM elements
-    const loginSection = document.getElementById('login-section');
-    const dashboardSection = document.getElementById('dashboard-section');
-    const loginForm = document.getElementById('login-form');
-    const errorMessage = document.getElementById('error-message');
-    const logoutBtn = document.getElementById('logout-btn');
     const loadingElement = document.getElementById('loading');
     // tableContainer is already defined above
     const submissionsBody = document.getElementById('submissions-body');
-    // Use the response-rate element instead of total-submissions
-const totalSubmissionsElement = document.getElementById('response-rate');
+    const totalSubmissionsElement = document.getElementById('total-submissions');
     const attendingCountElement = document.getElementById('attending-count');
     const notAttendingCountElement = document.getElementById('not-attending-count');
     const totalGuestsElement = document.getElementById('total-guests');
@@ -318,339 +59,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
     let guestListSort = { field: 'name', direction: 'asc' };
     let guestCategories = new Set(); // Unique categories
 
-    // Handle login form submission
-    if (loginForm) {
-        logDebug('Setting up login form submission handler');
-
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            logDebug('Login form submitted');
-
-            const email = document.getElementById('email')?.value?.trim() || '';
-            const password = document.getElementById('password')?.value || '';
-            const submitButton = loginForm.querySelector('button[type="submit"]');
-
-            // Validate inputs
-            if (!email || !password) {
-                const errorMsg = 'Please enter both email and password';
-                logDebug(`Validation error: ${errorMsg}`);
-
-                if (errorMessage) {
-                    errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
-                    errorMessage.style.animation = 'none';
-                    setTimeout(() => {
-                        errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
-                    }, 10);
-                    errorMessage.style.display = 'block';
-                }
-                return;
-            }
-
-            // Show loading state
-            if (submitButton) {
-                submitButton.classList.add('loading');
-            }
-
-            // Clear previous error messages
-            if (errorMessage) {
-                errorMessage.textContent = '';
-                errorMessage.style.display = 'none';
-            }
-
-            // Double-check Firebase Auth availability
-            if (typeof firebase === 'undefined') {
-                const errorMsg = 'Firebase SDK is not available. Please refresh the page and try again.';
-                logDebug(`ERROR: ${errorMsg}`, null, true);
-
-                if (submitButton) {
-                    submitButton.classList.remove('loading');
-                }
-                return;
-            }
-
-            if (typeof firebase.auth === 'undefined') {
-                const errorMsg = 'Firebase Authentication is not available. Please refresh the page and try again.';
-                logDebug(`ERROR: ${errorMsg}`, null, true);
-
-                if (submitButton) {
-                    submitButton.classList.remove('loading');
-                }
-                return;
-            }
-
-            try {
-                // This will throw an error if auth() is not properly initialized
-                const auth = firebase.auth();
-                logDebug('Firebase auth instance obtained successfully');
-            } catch (authError) {
-                const errorMsg = 'Error accessing Firebase Authentication. Please refresh the page and try again.';
-                logDebug(`ERROR: ${errorMsg}`, authError, true);
-
-                if (submitButton) {
-                    submitButton.classList.remove('loading');
-                }
-                return;
-            }
-
-            // Add a small delay to show the loading state (better UX)
-            setTimeout(() => {
-                try {
-                    // Sign in with Firebase Authentication
-                    logDebug('Attempting to sign in with Firebase Auth...', { email });
-
-                    // Create a direct reference to auth to avoid potential issues
-                    const auth = firebase.auth();
-                    logDebug('Auth reference created');
-
-                    // Add a direct error handler for the entire promise chain
-                    const loginPromise = auth.signInWithEmailAndPassword(email, password);
-                    logDebug('Login promise created');
-
-                    loginPromise
-                        .then((userCredential) => {
-                            // Login successful
-                            logDebug('Login successful', { uid: userCredential.user.uid });
-
-                            // Log user details for debugging
-                            const user = userCredential.user;
-                            logDebug('User details', {
-                                uid: user.uid,
-                                email: user.email,
-                                emailVerified: user.emailVerified,
-                                isAnonymous: user.isAnonymous,
-                                providerData: user.providerData
-                            });
-
-                            // Store login state in session storage
-                            try {
-                                sessionStorage.setItem('rsvp_dashboard_logged_in', 'true');
-                                logDebug('Login state saved to session storage');
-                            } catch (e) {
-                                logDebug('Could not save login state to session storage', e, true);
-                            }
-
-                            // Show dashboard
-                            if (loginSection && dashboardSection) {
-                                loginSection.style.display = 'none';
-                                dashboardSection.style.display = 'block';
-                                logDebug('Dashboard displayed');
-                            } else {
-                                logDebug('ERROR: Could not find login or dashboard sections', null, true);
-                            }
-
-                            // Reset form
-                            loginForm.reset();
-
-                            // Fetch RSVP submissions
-                            fetchSubmissions();
-                        })
-                        .catch((error) => {
-                            logDebug('Login error', { code: error.code, message: error.message }, true);
-
-                            // Show appropriate error message
-                            let errorMsg = 'Invalid email or password';
-
-                            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                                errorMsg = 'Invalid email or password. Please try again.';
-                            } else if (error.code === 'auth/too-many-requests') {
-                                errorMsg = 'Too many failed login attempts. Please try again later.';
-                            } else if (error.code === 'auth/network-request-failed') {
-                                errorMsg = 'Network error. Please check your internet connection.';
-                            } else if (error.code === 'auth/invalid-credential') {
-                                errorMsg = 'Invalid login credentials. Please check your email and password.';
-                            } else if (error.code === 'auth/invalid-email') {
-                                errorMsg = 'Invalid email format. Please enter a valid email address.';
-                            } else if (error.code === 'auth/internal-error') {
-                                errorMsg = 'An internal error occurred. Please try again later.';
-                            } else if (error.message) {
-                                errorMsg = error.message;
-                            }
-
-                            // Log the full error object for debugging
-                            logDebug(`Error details for code: ${error.code}`, error, true);
-
-                            if (errorMessage) {
-                                errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
-                                errorMessage.style.animation = 'none';
-                                setTimeout(() => {
-                                    errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
-                                }, 10);
-                                errorMessage.style.display = 'block';
-                            }
-                        })
-                        .finally(() => {
-                            // Remove loading state
-                            if (submitButton) {
-                                submitButton.classList.remove('loading');
-                            }
-                            logDebug('Login process completed');
-                        });
-                } catch (error) {
-                    // Handle any unexpected errors
-                    logDebug('Unexpected error during login', error);
-
-                    if (errorMessage) {
-                        errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> An unexpected error occurred. Please try again.`;
-                        errorMessage.style.display = 'block';
-                    }
-
-                    if (submitButton) {
-                        submitButton.classList.remove('loading');
-                    }
-                }
-            }, 500); // Small delay for better UX
-        });
-    } else {
-        logDebug('ERROR: Login form not found');
-    }
-
-    // Handle logout
-    if (logoutBtn) {
-        logDebug('Setting up logout button handler');
-
-        logoutBtn.addEventListener('click', function() {
-            logDebug('Logout button clicked');
-
-            // Show loading state
-            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
-            logoutBtn.disabled = true;
-
-            try {
-                // Check if Firebase Auth is available
-                if (typeof firebase === 'undefined' || typeof firebase.auth === 'undefined') {
-                    logDebug('ERROR: Firebase Auth not available for logout');
-                    alert('Error signing out: Firebase Auth not available. Please refresh the page.');
-
-                    // Reset the logout button
-                    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
-                    logoutBtn.disabled = false;
-                    return;
-                }
-
-                logDebug('Attempting to sign out with Firebase Auth');
-                firebase.auth().signOut()
-                    .then(() => {
-                        // Logout successful, show login form
-                        logDebug('Logout successful');
-
-                        if (dashboardSection && loginSection) {
-                            dashboardSection.style.display = 'none';
-                            loginSection.style.display = 'block';
-                            logDebug('Login form displayed after logout');
-                        } else {
-                            logDebug('ERROR: Could not find login or dashboard sections for logout');
-                        }
-
-                        // Clear session storage
-                        try {
-                            sessionStorage.removeItem('rsvp_dashboard_logged_in');
-                            logDebug('Login state removed from session storage');
-                        } catch (e) {
-                            logDebug('Could not clear session storage', e);
-                        }
-                    })
-                    .catch((error) => {
-                        logDebug('Logout error', error);
-                        alert('Error signing out. Please try again.');
-                    })
-                    .finally(() => {
-                        // Reset the logout button
-                        logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
-                        logoutBtn.disabled = false;
-                        logDebug('Logout process completed');
-                    });
-            } catch (error) {
-                // Handle any unexpected errors
-                logDebug('Unexpected error during logout', error);
-                alert('An unexpected error occurred during logout. Please refresh the page.');
-
-                // Reset the logout button
-                logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
-                logoutBtn.disabled = false;
-            }
-        });
-    } else {
-        logDebug('ERROR: Logout button not found');
-    }
-
-    // Set persistence to SESSION (survives page refreshes but not closing the browser tab)
-    try {
-        if (firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
-            logDebug('Setting Firebase Auth persistence to SESSION');
-            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                .then(() => {
-                    logDebug('Firebase Auth persistence set successfully');
-                })
-                .catch((error) => {
-                    logDebug('Error setting auth persistence', error);
-                });
-        } else {
-            logDebug('WARNING: Firebase Auth Persistence not available');
-        }
-    } catch (error) {
-        logDebug('ERROR: Failed to set Firebase Auth persistence', error);
-    }
-
-    // Check if user is already logged in
-    try {
-        logDebug('Setting up Firebase Auth state change listener');
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                // User is signed in, show dashboard
-                logDebug('User is signed in', { uid: user.uid, email: user.email });
-
-                if (loginSection && dashboardSection) {
-                    loginSection.style.display = 'none';
-                    dashboardSection.style.display = 'block';
-                    logDebug('Dashboard displayed');
-                } else {
-                    logDebug('ERROR: Could not find login or dashboard sections');
-                }
-
-                // Fetch RSVP submissions and guest list
-                fetchSubmissions();
-                fetchGuestList();
-            } else {
-                // User is signed out, show login form
-                logDebug('User is signed out');
-
-                if (dashboardSection) {
-                    dashboardSection.style.display = 'none';
-                }
-
-                // Add a subtle animation to the login container
-                setTimeout(() => {
-                    const loginContainer = document.querySelector('.login-container');
-                    if (loginContainer) {
-                        loginContainer.style.opacity = '0';
-                        loginContainer.style.transform = 'translateY(20px)';
-
-                        setTimeout(() => {
-                            loginContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                            loginContainer.style.opacity = '1';
-                            loginContainer.style.transform = 'translateY(0)';
-                        }, 50);
-                    }
-                }, 100);
-
-                if (loginSection) {
-                    loginSection.style.display = 'block';
-                    logDebug('Login form displayed');
-                } else {
-                    logDebug('ERROR: Login section not found');
-                }
-            }
-        }, function(error) {
-            logDebug('Error in auth state change listener', error);
-        });
-    } catch (error) {
-        logDebug('ERROR: Failed to set up auth state change listener', error);
-
-        if (errorMessage) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Failed to check login status. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-        }
-    }
+    // Login functionality has been moved to simple-login.js
 
     // Fetch submissions from Firestore
     function fetchSubmissions() {
@@ -1049,33 +458,30 @@ const totalSubmissionsElement = document.getElementById('response-rate');
             ? ((notAttendingCount / totalSubmissions) * 100).toFixed(1)
             : 0;
 
-        // Update DOM elements (with null checks)
-        if (totalSubmissionsElement) totalSubmissionsElement.textContent = totalSubmissions;
-        if (attendingCountElement) attendingCountElement.textContent = attendingCount;
-        if (notAttendingCountElement) notAttendingCountElement.textContent = notAttendingCount;
-        if (totalGuestsElement) totalGuestsElement.textContent = totalGuests;
+        // Update DOM elements
+        totalSubmissionsElement.textContent = totalSubmissions;
+        attendingCountElement.textContent = attendingCount;
+        notAttendingCountElement.textContent = notAttendingCount;
+        totalGuestsElement.textContent = totalGuests;
 
-        // Update subtext elements (with null checks)
-        const totalSubmissionsPercentElement = document.getElementById('total-submissions-percent');
-        const attendingPercentElement = document.getElementById('attending-percent');
-        const notAttendingPercentElement = document.getElementById('not-attending-percent');
-        const avgPartySizeElement = document.getElementById('avg-party-size');
-        const responseRateElement = document.getElementById('response-rate');
+        // Update subtext elements
+        document.getElementById('total-submissions-percent').textContent =
+            `${responseRate}% of expected invites`;
+        document.getElementById('attending-percent').textContent =
+            `${attendingPercent}% of responses`;
+        document.getElementById('not-attending-percent').textContent =
+            `${notAttendingPercent}% of responses`;
+        document.getElementById('avg-party-size').textContent =
+            `Avg party size: ${avgPartySize}`;
+        document.getElementById('response-rate').textContent =
+            `${responseRate}%`;
 
-        if (totalSubmissionsPercentElement) totalSubmissionsPercentElement.textContent = `${responseRate}% of expected invites`;
-        if (attendingPercentElement) attendingPercentElement.textContent = `${attendingPercent}% of responses`;
-        if (notAttendingPercentElement) notAttendingPercentElement.textContent = `${notAttendingPercent}% of responses`;
-        if (avgPartySizeElement) avgPartySizeElement.textContent = `Avg party size: ${avgPartySize}`;
-        if (responseRateElement) responseRateElement.textContent = `${responseRate}%`;
-
-        // Update latest RSVP info (with null checks)
+        // Update latest RSVP info
         if (latestRsvp.submittedAt) {
             const formattedDate = latestRsvp.submittedAt.toLocaleDateString();
-            const latestRsvpElement = document.getElementById('latest-rsvp');
-            const latestRsvpTimeElement = document.getElementById('latest-rsvp-time');
-
-            if (latestRsvpElement) latestRsvpElement.textContent = latestRsvp.name || 'Unknown';
-            if (latestRsvpTimeElement) latestRsvpTimeElement.textContent = `Submitted on ${formattedDate}`;
+            document.getElementById('latest-rsvp').textContent = latestRsvp.name || 'Unknown';
+            document.getElementById('latest-rsvp-time').textContent =
+                `Submitted on ${formattedDate}`;
         }
     }
 
@@ -1146,12 +552,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const categoryResponseChartCanvas = document.getElementById('category-response-chart');
         const categoryDistributionChartCanvas = document.getElementById('category-distribution-chart');
 
-        // Check if any of the required canvas elements are missing
-        if (!categoryResponseChartCanvas && !categoryDistributionChartCanvas) {
-            console.log('No category chart canvas elements found, skipping chart creation');
-            return;
-        }
-
         // Destroy existing charts if they exist
         if (window.categoryResponseChart instanceof Chart) {
             window.categoryResponseChart.destroy();
@@ -1191,9 +591,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         categoryStats.sort((a, b) => b.responseRate - a.responseRate);
 
         // Create response rate chart
-        // Only create category response chart if canvas exists
-        if (categoryResponseChartCanvas) {
-            window.categoryResponseChart = new Chart(categoryResponseChartCanvas, {
+        window.categoryResponseChart = new Chart(categoryResponseChartCanvas, {
             type: 'bar',
             data: {
                 labels: categoryStats.map(stat => stat.category),
@@ -1245,12 +643,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
-        }
 
         // Create category distribution chart
-        // Only create category distribution chart if canvas exists
-        if (categoryDistributionChartCanvas) {
-            window.categoryDistributionChart = new Chart(categoryDistributionChartCanvas, {
+        window.categoryDistributionChart = new Chart(categoryDistributionChartCanvas, {
             type: 'pie',
             data: {
                 labels: categories,
@@ -1289,7 +684,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
-        }
     }
 
     // Create charts
@@ -1299,13 +693,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const timelineChartCanvas = document.getElementById('timeline-chart');
         const guestCountChartCanvas = document.getElementById('guest-count-chart');
         const cumulativeGuestsChartCanvas = document.getElementById('cumulative-guests-chart');
-
-        // Check if any of the required canvas elements are missing
-        if (!attendanceChartCanvas && !timelineChartCanvas &&
-            !guestCountChartCanvas && !cumulativeGuestsChartCanvas) {
-            console.log('No chart canvas elements found, skipping chart creation');
-            return;
-        }
 
         // Destroy existing charts if they exist
         if (window.attendanceChart instanceof Chart) {
@@ -1325,9 +712,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
 
-        // Only create attendance chart if canvas exists
-        if (attendanceChartCanvas) {
-            window.attendanceChart = new Chart(attendanceChartCanvas, {
+        window.attendanceChart = new Chart(attendanceChartCanvas, {
             type: 'pie',
             data: {
                 labels: ['Attending', 'Not Attending'],
@@ -1378,9 +763,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
             cumulativeCounts.push(runningTotal);
         });
 
-        // Only create timeline chart if canvas exists
-        if (timelineChartCanvas) {
-            window.timelineChart = new Chart(timelineChartCanvas, {
+        window.timelineChart = new Chart(timelineChartCanvas, {
             type: 'line',
             data: {
                 labels: sortedDates,
@@ -1440,7 +823,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
-        }
 
         // Guest count distribution chart
         const guestCountDistribution = {};
@@ -1454,9 +836,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const guestCounts = Object.keys(guestCountDistribution).sort((a, b) => parseInt(a) - parseInt(b));
         const guestCountValues = guestCounts.map(count => guestCountDistribution[count]);
 
-        // Only create guest count chart if canvas exists
-        if (guestCountChartCanvas) {
-            window.guestCountChart = new Chart(guestCountChartCanvas, {
+        window.guestCountChart = new Chart(guestCountChartCanvas, {
             type: 'bar',
             data: {
                 labels: guestCounts.map(count => `${count} ${parseInt(count) === 1 ? 'Guest' : 'Guests'}`),
@@ -1496,7 +876,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
-        }
 
         // Cumulative guests chart
         // First, sort submissions by date
@@ -1518,9 +897,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const guestDates = Object.keys(guestsByDate).sort((a, b) => new Date(a) - new Date(b));
         const guestTotals = guestDates.map(date => guestsByDate[date]);
 
-        // Only create cumulative guests chart if canvas exists
-        if (cumulativeGuestsChartCanvas) {
-            window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
+        window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
             type: 'line',
             data: {
                 labels: guestDates,
@@ -1563,7 +940,6 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
-        }
     }
 
     // Display submissions in table
