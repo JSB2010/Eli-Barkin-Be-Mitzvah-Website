@@ -53,22 +53,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginForm.reset();
 
                 // Load dashboard data
-                console.log('Checking if fetchSubmissions is available:', typeof fetchSubmissions);
-                console.log('Checking if fetchGuestList is available:', typeof fetchGuestList);
+                console.log('Loading dashboard data after successful login');
 
-                if (typeof fetchSubmissions === 'function') {
-                    console.log('Calling fetchSubmissions...');
-                    fetchSubmissions();
-                } else {
-                    console.error('fetchSubmissions function is not available');
-                }
+                // Use a small delay to ensure the RSVP system is fully initialized
+                setTimeout(function() {
+                    if (typeof fetchSubmissions === 'function') {
+                        console.log('Calling fetchSubmissions...');
+                        fetchSubmissions();
+                    } else {
+                        console.error('fetchSubmissions function is not available');
+                    }
 
-                if (typeof fetchGuestList === 'function') {
-                    console.log('Calling fetchGuestList...');
-                    fetchGuestList();
-                } else {
-                    console.error('fetchGuestList function is not available');
-                }
+                    if (typeof fetchGuestList === 'function') {
+                        console.log('Calling fetchGuestList...');
+                        fetchGuestList();
+                    } else {
+                        console.error('fetchGuestList function is not available');
+                    }
+                }, 500);
             })
             .catch((error) => {
                 console.error('Login error:', error.code, error.message);
@@ -137,22 +139,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Load dashboard data
-            console.log('Auth state changed - Checking if fetchSubmissions is available:', typeof fetchSubmissions);
-            console.log('Auth state changed - Checking if fetchGuestList is available:', typeof fetchGuestList);
+            console.log('Auth state changed - Loading dashboard data');
 
-            if (typeof fetchSubmissions === 'function') {
-                console.log('Auth state changed - Calling fetchSubmissions...');
-                fetchSubmissions();
-            } else {
-                console.error('Auth state changed - fetchSubmissions function is not available');
-            }
+            // Use a small delay to ensure the RSVP system is fully initialized
+            setTimeout(function() {
+                if (typeof fetchSubmissions === 'function') {
+                    console.log('Auth state changed - Calling fetchSubmissions...');
+                    fetchSubmissions();
+                } else {
+                    console.error('Auth state changed - fetchSubmissions function is not available');
+                }
 
-            if (typeof fetchGuestList === 'function') {
-                console.log('Auth state changed - Calling fetchGuestList...');
-                fetchGuestList();
-            } else {
-                console.error('Auth state changed - fetchGuestList function is not available');
-            }
+                if (typeof fetchGuestList === 'function') {
+                    console.log('Auth state changed - Calling fetchGuestList...');
+                    fetchGuestList();
+                } else {
+                    console.error('Auth state changed - fetchGuestList function is not available');
+                }
+            }, 500);
         } else {
             // User is signed out
             if (dashboardSection && loginSection) {
