@@ -715,6 +715,12 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const categoryResponseChartCanvas = document.getElementById('category-response-chart');
         const categoryDistributionChartCanvas = document.getElementById('category-distribution-chart');
 
+        // Check if any of the required canvas elements are missing
+        if (!categoryResponseChartCanvas && !categoryDistributionChartCanvas) {
+            console.log('No category chart canvas elements found, skipping chart creation');
+            return;
+        }
+
         // Destroy existing charts if they exist
         if (window.categoryResponseChart instanceof Chart) {
             window.categoryResponseChart.destroy();
@@ -754,7 +760,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         categoryStats.sort((a, b) => b.responseRate - a.responseRate);
 
         // Create response rate chart
-        window.categoryResponseChart = new Chart(categoryResponseChartCanvas, {
+        // Only create category response chart if canvas exists
+        if (categoryResponseChartCanvas) {
+            window.categoryResponseChart = new Chart(categoryResponseChartCanvas, {
             type: 'bar',
             data: {
                 labels: categoryStats.map(stat => stat.category),
@@ -806,9 +814,12 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
+        }
 
         // Create category distribution chart
-        window.categoryDistributionChart = new Chart(categoryDistributionChartCanvas, {
+        // Only create category distribution chart if canvas exists
+        if (categoryDistributionChartCanvas) {
+            window.categoryDistributionChart = new Chart(categoryDistributionChartCanvas, {
             type: 'pie',
             data: {
                 labels: categories,
@@ -847,6 +858,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
+        }
     }
 
     // Create charts
@@ -856,6 +868,13 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const timelineChartCanvas = document.getElementById('timeline-chart');
         const guestCountChartCanvas = document.getElementById('guest-count-chart');
         const cumulativeGuestsChartCanvas = document.getElementById('cumulative-guests-chart');
+
+        // Check if any of the required canvas elements are missing
+        if (!attendanceChartCanvas && !timelineChartCanvas &&
+            !guestCountChartCanvas && !cumulativeGuestsChartCanvas) {
+            console.log('No chart canvas elements found, skipping chart creation');
+            return;
+        }
 
         // Destroy existing charts if they exist
         if (window.attendanceChart instanceof Chart) {
@@ -875,7 +894,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
 
-        window.attendanceChart = new Chart(attendanceChartCanvas, {
+        // Only create attendance chart if canvas exists
+        if (attendanceChartCanvas) {
+            window.attendanceChart = new Chart(attendanceChartCanvas, {
             type: 'pie',
             data: {
                 labels: ['Attending', 'Not Attending'],
@@ -926,7 +947,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
             cumulativeCounts.push(runningTotal);
         });
 
-        window.timelineChart = new Chart(timelineChartCanvas, {
+        // Only create timeline chart if canvas exists
+        if (timelineChartCanvas) {
+            window.timelineChart = new Chart(timelineChartCanvas, {
             type: 'line',
             data: {
                 labels: sortedDates,
@@ -986,6 +1009,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
+        }
 
         // Guest count distribution chart
         const guestCountDistribution = {};
@@ -999,7 +1023,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const guestCounts = Object.keys(guestCountDistribution).sort((a, b) => parseInt(a) - parseInt(b));
         const guestCountValues = guestCounts.map(count => guestCountDistribution[count]);
 
-        window.guestCountChart = new Chart(guestCountChartCanvas, {
+        // Only create guest count chart if canvas exists
+        if (guestCountChartCanvas) {
+            window.guestCountChart = new Chart(guestCountChartCanvas, {
             type: 'bar',
             data: {
                 labels: guestCounts.map(count => `${count} ${parseInt(count) === 1 ? 'Guest' : 'Guests'}`),
@@ -1039,6 +1065,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
+        }
 
         // Cumulative guests chart
         // First, sort submissions by date
@@ -1060,7 +1087,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         const guestDates = Object.keys(guestsByDate).sort((a, b) => new Date(a) - new Date(b));
         const guestTotals = guestDates.map(date => guestsByDate[date]);
 
-        window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
+        // Only create cumulative guests chart if canvas exists
+        if (cumulativeGuestsChartCanvas) {
+            window.cumulativeGuestsChart = new Chart(cumulativeGuestsChartCanvas, {
             type: 'line',
             data: {
                 labels: guestDates,
@@ -1103,6 +1132,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                 }
             }
         });
+        }
     }
 
     // Display submissions in table
