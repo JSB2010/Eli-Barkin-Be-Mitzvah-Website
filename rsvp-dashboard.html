@@ -49,16 +49,28 @@
             --black: #111827;
             --success: #10b981;
             --success-light: #d1fae5;
+            --success-dark: #047857;
             --warning: #f59e0b;
             --warning-light: #fef3c7;
+            --warning-dark: #d97706;
             --danger: #ef4444;
             --danger-light: #fee2e2;
+            --danger-dark: #dc2626;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --info-dark: #0284c7;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --section-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             --transition: all 0.3s ease;
             --border-radius: 12px;
             --border-radius-sm: 8px;
             --border-radius-lg: 16px;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
         }
 
         * {
@@ -787,66 +799,145 @@
         }
 
         /* Utilities Section Styles */
+        .dashboard-section:last-child {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        /* Utilities section header - overrides the dashboard section header */
+        .dashboard-section:last-child .section-header {
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .dashboard-section:last-child .section-header h2 {
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .dashboard-section:last-child .section-header i {
+            color: var(--primary-blue);
+            font-size: 1.25rem;
+        }
+
         .utilities-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
         }
 
         .utility-card {
             background-color: var(--white);
-            border-radius: var(--border-radius-sm);
+            border-radius: var(--border-radius);
             box-shadow: var(--card-shadow);
             overflow: hidden;
             transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
         .utility-card:hover {
             transform: translateY(-5px);
-            box-shadow: var(--section-shadow);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .utility-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .utility-card:nth-child(2)::before {
+            background-color: var(--warning);
+        }
+
+        .utility-card:nth-child(3)::before {
+            background-color: var(--info);
+        }
+
+        .utility-card:nth-child(4)::before {
+            background-color: var(--success);
+        }
+
+        .utility-card:nth-child(5)::before {
+            background-color: var(--danger);
         }
 
         .utility-header {
-            background-color: var(--light-blue);
-            padding: 1rem 1.5rem;
+            padding: var(--spacing-md) var(--spacing-lg);
             border-bottom: 1px solid var(--medium-gray);
+            background-color: var(--white);
         }
 
         .utility-header h3 {
-            color: var(--primary-blue-dark);
+            color: var(--dark-gray);
             font-size: 1.1rem;
             font-weight: 600;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .utility-header h3 i {
+            color: inherit;
+            font-size: 1rem;
         }
 
         .utility-content {
-            padding: 1.5rem;
+            padding: var(--spacing-lg);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .utility-content p {
-            margin-bottom: 1.25rem;
+            margin-bottom: var(--spacing-lg);
             color: var(--dark-gray);
+            line-height: 1.5;
         }
 
         .utility-actions {
             display: flex;
-            gap: 1rem;
+            gap: var(--spacing-md);
             flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .utility-help {
+            margin-top: var(--spacing-md);
+            color: var(--dark-gray);
+            font-size: 0.85rem;
+            opacity: 0.8;
         }
 
         .utility-results {
             background-color: var(--white);
-            border-radius: var(--border-radius-sm);
+            border-radius: var(--border-radius);
             box-shadow: var(--card-shadow);
-            margin-top: 1.5rem;
+            margin-top: var(--spacing-lg);
             overflow: hidden;
             animation: fadeIn 0.3s ease-in-out;
+            border: 1px solid var(--medium-gray);
         }
 
         .utility-results-header {
-            background-color: var(--light-blue);
-            padding: 1rem 1.5rem;
+            background-color: var(--light-gray);
+            padding: var(--spacing-md) var(--spacing-lg);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -854,50 +945,82 @@
         }
 
         .utility-results-header h3 {
-            color: var(--primary-blue-dark);
+            color: var(--dark-gray);
             font-size: 1.1rem;
             font-weight: 600;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
 
         .utility-results-content {
-            padding: 1.5rem;
-            max-height: 300px;
+            padding: var(--spacing-lg);
+            max-height: 400px;
             overflow-y: auto;
         }
 
         .test-users-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
         }
 
         .test-user-badge {
-            background-color: var(--light-blue);
-            color: var(--primary-blue-dark);
+            background-color: var(--warning-light);
+            color: var(--warning-dark);
             padding: 0.35rem 0.75rem;
             border-radius: 50px;
             font-size: 0.85rem;
             font-weight: 600;
+            transition: var(--transition);
         }
 
-        .btn.warning {
+        .test-user-badge:hover {
             background-color: var(--warning);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        /* Button styles are defined earlier in the document */
+
+        /* Additional button styles for utilities */
+        .btn.info {
+            background-color: var(--info);
+            color: var(--white);
+        }
+
+        .btn.info:hover {
+            background-color: var(--info-dark);
+        }
+
+        .btn.danger {
+            background-color: var(--danger);
             color: white;
         }
 
-        .btn.warning:hover {
-            background-color: var(--warning-dark);
+        .btn.danger:hover {
+            background-color: var(--danger-dark);
         }
 
-        .btn.success {
-            background-color: var(--success);
-            color: white;
-        }
+        @media (max-width: 768px) {
+            .utilities-container {
+                grid-template-columns: 1fr;
+            }
 
-        .btn.success:hover {
-            background-color: var(--success-dark);
+            .utility-card {
+                margin-bottom: var(--spacing-md);
+            }
+
+            .utility-actions {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .utility-actions .btn {
+                width: 100%;
+            }
         }
 
         /* Status badges */
@@ -1799,7 +1922,7 @@
                                     </div>
                                 </div>
                                 <button id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
-                                <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
+                                <button id="export-guest-list-btn-main" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
                             </div>
                         </div>
 
@@ -1848,7 +1971,7 @@
                                         <option value="large-party">Large Parties (4+)</option>
                                     </select>
                                 </div>
-                                <button id="export-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
+                                <button id="export-rsvps-btn-main" class="btn"><i class="fas fa-download"></i> Export CSV</button>
                             </div>
                         </div>
 
@@ -1929,7 +2052,7 @@
                     <div class="utilities-container">
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3>Google Sheet Sync</h3>
+                                <h3><i class="fas fa-sync-alt"></i> Google Sheet Sync</h3>
                             </div>
                             <div class="utility-content">
                                 <p>Sync data between Firebase and Google Sheets.</p>
@@ -1942,12 +2065,12 @@
 
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3>Test User Management</h3>
+                                <h3><i class="fas fa-user-edit"></i> Test User Management</h3>
                             </div>
                             <div class="utility-content">
                                 <p>Reset test users to test the RSVP process again.</p>
                                 <div class="utility-actions">
-                                    <button id="reset-test-users-btn" class="btn warning"><i class="fas fa-user-edit"></i> Reset Test Users</button>
+                                    <button id="reset-test-users-btn" class="btn warning"><i class="fas fa-undo"></i> Reset Test Users</button>
                                 </div>
                                 <div class="test-users-list">
                                     <span class="test-user-badge">Jacob Barkin</span>
@@ -1959,10 +2082,55 @@
 
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3>Data Management</h3>
+                                <h3><i class="fas fa-file-export"></i> Export Data</h3>
                             </div>
                             <div class="utility-content">
-                                <p>Manage your RSVP data.</p>
+                                <p>Export data to CSV files for offline use.</p>
+                                <div class="utility-actions">
+                                    <button id="export-guest-list-btn" class="btn info"><i class="fas fa-users"></i> Export Guest List</button>
+                                    <button id="export-rsvps-btn" class="btn info"><i class="fas fa-clipboard-list"></i> Export RSVPs</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-file-import"></i> Import Data</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Import guests from a CSV file.</p>
+                                <div class="utility-actions">
+                                    <button id="bulk-add-guests-btn" class="btn success"><i class="fas fa-upload"></i> Upload CSV</button>
+                                    <input type="file" id="file-upload-input" accept=".csv" style="display: none;">
+                                </div>
+                                <div class="utility-help">
+                                    <small>CSV format: Name, Email, Phone, Address, City, State, Zip, Category</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-database"></i> Database Management</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Manage your database data.</p>
+                                <div class="utility-actions">
+                                    <button id="backup-database-btn" class="btn primary"><i class="fas fa-download"></i> Backup Database</button>
+                                    <button id="clear-test-data-btn" class="btn danger"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
+                                </div>
+                                <div class="utility-help">
+                                    <small>Warning: Clear Test Data will remove all test submissions</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-tools"></i> Quick Actions</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Common dashboard actions.</p>
                                 <div class="utility-actions">
                                     <button id="refresh-data-btn-util" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
                                     <button id="add-guest-btn-util" class="btn success"><i class="fas fa-user-plus"></i> Add Guest</button>

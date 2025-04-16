@@ -608,6 +608,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Get main dashboard buttons
+    const exportGuestListBtnMain = document.getElementById('export-guest-list-btn-main');
+    const exportRsvpsBtnMain = document.getElementById('export-rsvps-btn-main');
+
     // Add event listeners to buttons
     if (syncSheetToFirebaseBtn) {
         syncSheetToFirebaseBtn.addEventListener('click', syncSheetToFirebase);
@@ -625,8 +629,16 @@ document.addEventListener('DOMContentLoaded', function() {
         exportGuestListBtn.addEventListener('click', exportGuestList);
     }
 
+    if (exportGuestListBtnMain) {
+        exportGuestListBtnMain.addEventListener('click', exportGuestList);
+    }
+
     if (exportRsvpsBtn) {
         exportRsvpsBtn.addEventListener('click', exportRsvpSubmissions);
+    }
+
+    if (exportRsvpsBtnMain) {
+        exportRsvpsBtnMain.addEventListener('click', exportRsvpSubmissions);
     }
 
     if (backupDatabaseBtn) {
