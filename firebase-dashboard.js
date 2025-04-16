@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingElement = document.getElementById('loading');
     // tableContainer is already defined above
     const submissionsBody = document.getElementById('submissions-body');
-    const totalSubmissionsElement = document.getElementById('total-submissions');
+    // Use the response-rate element instead of total-submissions
+const totalSubmissionsElement = document.getElementById('response-rate');
     const attendingCountElement = document.getElementById('attending-count');
     const notAttendingCountElement = document.getElementById('not-attending-count');
     const totalGuestsElement = document.getElementById('total-guests');
@@ -617,11 +618,11 @@ document.addEventListener('DOMContentLoaded', function() {
             ? ((notAttendingCount / totalSubmissions) * 100).toFixed(1)
             : 0;
 
-        // Update DOM elements
-        totalSubmissionsElement.textContent = totalSubmissions;
-        attendingCountElement.textContent = attendingCount;
-        notAttendingCountElement.textContent = notAttendingCount;
-        totalGuestsElement.textContent = totalGuests;
+        // Update DOM elements (with null checks)
+        if (totalSubmissionsElement) totalSubmissionsElement.textContent = totalSubmissions;
+        if (attendingCountElement) attendingCountElement.textContent = attendingCount;
+        if (notAttendingCountElement) notAttendingCountElement.textContent = notAttendingCount;
+        if (totalGuestsElement) totalGuestsElement.textContent = totalGuests;
 
         // Update subtext elements
         document.getElementById('total-submissions-percent').textContent =
