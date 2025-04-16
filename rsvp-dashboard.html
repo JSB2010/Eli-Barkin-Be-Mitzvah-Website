@@ -807,85 +807,7 @@
             color: var(--danger);
         }
 
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--white);
-            border-radius: 12px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: var(--card-shadow);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--medium-gray);
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary-blue);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--dark-gray);
-            transition: var(--transition);
-        }
-
-        .modal-close:hover {
-            color: var(--danger);
-        }
-
-        .modal-body {
-            margin-bottom: 1.5rem;
-        }
-
-        .detail-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: var(--dark-gray);
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
-        }
-
-        .detail-value {
-            font-size: 1.1rem;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--medium-gray);
-        }
+        /* Modal styles - removed duplicates */
 
         /* Dashboard Sections */
         .dashboard-section {
@@ -1263,17 +1185,6 @@
         }
 
         /* Notification styles */
-        .export-success {
-            background-color: var(--success-green);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            margin-left: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            animation: fadeIn 0.3s ease-in-out;
-        }
 
         .notification {
             position: fixed;
@@ -1289,22 +1200,23 @@
             z-index: 1000;
             animation: slideIn 0.3s ease-out;
             max-width: 400px;
+            font-weight: 500;
         }
 
         .sync-success {
-            background-color: var(--success-green);
+            background-color: var(--success);
         }
 
         .sync-error {
-            background-color: var(--error-red);
+            background-color: var(--danger);
         }
 
         .status-pending {
-            color: var(--warning-orange);
+            color: var(--warning);
         }
 
         .status-error {
-            color: var(--error-red);
+            color: var(--danger);
         }
 
         @keyframes slideIn {
@@ -1314,6 +1226,138 @@
             }
             to {
                 transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            animation: slideDown 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            background-color: var(--primary-blue-dark);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: flex-end;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .modal-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 576px) {
+            .modal-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .detail-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .detail-value.address {
+            line-height: 1.6;
+        }
+
+        .guest-list {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.25rem;
+        }
+
+        .guest-list li {
+            margin-bottom: 0.25rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
                 opacity: 1;
             }
         }

@@ -188,6 +188,46 @@ const RSVPSystem = {
                 });
             });
         }
+
+        // Set up view details buttons for submissions
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.view-details')) {
+                const button = e.target.closest('.view-details');
+                const submissionId = button.getAttribute('data-id');
+                if (submissionId) {
+                    this.showSubmissionDetails(submissionId);
+                }
+            }
+        });
+
+        // Set up view details buttons for guest list
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.view-guest-details')) {
+                const button = e.target.closest('.view-guest-details');
+                const guestId = button.getAttribute('data-id');
+                if (guestId) {
+                    this.showGuestDetails(guestId);
+                }
+            }
+        });
+
+        // Set up modal close buttons
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modal = button.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
     },
 
     // Show loading state
@@ -1449,6 +1489,206 @@ const RSVPSystem = {
         } else {
             return '';
         }
+    },
+
+    // Show submission details in modal
+    showSubmissionDetails: function(submissionId) {
+        console.log('Showing submission details for ID:', submissionId);
+
+        // Find the submission
+        const submission = this.state.submissions.find(s => s.id === submissionId);
+        if (!submission) {
+            console.error('Submission not found with ID:', submissionId);
+            return;
+        }
+
+        // Get the modal elements
+        const modal = document.getElementById('rsvp-modal');
+        const modalBody = document.getElementById('modal-body');
+        const modalTitle = modal.querySelector('.modal-title');
+
+        if (!modal || !modalBody) return;
+
+        // Set the modal title
+        if (modalTitle) {
+            modalTitle.textContent = `RSVP Details: ${submission.name || 'Unknown'}`;
+        }
+
+        // Format date
+        const submissionDate = submission.submittedAt;
+        const formattedDate = submissionDate ?
+            submissionDate.toLocaleDateString() + ' ' + submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+            'Unknown';
+
+        // Format additional guests
+        const additionalGuests = submission.additionalGuests || [];
+        const formattedGuests = additionalGuests.length > 0 ?
+            `<ul class="guest-list">${additionalGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
+            'None';
+
+        // Create the content
+        const content = `
+            <div class="modal-details">
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <span class="detail-label">Submission Date:</span>
+                        <span class="detail-value">${formattedDate}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value">${submission.name || 'Not provided'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${submission.email || 'Not provided'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value">${submission.phone || 'Not provided'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <span class="detail-label">Attending:</span>
+                        <span class="detail-value status-badge ${submission.attending === 'yes' ? 'status-attending' : 'status-not-attending'}">
+                            ${submission.attending === 'yes' ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No'}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Guest Count:</span>
+                        <span class="detail-value">${submission.guestCount || 1}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Additional Guests:</span>
+                        <div class="detail-value">${formattedGuests}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Set the content
+        modalBody.innerHTML = content;
+
+        // Show the modal
+        modal.style.display = 'block';
+    },
+
+    // Show guest details in modal
+    showGuestDetails: function(guestId) {
+        console.log('Showing guest details for ID:', guestId);
+
+        // Find the guest
+        const guest = this.state.guests.find(g => g.id === guestId);
+        if (!guest) {
+            console.error('Guest not found with ID:', guestId);
+            return;
+        }
+
+        // Get the modal elements
+        const modal = document.getElementById('guest-modal');
+        const modalBody = document.getElementById('guest-modal-body');
+        const modalTitle = modal.querySelector('.modal-title');
+
+        if (!modal || !modalBody) return;
+
+        // Set the modal title
+        if (modalTitle) {
+            modalTitle.textContent = `Guest Details: ${guest.name || 'Unknown'}`;
+        }
+
+        // Format address
+        let formattedAddress = 'Not provided';
+        if (guest.address) {
+            const addressParts = [];
+            if (guest.address.line1) addressParts.push(guest.address.line1);
+            if (guest.address.line2) addressParts.push(guest.address.line2);
+
+            const cityStateZip = [];
+            if (guest.address.city) cityStateZip.push(guest.address.city);
+            if (guest.address.state) cityStateZip.push(guest.address.state);
+            if (guest.address.zip) cityStateZip.push(guest.address.zip);
+
+            if (cityStateZip.length > 0) addressParts.push(cityStateZip.join(', '));
+            if (guest.address.country) addressParts.push(guest.address.country);
+
+            if (addressParts.length > 0) {
+                formattedAddress = addressParts.join('<br>');
+            }
+        }
+
+        // Format additional guests
+        const additionalGuests = guest.additionalGuests || [];
+        const formattedGuests = additionalGuests.length > 0 ?
+            `<ul class="guest-list">${additionalGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
+            'None';
+
+        // Format submission date
+        const submissionDate = guest.submittedAt;
+        const formattedDate = submissionDate ?
+            submissionDate.toLocaleDateString() + ' ' + submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+            'Not submitted';
+
+        // Create the content
+        const content = `
+            <div class="modal-details">
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value">${guest.name || 'Not provided'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${guest.email || 'Not provided'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value">${guest.phone || 'Not provided'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Address:</span>
+                        <span class="detail-value address">${formattedAddress}</span>
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value response-status ${guest.hasResponded ? 'status-responded' : 'status-not-responded'}">
+                            ${guest.hasResponded ?
+                                '<i class="fas fa-check-circle"></i> Responded' :
+                                '<i class="fas fa-clock"></i> Pending'}
+                        </span>
+                    </div>
+                    ${guest.hasResponded ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Response:</span>
+                        <span class="detail-value status-badge ${guest.response === 'attending' ? 'status-attending' : 'status-not-attending'}">
+                            ${this.formatGuestResponse(guest.response)}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Guest Count:</span>
+                        <span class="detail-value">${guest.actualGuestCount || 0}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Additional Guests:</span>
+                        <div class="detail-value">${formattedGuests}</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Submission Date:</span>
+                        <span class="detail-value">${formattedDate}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // Set the content
+        modalBody.innerHTML = content;
+
+        // Show the modal
+        modal.style.display = 'block';
     }
 };
 
