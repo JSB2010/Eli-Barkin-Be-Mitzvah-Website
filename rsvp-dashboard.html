@@ -1378,12 +1378,12 @@
             <h2>RSVP Dashboard</h2>
             <p>Welcome to Eli's Be Mitzvah RSVP management system. Please enter your credentials to access the dashboard.</p>
             <div id="error-message" class="error-message"></div>
-            <div id="debug-panel" class="debug-panel" style="display: none;">
+            <div id="debug-panel" class="debug-panel" style="display: block;">
                 <h4>Debug Information</h4>
                 <div id="debug-info"></div>
                 <button type="button" id="toggle-debug-btn" class="btn secondary" style="margin-top: 10px; padding: 5px 10px; font-size: 0.8rem;">Hide Debug Info</button>
             </div>
-            <form id="login-form" class="login-form">
+            <form id="login-form" class="login-form" onsubmit="console.log('Form submitted directly'); return false;">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
@@ -1399,8 +1399,14 @@
                     <i class="fas fa-spinner spinner"></i>
                 </button>
                 <div style="margin-top: 15px; text-align: center;">
-                    <button type="button" id="show-debug-btn" class="btn secondary" style="padding: 5px 10px; font-size: 0.8rem; background: none; color: #6c757d; border: 1px solid #6c757d;">
+                    <button type="button" id="show-debug-btn" class="btn secondary" style="padding: 5px 10px; font-size: 0.8rem; background: none; color: #6c757d; border: 1px solid #6c757d; margin-right: 10px;">
                         <i class="fas fa-bug"></i> Show Debug Info
+                    </button>
+                    <button type="button" id="direct-login-btn" class="btn secondary" style="padding: 5px 10px; font-size: 0.8rem; background: none; color: #4caf50; border: 1px solid #4caf50; margin-right: 10px;">
+                        <i class="fas fa-sign-in-alt"></i> Direct Login
+                    </button>
+                    <button type="button" id="test-auth-btn" class="btn secondary" style="padding: 5px 10px; font-size: 0.8rem; background: none; color: #ff9800; border: 1px solid #ff9800;">
+                        <i class="fas fa-flask"></i> Test Auth
                     </button>
                 </div>
             </form>

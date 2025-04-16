@@ -1,21 +1,135 @@
+// Function to display error directly on the page
+function showError(message, error = null) {
+    console.error(message, error || '');
+
+    // Create error container if it doesn't exist
+    let errorContainer = document.getElementById('direct-error-container');
+    if (!errorContainer) {
+        errorContainer = document.createElement('div');
+        errorContainer.id = 'direct-error-container';
+        errorContainer.style.position = 'fixed';
+        errorContainer.style.top = '10px';
+        errorContainer.style.left = '10px';
+        errorContainer.style.right = '10px';
+        errorContainer.style.backgroundColor = '#f44336';
+        errorContainer.style.color = 'white';
+        errorContainer.style.padding = '15px';
+        errorContainer.style.borderRadius = '5px';
+        errorContainer.style.zIndex = '9999';
+        errorContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+        document.body.appendChild(errorContainer);
+    }
+
+    // Add error message
+    const errorMsg = document.createElement('div');
+    errorMsg.style.marginBottom = '10px';
+    errorMsg.innerHTML = `<strong>${message}</strong>`;
+    if (error) {
+        const errorDetails = document.createElement('pre');
+        errorDetails.style.marginTop = '5px';
+        errorDetails.style.fontSize = '12px';
+        errorDetails.style.whiteSpace = 'pre-wrap';
+        errorDetails.style.maxHeight = '100px';
+        errorDetails.style.overflow = 'auto';
+        errorDetails.textContent = typeof error === 'object' ? JSON.stringify(error, null, 2) : error.toString();
+        errorMsg.appendChild(errorDetails);
+    }
+    errorContainer.appendChild(errorMsg);
+
+    // Also try to show in error message element
+    const errorMessage = document.getElementById('error-message');
+    if (errorMessage) {
+        errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        errorMessage.style.display = 'block';
+    }
+}
+
 // Debug logging function
-function logDebug(message, data = null) {
+function logDebug(message, data = null, isError = false) {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] ${message}`;
-    console.log(logMessage, data || '');
+
+    if (isError) {
+        console.error(logMessage, data || '');
+    } else {
+        console.log(logMessage, data || '');
+    }
 
     // Add to debug panel if it exists
     const debugInfo = document.getElementById('debug-info');
     if (debugInfo) {
         const logEntry = document.createElement('div');
-        logEntry.innerHTML = `<strong>${timestamp}</strong>: ${message}`;
+        logEntry.style.marginBottom = '8px';
+        logEntry.style.borderLeft = isError ? '3px solid #f44336' : '3px solid #ccc';
+        logEntry.style.paddingLeft = '8px';
+        logEntry.innerHTML = `<strong>${timestamp}</strong>: <span style="${isError ? 'color: #f44336; font-weight: bold;' : ''}">${message}</span>`;
         if (data) {
             const pre = document.createElement('pre');
+            pre.style.background = '#f5f5f5';
+            pre.style.padding = '5px';
+            pre.style.borderRadius = '4px';
+            pre.style.marginTop = '5px';
+            pre.style.overflowX = 'auto';
             pre.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data.toString();
             logEntry.appendChild(pre);
         }
         debugInfo.appendChild(logEntry);
         debugInfo.scrollTop = debugInfo.scrollHeight;
+
+        // Also show in error message if it's an error
+        if (isError) {
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+                errorMessage.style.display = 'block';
+            }
+        }
+    }
+}
+
+// Function to test Firebase Auth directly
+function testFirebaseAuth() {
+    try {
+        showError('Testing Firebase Auth...');
+
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+            showError('Firebase SDK is not loaded');
+            return;
+        }
+
+        showError('Firebase SDK is loaded');
+
+        // Check if Auth is available
+        if (typeof firebase.auth === 'undefined') {
+            showError('Firebase Auth is not available');
+            return;
+        }
+
+        showError('Firebase Auth is available');
+
+        // Try to get auth instance
+        try {
+            const auth = firebase.auth();
+            showError('Firebase Auth instance created successfully');
+
+            // Try to get current user
+            const user = auth.currentUser;
+            showError('Current user: ' + (user ? user.email : 'No user signed in'));
+
+            // Try a sign in operation
+            auth.signInWithEmailAndPassword('test@example.com', 'password')
+                .then(result => {
+                    showError('Sign in attempt succeeded (unexpected)');
+                })
+                .catch(error => {
+                    showError('Sign in attempt failed as expected', error);
+                });
+        } catch (error) {
+            showError('Error creating Firebase Auth instance', error);
+        }
+    } catch (error) {
+        showError('Unexpected error in testFirebaseAuth', error);
     }
 }
 
@@ -27,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const showDebugBtn = document.getElementById('show-debug-btn');
     const toggleDebugBtn = document.getElementById('toggle-debug-btn');
     const debugPanel = document.getElementById('debug-panel');
+    const directLoginBtn = document.getElementById('direct-login-btn');
+    const testAuthBtn = document.getElementById('test-auth-btn');
 
     if (showDebugBtn && debugPanel) {
         showDebugBtn.addEventListener('click', function() {
@@ -49,27 +165,74 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Setup test auth button
+    if (testAuthBtn) {
+        testAuthBtn.addEventListener('click', function() {
+            logDebug('Test Auth button clicked');
+            testFirebaseAuth();
+        });
+    }
+
+    // Setup direct login button
+    if (directLoginBtn) {
+        directLoginBtn.addEventListener('click', function() {
+            logDebug('Direct login button clicked');
+
+            // Check Firebase availability
+            if (typeof firebase === 'undefined') {
+                logDebug('ERROR: Firebase SDK not available for direct login', null, true);
+                return;
+            }
+
+            if (typeof firebase.auth === 'undefined') {
+                logDebug('ERROR: Firebase Auth not available for direct login', null, true);
+                return;
+            }
+
+            try {
+                // Get email and password from form
+                const email = document.getElementById('email')?.value?.trim() || 'admin@elibarkin.com';
+                const password = document.getElementById('password')?.value || 'password123';
+
+                logDebug('Attempting direct login with Firebase Auth...', { email });
+
+                // Create a direct reference to auth
+                const auth = firebase.auth();
+
+                // Sign in directly
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        logDebug('Direct login successful', { uid: userCredential.user.uid });
+
+                        // Show dashboard
+                        if (loginSection && dashboardSection) {
+                            loginSection.style.display = 'none';
+                            dashboardSection.style.display = 'block';
+                            logDebug('Dashboard displayed after direct login');
+                        } else {
+                            logDebug('ERROR: Could not find login or dashboard sections', null, true);
+                        }
+                    })
+                    .catch((error) => {
+                        logDebug('Direct login error', error, true);
+                    });
+            } catch (error) {
+                logDebug('Unexpected error during direct login', error, true);
+            }
+        });
+    }
+
     // Check Firebase availability
     if (typeof firebase === 'undefined') {
-        logDebug('ERROR: Firebase SDK not loaded');
-        const errorMessage = document.getElementById('error-message');
-        if (errorMessage) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase SDK not loaded. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-        }
+        logDebug('ERROR: Firebase SDK not loaded', null, true);
         return;
     }
 
-    logDebug('Firebase SDK loaded', { version: firebase.SDK_VERSION });
+    logDebug('Firebase SDK loaded', { version: firebase.SDK_VERSION || 'unknown' });
 
     // Check Firebase Auth availability
     if (typeof firebase.auth === 'undefined') {
-        logDebug('ERROR: Firebase Auth not available');
-        const errorMessage = document.getElementById('error-message');
-        if (errorMessage) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Authentication not available. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-        }
+        logDebug('ERROR: Firebase Auth not available', null, true);
         return;
     }
 
@@ -77,12 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Check Firestore availability
     if (typeof firebase.firestore === 'undefined') {
-        logDebug('ERROR: Firebase Firestore not available');
-        const errorMessage = document.getElementById('error-message');
-        if (errorMessage) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Firestore not available. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-        }
+        logDebug('ERROR: Firebase Firestore not available', null, true);
         return;
     }
 
@@ -90,12 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Check if db is available
     if (typeof db === 'undefined') {
-        logDebug('ERROR: Firestore db instance not available');
-        const errorMessage = document.getElementById('error-message');
-        if (errorMessage) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firestore database not initialized. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-        }
+        logDebug('ERROR: Firestore db instance not available', null, true);
         return;
     }
 
@@ -205,14 +358,33 @@ const totalSubmissionsElement = document.getElementById('response-rate');
             }
 
             // Double-check Firebase Auth availability
-            if (typeof firebase === 'undefined' || typeof firebase.auth === 'undefined' || typeof firebase.auth() === 'undefined') {
-                const errorMsg = 'Firebase Authentication is not available. Please refresh the page and try again.';
-                logDebug(`ERROR: ${errorMsg}`);
+            if (typeof firebase === 'undefined') {
+                const errorMsg = 'Firebase SDK is not available. Please refresh the page and try again.';
+                logDebug(`ERROR: ${errorMsg}`, null, true);
 
-                if (errorMessage) {
-                    errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
-                    errorMessage.style.display = 'block';
+                if (submitButton) {
+                    submitButton.classList.remove('loading');
                 }
+                return;
+            }
+
+            if (typeof firebase.auth === 'undefined') {
+                const errorMsg = 'Firebase Authentication is not available. Please refresh the page and try again.';
+                logDebug(`ERROR: ${errorMsg}`, null, true);
+
+                if (submitButton) {
+                    submitButton.classList.remove('loading');
+                }
+                return;
+            }
+
+            try {
+                // This will throw an error if auth() is not properly initialized
+                const auth = firebase.auth();
+                logDebug('Firebase auth instance obtained successfully');
+            } catch (authError) {
+                const errorMsg = 'Error accessing Firebase Authentication. Please refresh the page and try again.';
+                logDebug(`ERROR: ${errorMsg}`, authError, true);
 
                 if (submitButton) {
                     submitButton.classList.remove('loading');
@@ -226,17 +398,35 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                     // Sign in with Firebase Authentication
                     logDebug('Attempting to sign in with Firebase Auth...', { email });
 
-                    firebase.auth().signInWithEmailAndPassword(email, password)
+                    // Create a direct reference to auth to avoid potential issues
+                    const auth = firebase.auth();
+                    logDebug('Auth reference created');
+
+                    // Add a direct error handler for the entire promise chain
+                    const loginPromise = auth.signInWithEmailAndPassword(email, password);
+                    logDebug('Login promise created');
+
+                    loginPromise
                         .then((userCredential) => {
                             // Login successful
                             logDebug('Login successful', { uid: userCredential.user.uid });
+
+                            // Log user details for debugging
+                            const user = userCredential.user;
+                            logDebug('User details', {
+                                uid: user.uid,
+                                email: user.email,
+                                emailVerified: user.emailVerified,
+                                isAnonymous: user.isAnonymous,
+                                providerData: user.providerData
+                            });
 
                             // Store login state in session storage
                             try {
                                 sessionStorage.setItem('rsvp_dashboard_logged_in', 'true');
                                 logDebug('Login state saved to session storage');
                             } catch (e) {
-                                logDebug('Could not save login state to session storage', e);
+                                logDebug('Could not save login state to session storage', e, true);
                             }
 
                             // Show dashboard
@@ -245,7 +435,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                                 dashboardSection.style.display = 'block';
                                 logDebug('Dashboard displayed');
                             } else {
-                                logDebug('ERROR: Could not find login or dashboard sections');
+                                logDebug('ERROR: Could not find login or dashboard sections', null, true);
                             }
 
                             // Reset form
@@ -255,7 +445,7 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                             fetchSubmissions();
                         })
                         .catch((error) => {
-                            logDebug('Login error', { code: error.code, message: error.message });
+                            logDebug('Login error', { code: error.code, message: error.message }, true);
 
                             // Show appropriate error message
                             let errorMsg = 'Invalid email or password';
@@ -275,6 +465,9 @@ const totalSubmissionsElement = document.getElementById('response-rate');
                             } else if (error.message) {
                                 errorMsg = error.message;
                             }
+
+                            // Log the full error object for debugging
+                            logDebug(`Error details for code: ${error.code}`, error, true);
 
                             if (errorMessage) {
                                 errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
