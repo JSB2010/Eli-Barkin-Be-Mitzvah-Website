@@ -63,23 +63,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch submissions from Firestore
     function fetchSubmissions() {
+        console.log('Fetching submissions...');
+
+        // Make sure loading element exists
+        if (!loadingElement) {
+            console.error('Loading element not found');
+            return;
+        }
+
         loadingElement.style.display = 'block';
-        tableContainer.style.display = 'none';
+
+        // Make sure table container exists
+        if (tableContainer) {
+            tableContainer.style.display = 'none';
+        } else {
+            console.warn('Table container element not found');
+        }
 
         // Check if Firestore is available
         if (!db) {
-            loadingElement.innerHTML = '<p><i class="fas fa-exclamation-triangle"></i> Error: Firestore database is not available. Please check your Firebase configuration.</p>';
+            console.error('Firestore database is not available');
+            if (loadingElement) {
+                loadingElement.innerHTML = '<p><i class="fas fa-exclamation-triangle"></i> Error: Firestore database is not available. Please check your Firebase configuration.</p>';
+            }
             return;
         }
+
+        console.log('Firestore database is available, proceeding with fetch');
 
         // Add retry functionality
         let retryCount = 0;
         const maxRetries = 5; // Increase max retries from 3 to 5
 
         function attemptFetch() {
-            db.collection('sheetRsvps').orderBy('submittedAt', 'desc').get()
-                .then((querySnapshot) => {
-                    allSubmissions = querySnapshot.docs.map(doc => {
+            console.log('Attempting to fetch from sheetRsvps collection...');
+
+            try {
+                db.collection('sheetRsvps').orderBy('submittedAt', 'desc').get()
+                    .then((querySnapshot) => {
+                        console.log('Query successful, received', querySnapshot.size, 'documents');
+                        allSubmissions = querySnapshot.docs.map(doc => {
                         // Safely extract data
                         const data = doc.data() || {};
                         let submittedDate;
@@ -194,21 +217,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch guest list from Firestore
     function fetchGuestList() {
+        console.log('Fetching guest list...');
+
         // Check if Firestore is available
         if (!db) {
-            console.error('Firestore database is not available');
+            console.error('Firestore database is not available for guest list');
             return;
         }
+
+        console.log('Firestore database is available for guest list');
 
         // Add retry functionality
         let retryCount = 0;
         const maxRetries = 5;
 
         function attemptGuestFetch() {
-            // Get guest list from Firestore
-            db.collection('guestList').get()
-                .then((querySnapshot) => {
-                    allGuests = querySnapshot.docs.map(doc => {
+            console.log('Attempting to fetch from guestList collection...');
+
+            try {
+                // Get guest list from Firestore
+                db.collection('guestList').get()
+                    .then((querySnapshot) => {
+                        console.log('Guest list query successful, received', querySnapshot.size, 'documents');
+                        allGuests = querySnapshot.docs.map(doc => {
                         const data = doc.data() || {};
                         return {
                             id: doc.id,
@@ -238,25 +269,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch((error) => {
                     console.error('Error fetching guest list:', error);
-
-                    // Check if it's a network error
-                    const isNetworkError = error.code === 'unavailable' ||
-                                          error.message.includes('network') ||
-                                          error.message.includes('connection') ||
-                                          error.name === 'FirebaseError';
-
-                    if (retryCount < maxRetries) {
-                        // Retry with exponential backoff
-                        retryCount++;
-                        // Longer delay for network errors
-                        const delay = Math.pow(2, retryCount) * (isNetworkError ? 1500 : 1000);
-
-                        console.log(`Retrying guest list fetch in ${Math.round(delay/1000)} seconds... (Attempt ${retryCount}/${maxRetries})`);
-                        setTimeout(attemptGuestFetch, delay);
-                    } else {
-                        console.error(`Failed to fetch guest list after ${maxRetries} attempts`);
-                    }
+                })
+                .finally(() => {
+                    console.log('Guest list fetch operation completed');
                 });
+            } catch (error) {
+                console.error('Exception during guest list fetch operation:', error);
+
+                // Check if it's a network error
+                const isNetworkError = error.code === 'unavailable' ||
+                                      error.message.includes('network') ||
+                                      error.message.includes('connection') ||
+                                      error.name === 'FirebaseError';
+
+                if (retryCount < maxRetries) {
+                    // Retry with exponential backoff
+                    retryCount++;
+                    // Longer delay for network errors
+                    const delay = Math.pow(2, retryCount) * (isNetworkError ? 1500 : 1000);
+
+                    console.log(`Retrying guest list fetch in ${Math.round(delay/1000)} seconds... (Attempt ${retryCount}/${maxRetries})`);
+                    setTimeout(attemptGuestFetch, delay);
+                } else {
+                    console.error(`Failed to fetch guest list after ${maxRetries} attempts`);
+                }
+            }
         }
 
         // Start the fetch process
@@ -265,10 +302,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Process and display guest list
     function processGuestList() {
+        console.log('Processing guest list...');
+
         if (allGuests.length === 0) {
             console.log('No guests found in the guest list');
             return;
         }
+
+        console.log(`Processing ${allGuests.length} guests`);
 
         // Apply filters to guest list
         applyGuestListFilters();
@@ -288,11 +329,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Process and display submissions
     function processSubmissions() {
+        console.log('Processing submissions...');
+
         if (allSubmissions.length === 0) {
-            loadingElement.innerHTML = '<p>No submissions found.</p>';
-            loadingElement.style.display = 'block';
+            console.log('No submissions found');
+            if (loadingElement) {
+                loadingElement.innerHTML = '<p>No submissions found.</p>';
+                loadingElement.style.display = 'block';
+            }
             return;
         }
+
+        console.log(`Processing ${allSubmissions.length} submissions`);
 
         // Apply filters
         applyFilters();
@@ -426,9 +474,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update statistics
     function updateStats() {
+        console.log('Updating statistics...');
+
+        if (!allSubmissions || !Array.isArray(allSubmissions)) {
+            console.error('allSubmissions is not a valid array');
+            return;
+        }
+
         const totalSubmissions = allSubmissions.length;
         const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
         const notAttendingCount = allSubmissions.filter(submission => submission.attending === 'no').length;
+
+        console.log(`Stats: ${totalSubmissions} total, ${attendingCount} attending, ${notAttendingCount} not attending`);
 
         // Calculate total guests (sum of guest counts for attending submissions)
         const totalGuests = allSubmissions
@@ -458,23 +515,29 @@ document.addEventListener('DOMContentLoaded', function() {
             ? ((notAttendingCount / totalSubmissions) * 100).toFixed(1)
             : 0;
 
-        // Update DOM elements
-        totalSubmissionsElement.textContent = totalSubmissions;
-        attendingCountElement.textContent = attendingCount;
-        notAttendingCountElement.textContent = notAttendingCount;
-        totalGuestsElement.textContent = totalGuests;
+        // Update DOM elements with null checks
+        console.log('Updating DOM elements with statistics...');
 
-        // Update subtext elements
-        document.getElementById('total-submissions-percent').textContent =
-            `${responseRate}% of expected invites`;
-        document.getElementById('attending-percent').textContent =
-            `${attendingPercent}% of responses`;
-        document.getElementById('not-attending-percent').textContent =
-            `${notAttendingPercent}% of responses`;
-        document.getElementById('avg-party-size').textContent =
-            `Avg party size: ${avgPartySize}`;
-        document.getElementById('response-rate').textContent =
-            `${responseRate}%`;
+        if (totalSubmissionsElement) totalSubmissionsElement.textContent = totalSubmissions;
+        if (attendingCountElement) attendingCountElement.textContent = attendingCount;
+        if (notAttendingCountElement) notAttendingCountElement.textContent = notAttendingCount;
+        if (totalGuestsElement) totalGuestsElement.textContent = totalGuests;
+
+        // Update subtext elements with null checks
+        const totalSubmissionsPercent = document.getElementById('total-submissions-percent');
+        if (totalSubmissionsPercent) totalSubmissionsPercent.textContent = `${responseRate}% of expected invites`;
+
+        const attendingPercElem = document.getElementById('attending-percent');
+        if (attendingPercElem) attendingPercElem.textContent = `${attendingPercent}% of responses`;
+
+        const notAttendingPercElem = document.getElementById('not-attending-percent');
+        if (notAttendingPercElem) notAttendingPercElem.textContent = `${notAttendingPercent}% of responses`;
+
+        const avgPartySizeElem = document.getElementById('avg-party-size');
+        if (avgPartySizeElem) avgPartySizeElem.textContent = `Avg party size: ${avgPartySize}`;
+
+        const responseRateElem = document.getElementById('response-rate');
+        if (responseRateElem) responseRateElem.textContent = `${responseRate}%`;
 
         // Update latest RSVP info
         if (latestRsvp.submittedAt) {
