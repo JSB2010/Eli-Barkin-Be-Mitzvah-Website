@@ -1,5 +1,105 @@
+// Debug logging function
+function logDebug(message, data = null) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(logMessage, data || '');
+
+    // Add to debug panel if it exists
+    const debugInfo = document.getElementById('debug-info');
+    if (debugInfo) {
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `<strong>${timestamp}</strong>: ${message}`;
+        if (data) {
+            const pre = document.createElement('pre');
+            pre.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data.toString();
+            logEntry.appendChild(pre);
+        }
+        debugInfo.appendChild(logEntry);
+        debugInfo.scrollTop = debugInfo.scrollHeight;
+    }
+}
+
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    logDebug('DOM fully loaded');
+
+    // Setup debug panel toggle buttons
+    const showDebugBtn = document.getElementById('show-debug-btn');
+    const toggleDebugBtn = document.getElementById('toggle-debug-btn');
+    const debugPanel = document.getElementById('debug-panel');
+
+    if (showDebugBtn && debugPanel) {
+        showDebugBtn.addEventListener('click', function() {
+            debugPanel.style.display = 'block';
+            logDebug('Debug panel opened');
+        });
+    }
+
+    if (toggleDebugBtn && debugPanel) {
+        toggleDebugBtn.addEventListener('click', function() {
+            if (debugPanel.style.display === 'none') {
+                debugPanel.style.display = 'block';
+                toggleDebugBtn.textContent = 'Hide Debug Info';
+                logDebug('Debug panel opened');
+            } else {
+                debugPanel.style.display = 'none';
+                toggleDebugBtn.textContent = 'Show Debug Info';
+                logDebug('Debug panel closed');
+            }
+        });
+    }
+
+    // Check Firebase availability
+    if (typeof firebase === 'undefined') {
+        logDebug('ERROR: Firebase SDK not loaded');
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase SDK not loaded. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
+        }
+        return;
+    }
+
+    logDebug('Firebase SDK loaded', { version: firebase.SDK_VERSION });
+
+    // Check Firebase Auth availability
+    if (typeof firebase.auth === 'undefined') {
+        logDebug('ERROR: Firebase Auth not available');
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Authentication not available. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
+        }
+        return;
+    }
+
+    logDebug('Firebase Auth available');
+
+    // Check Firestore availability
+    if (typeof firebase.firestore === 'undefined') {
+        logDebug('ERROR: Firebase Firestore not available');
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Firestore not available. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
+        }
+        return;
+    }
+
+    logDebug('Firebase Firestore available');
+
+    // Check if db is available
+    if (typeof db === 'undefined') {
+        logDebug('ERROR: Firestore db instance not available');
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firestore database not initialized. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
+        }
+        return;
+    }
+
+    logDebug('Firestore db instance available');
     // Dashboard elements
     const syncSheetBtn = document.getElementById('sync-sheet-btn');
     const toggleGuestListBtn = document.getElementById('toggle-guest-list-btn');
@@ -66,177 +166,298 @@ const totalSubmissionsElement = document.getElementById('response-rate');
     let guestCategories = new Set(); // Unique categories
 
     // Handle login form submission
-    loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    if (loginForm) {
+        logDebug('Setting up login form submission handler');
 
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const submitButton = loginForm.querySelector('button[type="submit"]');
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            logDebug('Login form submitted');
 
-        // Validate inputs
-        if (!email || !password) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter both email and password`;
-            errorMessage.style.animation = 'none';
-            setTimeout(() => {
-                errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
-            }, 10);
-            errorMessage.style.display = 'block';
-            return;
-        }
+            const email = document.getElementById('email')?.value?.trim() || '';
+            const password = document.getElementById('password')?.value || '';
+            const submitButton = loginForm.querySelector('button[type="submit"]');
 
-        // Show loading state
-        submitButton.classList.add('loading');
+            // Validate inputs
+            if (!email || !password) {
+                const errorMsg = 'Please enter both email and password';
+                logDebug(`Validation error: ${errorMsg}`);
 
-        // Clear previous error messages
-        errorMessage.textContent = '';
-        errorMessage.style.display = 'none';
-
-        // Check if Firebase Auth is available
-        if (!firebase.auth) {
-            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase Authentication is not available. Please refresh the page and try again.`;
-            errorMessage.style.display = 'block';
-            submitButton.classList.remove('loading');
-            return;
-        }
-
-        // Add a small delay to show the loading state (better UX)
-        setTimeout(() => {
-            // Sign in with Firebase Authentication
-            console.log('Attempting to sign in with Firebase Auth...');
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Login successful
-
-                    // Store login state in session storage
-                    try {
-                        sessionStorage.setItem('rsvp_dashboard_logged_in', 'true');
-                    } catch (e) {
-                        console.warn('Could not save login state to session storage', e);
-                    }
-
-                    // Show dashboard
-                    loginSection.style.display = 'none';
-                    dashboardSection.style.display = 'block';
-
-                    // Reset form
-                    loginForm.reset();
-
-                    // Fetch RSVP submissions
-                    fetchSubmissions();
-                })
-                .catch((error) => {
-                    console.error('Login error:', error);
-                    console.error('Error code:', error.code);
-                    console.error('Error message:', error.message);
-
-                    // Show appropriate error message
-                    let errorMsg = 'Invalid email or password';
-
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                        errorMsg = 'Invalid email or password. Please try again.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        errorMsg = 'Too many failed login attempts. Please try again later.';
-                    } else if (error.code === 'auth/network-request-failed') {
-                        errorMsg = 'Network error. Please check your internet connection.';
-                    } else if (error.code === 'auth/invalid-credential') {
-                        errorMsg = 'Invalid login credentials. Please check your email and password.';
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMsg = 'Invalid email format. Please enter a valid email address.';
-                    } else if (error.code === 'auth/internal-error') {
-                        errorMsg = 'An internal error occurred. Please try again later.';
-                    } else if (error.message) {
-                        errorMsg = error.message;
-                    }
-
+                if (errorMessage) {
                     errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
                     errorMessage.style.animation = 'none';
                     setTimeout(() => {
                         errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
                     }, 10);
                     errorMessage.style.display = 'block';
-                })
-                .finally(() => {
-                    // Remove loading state
+                }
+                return;
+            }
+
+            // Show loading state
+            if (submitButton) {
+                submitButton.classList.add('loading');
+            }
+
+            // Clear previous error messages
+            if (errorMessage) {
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
+            }
+
+            // Double-check Firebase Auth availability
+            if (typeof firebase === 'undefined' || typeof firebase.auth === 'undefined' || typeof firebase.auth() === 'undefined') {
+                const errorMsg = 'Firebase Authentication is not available. Please refresh the page and try again.';
+                logDebug(`ERROR: ${errorMsg}`);
+
+                if (errorMessage) {
+                    errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
+                    errorMessage.style.display = 'block';
+                }
+
+                if (submitButton) {
                     submitButton.classList.remove('loading');
-                });
-        }, 500); // Small delay for better UX
-    });
+                }
+                return;
+            }
+
+            // Add a small delay to show the loading state (better UX)
+            setTimeout(() => {
+                try {
+                    // Sign in with Firebase Authentication
+                    logDebug('Attempting to sign in with Firebase Auth...', { email });
+
+                    firebase.auth().signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            // Login successful
+                            logDebug('Login successful', { uid: userCredential.user.uid });
+
+                            // Store login state in session storage
+                            try {
+                                sessionStorage.setItem('rsvp_dashboard_logged_in', 'true');
+                                logDebug('Login state saved to session storage');
+                            } catch (e) {
+                                logDebug('Could not save login state to session storage', e);
+                            }
+
+                            // Show dashboard
+                            if (loginSection && dashboardSection) {
+                                loginSection.style.display = 'none';
+                                dashboardSection.style.display = 'block';
+                                logDebug('Dashboard displayed');
+                            } else {
+                                logDebug('ERROR: Could not find login or dashboard sections');
+                            }
+
+                            // Reset form
+                            loginForm.reset();
+
+                            // Fetch RSVP submissions
+                            fetchSubmissions();
+                        })
+                        .catch((error) => {
+                            logDebug('Login error', { code: error.code, message: error.message });
+
+                            // Show appropriate error message
+                            let errorMsg = 'Invalid email or password';
+
+                            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                                errorMsg = 'Invalid email or password. Please try again.';
+                            } else if (error.code === 'auth/too-many-requests') {
+                                errorMsg = 'Too many failed login attempts. Please try again later.';
+                            } else if (error.code === 'auth/network-request-failed') {
+                                errorMsg = 'Network error. Please check your internet connection.';
+                            } else if (error.code === 'auth/invalid-credential') {
+                                errorMsg = 'Invalid login credentials. Please check your email and password.';
+                            } else if (error.code === 'auth/invalid-email') {
+                                errorMsg = 'Invalid email format. Please enter a valid email address.';
+                            } else if (error.code === 'auth/internal-error') {
+                                errorMsg = 'An internal error occurred. Please try again later.';
+                            } else if (error.message) {
+                                errorMsg = error.message;
+                            }
+
+                            if (errorMessage) {
+                                errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
+                                errorMessage.style.animation = 'none';
+                                setTimeout(() => {
+                                    errorMessage.style.animation = 'fadeIn 0.4s ease-in-out';
+                                }, 10);
+                                errorMessage.style.display = 'block';
+                            }
+                        })
+                        .finally(() => {
+                            // Remove loading state
+                            if (submitButton) {
+                                submitButton.classList.remove('loading');
+                            }
+                            logDebug('Login process completed');
+                        });
+                } catch (error) {
+                    // Handle any unexpected errors
+                    logDebug('Unexpected error during login', error);
+
+                    if (errorMessage) {
+                        errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> An unexpected error occurred. Please try again.`;
+                        errorMessage.style.display = 'block';
+                    }
+
+                    if (submitButton) {
+                        submitButton.classList.remove('loading');
+                    }
+                }
+            }, 500); // Small delay for better UX
+        });
+    } else {
+        logDebug('ERROR: Login form not found');
+    }
 
     // Handle logout
-    logoutBtn.addEventListener('click', function() {
-        // Show loading state
-        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
-        logoutBtn.disabled = true;
+    if (logoutBtn) {
+        logDebug('Setting up logout button handler');
 
-        firebase.auth().signOut()
-            .then(() => {
-                // Logout successful, show login form
-                dashboardSection.style.display = 'none';
-                loginSection.style.display = 'block';
+        logoutBtn.addEventListener('click', function() {
+            logDebug('Logout button clicked');
 
-                // Clear session storage
-                try {
-                    sessionStorage.removeItem('rsvp_dashboard_logged_in');
-                } catch (e) {
-                    console.warn('Could not clear session storage', e);
+            // Show loading state
+            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+            logoutBtn.disabled = true;
+
+            try {
+                // Check if Firebase Auth is available
+                if (typeof firebase === 'undefined' || typeof firebase.auth === 'undefined') {
+                    logDebug('ERROR: Firebase Auth not available for logout');
+                    alert('Error signing out: Firebase Auth not available. Please refresh the page.');
+
+                    // Reset the logout button
+                    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                    logoutBtn.disabled = false;
+                    return;
                 }
-            })
-            .catch((error) => {
-                console.error('Logout error:', error);
-                alert('Error signing out. Please try again.');
-            })
-            .finally(() => {
+
+                logDebug('Attempting to sign out with Firebase Auth');
+                firebase.auth().signOut()
+                    .then(() => {
+                        // Logout successful, show login form
+                        logDebug('Logout successful');
+
+                        if (dashboardSection && loginSection) {
+                            dashboardSection.style.display = 'none';
+                            loginSection.style.display = 'block';
+                            logDebug('Login form displayed after logout');
+                        } else {
+                            logDebug('ERROR: Could not find login or dashboard sections for logout');
+                        }
+
+                        // Clear session storage
+                        try {
+                            sessionStorage.removeItem('rsvp_dashboard_logged_in');
+                            logDebug('Login state removed from session storage');
+                        } catch (e) {
+                            logDebug('Could not clear session storage', e);
+                        }
+                    })
+                    .catch((error) => {
+                        logDebug('Logout error', error);
+                        alert('Error signing out. Please try again.');
+                    })
+                    .finally(() => {
+                        // Reset the logout button
+                        logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                        logoutBtn.disabled = false;
+                        logDebug('Logout process completed');
+                    });
+            } catch (error) {
+                // Handle any unexpected errors
+                logDebug('Unexpected error during logout', error);
+                alert('An unexpected error occurred during logout. Please refresh the page.');
+
                 // Reset the logout button
                 logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
                 logoutBtn.disabled = false;
-            });
-    });
-
-    // Check if Firebase Auth is available
-    if (!firebase.auth) {
-        loginSection.style.display = 'none';
-        dashboardSection.style.display = 'none';
-        document.body.innerHTML = '<div style="text-align: center; padding: 2rem;"><h2>Error</h2><p>Firebase Authentication is not available. Please check your Firebase configuration.</p></div>';
-        return;
+            }
+        });
+    } else {
+        logDebug('ERROR: Logout button not found');
     }
 
     // Set persistence to SESSION (survives page refreshes but not closing the browser tab)
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-        .catch((error) => {
-            console.error('Error setting auth persistence:', error);
-        });
+    try {
+        if (firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+            logDebug('Setting Firebase Auth persistence to SESSION');
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+                .then(() => {
+                    logDebug('Firebase Auth persistence set successfully');
+                })
+                .catch((error) => {
+                    logDebug('Error setting auth persistence', error);
+                });
+        } else {
+            logDebug('WARNING: Firebase Auth Persistence not available');
+        }
+    } catch (error) {
+        logDebug('ERROR: Failed to set Firebase Auth persistence', error);
+    }
 
     // Check if user is already logged in
-    firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {
-            // User is signed in, show dashboard
-            loginSection.style.display = 'none';
-            dashboardSection.style.display = 'block';
+    try {
+        logDebug('Setting up Firebase Auth state change listener');
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is signed in, show dashboard
+                logDebug('User is signed in', { uid: user.uid, email: user.email });
 
-            // Fetch RSVP submissions and guest list
-            fetchSubmissions();
-            fetchGuestList();
-        } else {
-            // User is signed out, show login form
-            dashboardSection.style.display = 'none';
-
-            // Add a subtle animation to the login container
-            setTimeout(() => {
-                const loginContainer = document.querySelector('.login-container');
-                if (loginContainer) {
-                    loginContainer.style.opacity = '0';
-                    loginContainer.style.transform = 'translateY(20px)';
-
-                    setTimeout(() => {
-                        loginContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                        loginContainer.style.opacity = '1';
-                        loginContainer.style.transform = 'translateY(0)';
-                    }, 50);
+                if (loginSection && dashboardSection) {
+                    loginSection.style.display = 'none';
+                    dashboardSection.style.display = 'block';
+                    logDebug('Dashboard displayed');
+                } else {
+                    logDebug('ERROR: Could not find login or dashboard sections');
                 }
-            }, 100);
-            loginSection.style.display = 'block';
+
+                // Fetch RSVP submissions and guest list
+                fetchSubmissions();
+                fetchGuestList();
+            } else {
+                // User is signed out, show login form
+                logDebug('User is signed out');
+
+                if (dashboardSection) {
+                    dashboardSection.style.display = 'none';
+                }
+
+                // Add a subtle animation to the login container
+                setTimeout(() => {
+                    const loginContainer = document.querySelector('.login-container');
+                    if (loginContainer) {
+                        loginContainer.style.opacity = '0';
+                        loginContainer.style.transform = 'translateY(20px)';
+
+                        setTimeout(() => {
+                            loginContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                            loginContainer.style.opacity = '1';
+                            loginContainer.style.transform = 'translateY(0)';
+                        }, 50);
+                    }
+                }, 100);
+
+                if (loginSection) {
+                    loginSection.style.display = 'block';
+                    logDebug('Login form displayed');
+                } else {
+                    logDebug('ERROR: Login section not found');
+                }
+            }
+        }, function(error) {
+            logDebug('Error in auth state change listener', error);
+        });
+    } catch (error) {
+        logDebug('ERROR: Failed to set up auth state change listener', error);
+
+        if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Failed to check login status. Please refresh the page and try again.`;
+            errorMessage.style.display = 'block';
         }
-    });
+    }
 
     // Fetch submissions from Firestore
     function fetchSubmissions() {

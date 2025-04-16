@@ -18,23 +18,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="mobile-nav.js" defer></script>
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+      // Function to handle script loading errors
+      function handleScriptError(scriptName) {
+        console.error(`Failed to load ${scriptName}`);
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+          errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Failed to load ${scriptName}. Please check your internet connection and refresh the page.`;
+          errorMessage.style.display = 'block';
+        }
+      }
+    </script>
+
+    <!-- Load Firebase SDK with error handling -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" onerror="handleScriptError('Firebase App')"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" onerror="handleScriptError('Firebase Auth')"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" onerror="handleScriptError('Firebase Firestore')"></script>
+
     <!-- Wait for Firebase SDK to load -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         // Check if Firebase is loaded
         if (typeof firebase === 'undefined') {
           console.error('Firebase SDK not loaded');
-          alert('Firebase SDK not loaded. Please refresh the page and try again.');
+          const errorMessage = document.getElementById('error-message');
+          if (errorMessage) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Firebase SDK not loaded. Please check your internet connection and refresh the page.`;
+            errorMessage.style.display = 'block';
+          }
         } else {
           console.log('Firebase SDK loaded successfully');
         }
       });
     </script>
+
     <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
+    <script src="firebase-config.js" onerror="handleScriptError('Firebase Config')"></script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -346,6 +365,32 @@
         .error-message i {
             margin-right: 0.6rem;
             font-size: 1.1rem;
+        }
+
+        .debug-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-panel h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: #495057;
+        }
+
+        .debug-panel pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.85rem;
         }
 
         .login-footer {
@@ -1333,6 +1378,11 @@
             <h2>RSVP Dashboard</h2>
             <p>Welcome to Eli's Be Mitzvah RSVP management system. Please enter your credentials to access the dashboard.</p>
             <div id="error-message" class="error-message"></div>
+            <div id="debug-panel" class="debug-panel" style="display: none;">
+                <h4>Debug Information</h4>
+                <div id="debug-info"></div>
+                <button type="button" id="toggle-debug-btn" class="btn secondary" style="margin-top: 10px; padding: 5px 10px; font-size: 0.8rem;">Hide Debug Info</button>
+            </div>
             <form id="login-form" class="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>
@@ -1348,6 +1398,11 @@
                     <span class="btn-text">Login to Dashboard</span>
                     <i class="fas fa-spinner spinner"></i>
                 </button>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button type="button" id="show-debug-btn" class="btn secondary" style="padding: 5px 10px; font-size: 0.8rem; background: none; color: #6c757d; border: 1px solid #6c757d;">
+                        <i class="fas fa-bug"></i> Show Debug Info
+                    </button>
+                </div>
             </form>
             <div class="login-footer">
                 &copy; 2024 Eli Barkin's Be Mitzvah
