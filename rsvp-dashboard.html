@@ -633,14 +633,17 @@
             font-size: 0.8rem;
             margin-left: 5px;
             opacity: 0.7;
+            transition: var(--transition);
         }
 
-        th.sort-asc .sort-icon:after {
-            content: "↑";
+        .sort-icon.active {
+            opacity: 1;
+            color: var(--primary-blue-dark);
+            font-weight: bold;
         }
 
-        th.sort-desc .sort-icon:after {
-            content: "↓";
+        th.sortable:hover .sort-icon {
+            opacity: 1;
         }
 
         tr {
@@ -1502,11 +1505,9 @@
                                 <thead>
                                     <tr>
                                         <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
-
-
-                                        <th>Status</th>
-                                        <th>Response</th>
-                                        <th>Actual Guests</th>
+                                        <th class="sortable" data-sort="status">Status <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="response">Response <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="guestCount">Actual Guests <span class="sort-icon">↕</span></th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>

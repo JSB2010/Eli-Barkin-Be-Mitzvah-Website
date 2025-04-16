@@ -10,7 +10,14 @@ const RSVPSystem = {
         currentPage: 1,
         guestListPage: 1,
         itemsPerPage: 10,
-        expectedInvites: 300
+        expectedInvites: 300,
+        sortColumn: 'name',
+        sortDirection: 'asc',
+        guestSortColumn: 'name',
+        guestSortDirection: 'asc',
+        searchTerm: '',
+        guestSearchTerm: '',
+        responseFilter: 'all'
     },
 
     // Initialize the system
@@ -34,8 +41,131 @@ const RSVPSystem = {
 
     // Set up event listeners
     setupEventListeners: function() {
-        // Add event listeners for pagination, sorting, filtering, etc.
-        // This will be implemented in the next steps
+        // Set up sorting for guest list
+        const guestListHeaders = document.querySelectorAll('#guest-list-container th.sortable');
+        guestListHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.getAttribute('data-sort');
+                if (column) {
+                    // Toggle sort direction if same column is clicked again
+                    if (this.state.guestSortColumn === column) {
+                        this.state.guestSortDirection = this.state.guestSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.state.guestSortColumn = column;
+                        this.state.guestSortDirection = 'asc';
+                    }
+
+                    // Update sort indicators
+                    guestListHeaders.forEach(h => {
+                        const sortIcon = h.querySelector('.sort-icon');
+                        if (sortIcon) {
+                            if (h.getAttribute('data-sort') === this.state.guestSortColumn) {
+                                sortIcon.textContent = this.state.guestSortDirection === 'asc' ? '↑' : '↓';
+                                sortIcon.classList.add('active');
+                            } else {
+                                sortIcon.textContent = '↕';
+                                sortIcon.classList.remove('active');
+                            }
+                        }
+                    });
+
+                    // Reset to first page and refresh
+                    this.state.guestListPage = 1;
+                    this.processGuestList();
+                }
+            });
+        });
+
+        // Set up sorting for submissions
+        const submissionHeaders = document.querySelectorAll('#table-container th.sortable');
+        submissionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.getAttribute('data-sort');
+                if (column) {
+                    // Toggle sort direction if same column is clicked again
+                    if (this.state.sortColumn === column) {
+                        this.state.sortDirection = this.state.sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.state.sortColumn = column;
+                        this.state.sortDirection = 'asc';
+                    }
+
+                    // Update sort indicators
+                    submissionHeaders.forEach(h => {
+                        const sortIcon = h.querySelector('.sort-icon');
+                        if (sortIcon) {
+                            if (h.getAttribute('data-sort') === this.state.sortColumn) {
+                                sortIcon.textContent = this.state.sortDirection === 'asc' ? '↑' : '↓';
+                                sortIcon.classList.add('active');
+                            } else {
+                                sortIcon.textContent = '↕';
+                                sortIcon.classList.remove('active');
+                            }
+                        }
+                    });
+
+                    // Reset to first page and refresh
+                    this.state.currentPage = 1;
+                    this.processSubmissions();
+                }
+            });
+        });
+
+        // Set up search for guest list
+        const guestSearchBox = document.getElementById('guest-search-box');
+        if (guestSearchBox) {
+            guestSearchBox.addEventListener('input', (e) => {
+                this.state.guestSearchTerm = e.target.value.toLowerCase();
+                this.state.guestListPage = 1; // Reset to first page
+                this.processGuestList();
+            });
+        }
+
+        // Set up search for submissions
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+            searchBox.addEventListener('input', (e) => {
+                this.state.searchTerm = e.target.value.toLowerCase();
+                this.state.currentPage = 1; // Reset to first page
+                this.processSubmissions();
+            });
+        }
+
+        // Set up response filter for guest list
+        const responseFilter = document.getElementById('response-filter');
+        if (responseFilter) {
+            responseFilter.addEventListener('change', (e) => {
+                this.state.responseFilter = e.target.value;
+                this.state.guestListPage = 1; // Reset to first page
+                this.processGuestList();
+            });
+        }
+
+        // Set up filter for submissions
+        const filterDropdown = document.getElementById('filter-dropdown');
+        if (filterDropdown) {
+            filterDropdown.addEventListener('change', (e) => {
+                this.state.submissionFilter = e.target.value;
+                this.state.currentPage = 1; // Reset to first page
+                this.processSubmissions();
+            });
+        }
+
+        // Set up export for guest list
+        const exportGuestListBtn = document.getElementById('export-guest-list-btn');
+        if (exportGuestListBtn) {
+            exportGuestListBtn.addEventListener('click', () => {
+                this.exportGuestListToCSV();
+            });
+        }
+
+        // Set up export for submissions
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportSubmissionsToCSV();
+            });
+        }
     },
 
     // Show loading state
@@ -175,8 +305,89 @@ const RSVPSystem = {
             return;
         }
 
-        // Apply filters (simplified for now)
-        this.state.filteredSubmissions = [...this.state.submissions];
+        // Apply search filter
+        if (this.state.searchTerm) {
+            this.state.filteredSubmissions = this.state.submissions.filter(submission => {
+                return (
+                    (submission.name && submission.name.toLowerCase().includes(this.state.searchTerm)) ||
+                    (submission.email && submission.email.toLowerCase().includes(this.state.searchTerm)) ||
+                    (submission.phone && submission.phone.toLowerCase().includes(this.state.searchTerm))
+                );
+            });
+        } else {
+            this.state.filteredSubmissions = [...this.state.submissions];
+        }
+
+        // Apply dropdown filter
+        if (this.state.submissionFilter && this.state.submissionFilter !== 'all') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+            this.state.filteredSubmissions = this.state.filteredSubmissions.filter(submission => {
+                switch (this.state.submissionFilter) {
+                    case 'attending':
+                        return submission.attending === 'yes';
+                    case 'not-attending':
+                        return submission.attending === 'no';
+                    case 'recent':
+                        return submission.submittedAt >= oneWeekAgo;
+                    case 'large-party':
+                        return (submission.guestCount || 1) >= 4;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Apply sorting
+        if (this.state.sortColumn) {
+            this.state.filteredSubmissions.sort((a, b) => {
+                let valueA, valueB;
+
+                // Get the values to compare based on the sort column
+                switch (this.state.sortColumn) {
+                    case 'date':
+                        valueA = a.submittedAt || new Date(0);
+                        valueB = b.submittedAt || new Date(0);
+                        break;
+                    case 'name':
+                        valueA = a.name || '';
+                        valueB = b.name || '';
+                        break;
+                    case 'email':
+                        valueA = a.email || '';
+                        valueB = b.email || '';
+                        break;
+                    case 'phone':
+                        valueA = a.phone || '';
+                        valueB = b.phone || '';
+                        break;
+                    case 'attending':
+                        valueA = a.attending === 'yes' ? 1 : 0;
+                        valueB = b.attending === 'yes' ? 1 : 0;
+                        break;
+                    case 'guestCount':
+                        valueA = a.guestCount || 1;
+                        valueB = b.guestCount || 1;
+                        break;
+                    default:
+                        valueA = a[this.state.sortColumn] || '';
+                        valueB = b[this.state.sortColumn] || '';
+                }
+
+                // Compare the values
+                if (valueA instanceof Date && valueB instanceof Date) {
+                    const comparison = valueA.getTime() - valueB.getTime();
+                    return this.state.sortDirection === 'asc' ? comparison : -comparison;
+                } else if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    const comparison = valueA.localeCompare(valueB);
+                    return this.state.sortDirection === 'asc' ? comparison : -comparison;
+                } else {
+                    const comparison = valueA - valueB;
+                    return this.state.sortDirection === 'asc' ? comparison : -comparison;
+                }
+            });
+        }
 
         // Update statistics
         this.updateStats();
@@ -356,8 +567,75 @@ const RSVPSystem = {
             return;
         }
 
-        // Apply filters (simplified for now)
-        this.state.filteredGuests = [...this.state.guests];
+        // Apply search filter
+        if (this.state.guestSearchTerm) {
+            this.state.filteredGuests = this.state.guests.filter(guest => {
+                return (
+                    (guest.name && guest.name.toLowerCase().includes(this.state.guestSearchTerm)) ||
+                    (guest.email && guest.email.toLowerCase().includes(this.state.guestSearchTerm)) ||
+                    (guest.phone && guest.phone.toLowerCase().includes(this.state.guestSearchTerm))
+                );
+            });
+        } else {
+            this.state.filteredGuests = [...this.state.guests];
+        }
+
+        // Apply response filter
+        if (this.state.responseFilter && this.state.responseFilter !== 'all') {
+            this.state.filteredGuests = this.state.filteredGuests.filter(guest => {
+                switch (this.state.responseFilter) {
+                    case 'responded':
+                        return guest.hasResponded;
+                    case 'not-responded':
+                        return !guest.hasResponded;
+                    case 'attending':
+                        return guest.hasResponded && guest.response === 'attending';
+                    case 'not-attending':
+                        return guest.hasResponded && guest.response === 'declined';
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Apply sorting
+        if (this.state.guestSortColumn) {
+            this.state.filteredGuests.sort((a, b) => {
+                let valueA, valueB;
+
+                // Get the values to compare based on the sort column
+                switch (this.state.guestSortColumn) {
+                    case 'name':
+                        valueA = a.name || '';
+                        valueB = b.name || '';
+                        break;
+                    case 'status':
+                        valueA = a.hasResponded ? 1 : 0;
+                        valueB = b.hasResponded ? 1 : 0;
+                        break;
+                    case 'response':
+                        valueA = a.response || '';
+                        valueB = b.response || '';
+                        break;
+                    case 'guestCount':
+                        valueA = a.actualGuestCount || 0;
+                        valueB = b.actualGuestCount || 0;
+                        break;
+                    default:
+                        valueA = a[this.state.guestSortColumn] || '';
+                        valueB = b[this.state.guestSortColumn] || '';
+                }
+
+                // Compare the values
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    const comparison = valueA.localeCompare(valueB);
+                    return this.state.guestSortDirection === 'asc' ? comparison : -comparison;
+                } else {
+                    const comparison = valueA - valueB;
+                    return this.state.guestSortDirection === 'asc' ? comparison : -comparison;
+                }
+            });
+        }
 
         // Update guest list statistics
         this.updateGuestListStats();
@@ -815,6 +1093,174 @@ const RSVPSystem = {
                 'No new responses in last 7 days';
 
             responseTrendElem.textContent = trendText;
+        }
+    },
+
+    // Export guest list to CSV
+    exportGuestListToCSV: function() {
+        console.log('Exporting guest list to CSV...');
+
+        if (this.state.filteredGuests.length === 0) {
+            alert('No guest data to export');
+            return;
+        }
+
+        // Define CSV headers
+        const headers = [
+            'Name',
+            'Email',
+            'Phone',
+            'Status',
+            'Response',
+            'Actual Guest Count',
+            'Additional Guests',
+            'Address',
+            'Submitted Date'
+        ];
+
+        // Convert guest data to CSV rows
+        const rows = this.state.filteredGuests.map(guest => {
+            // Format address
+            const address = guest.address ?
+                `${guest.address.line1 || ''} ${guest.address.line2 || ''} ${guest.address.city || ''} ${guest.address.state || ''} ${guest.address.zip || ''}`.trim() :
+                '';
+
+            // Format additional guests
+            const additionalGuests = guest.additionalGuests ? guest.additionalGuests.join(', ') : '';
+
+            // Format date
+            const submittedDate = guest.submittedAt ?
+                guest.submittedAt.toLocaleDateString() + ' ' + guest.submittedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+                '';
+
+            return [
+                guest.name || '',
+                guest.email || '',
+                guest.phone || '',
+                guest.hasResponded ? 'Responded' : 'Not Responded',
+                guest.response === 'attending' ? 'Attending' : (guest.response === 'declined' ? 'Not Attending' : ''),
+                guest.hasResponded ? (guest.actualGuestCount || 0) : '',
+                additionalGuests,
+                address,
+                submittedDate
+            ];
+        });
+
+        // Generate CSV content
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `guest-list-${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+
+        // Trigger download and clean up
+        link.click();
+        document.body.removeChild(link);
+
+        // Show success message
+        this.showExportSuccess('guest-list');
+    },
+
+    // Export submissions to CSV
+    exportSubmissionsToCSV: function() {
+        console.log('Exporting submissions to CSV...');
+
+        if (this.state.filteredSubmissions.length === 0) {
+            alert('No submission data to export');
+            return;
+        }
+
+        // Define CSV headers
+        const headers = [
+            'Date',
+            'Name',
+            'Email',
+            'Phone',
+            'Attending',
+            'Guest Count',
+            'Additional Guests'
+        ];
+
+        // Convert submission data to CSV rows
+        const rows = this.state.filteredSubmissions.map(submission => {
+            // Format date
+            const submissionDate = submission.submittedAt ?
+                submission.submittedAt.toLocaleDateString() + ' ' + submission.submittedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+                '';
+
+            // Format additional guests
+            const additionalGuests = submission.additionalGuests ? submission.additionalGuests.join(', ') : '';
+
+            return [
+                submissionDate,
+                submission.name || '',
+                submission.email || '',
+                submission.phone || '',
+                submission.attending === 'yes' ? 'Yes' : 'No',
+                submission.guestCount || 1,
+                additionalGuests
+            ];
+        });
+
+        // Generate CSV content
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `rsvp-submissions-${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+
+        // Trigger download and clean up
+        link.click();
+        document.body.removeChild(link);
+
+        // Show success message
+        this.showExportSuccess('submissions');
+    },
+
+    // Show export success message
+    showExportSuccess: function(type) {
+        const containerId = type === 'guest-list' ? 'guest-list-container' : 'table-container';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Create success message element
+        const successMessage = document.createElement('div');
+        successMessage.className = 'export-success';
+        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Export successful!';
+
+        // Add to container
+        const actionsContainer = container.querySelector('.guest-list-actions, .table-actions');
+        if (actionsContainer) {
+            // Remove any existing success message
+            const existingMessage = actionsContainer.querySelector('.export-success');
+            if (existingMessage) {
+                actionsContainer.removeChild(existingMessage);
+            }
+
+            actionsContainer.appendChild(successMessage);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (successMessage.parentNode === actionsContainer) {
+                    actionsContainer.removeChild(successMessage);
+                }
+            }, 3000);
         }
     }
 };
