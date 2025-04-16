@@ -624,24 +624,27 @@ const totalSubmissionsElement = document.getElementById('response-rate');
         if (notAttendingCountElement) notAttendingCountElement.textContent = notAttendingCount;
         if (totalGuestsElement) totalGuestsElement.textContent = totalGuests;
 
-        // Update subtext elements
-        document.getElementById('total-submissions-percent').textContent =
-            `${responseRate}% of expected invites`;
-        document.getElementById('attending-percent').textContent =
-            `${attendingPercent}% of responses`;
-        document.getElementById('not-attending-percent').textContent =
-            `${notAttendingPercent}% of responses`;
-        document.getElementById('avg-party-size').textContent =
-            `Avg party size: ${avgPartySize}`;
-        document.getElementById('response-rate').textContent =
-            `${responseRate}%`;
+        // Update subtext elements (with null checks)
+        const totalSubmissionsPercentElement = document.getElementById('total-submissions-percent');
+        const attendingPercentElement = document.getElementById('attending-percent');
+        const notAttendingPercentElement = document.getElementById('not-attending-percent');
+        const avgPartySizeElement = document.getElementById('avg-party-size');
+        const responseRateElement = document.getElementById('response-rate');
 
-        // Update latest RSVP info
+        if (totalSubmissionsPercentElement) totalSubmissionsPercentElement.textContent = `${responseRate}% of expected invites`;
+        if (attendingPercentElement) attendingPercentElement.textContent = `${attendingPercent}% of responses`;
+        if (notAttendingPercentElement) notAttendingPercentElement.textContent = `${notAttendingPercent}% of responses`;
+        if (avgPartySizeElement) avgPartySizeElement.textContent = `Avg party size: ${avgPartySize}`;
+        if (responseRateElement) responseRateElement.textContent = `${responseRate}%`;
+
+        // Update latest RSVP info (with null checks)
         if (latestRsvp.submittedAt) {
             const formattedDate = latestRsvp.submittedAt.toLocaleDateString();
-            document.getElementById('latest-rsvp').textContent = latestRsvp.name || 'Unknown';
-            document.getElementById('latest-rsvp-time').textContent =
-                `Submitted on ${formattedDate}`;
+            const latestRsvpElement = document.getElementById('latest-rsvp');
+            const latestRsvpTimeElement = document.getElementById('latest-rsvp-time');
+
+            if (latestRsvpElement) latestRsvpElement.textContent = latestRsvp.name || 'Unknown';
+            if (latestRsvpTimeElement) latestRsvpTimeElement.textContent = `Submitted on ${formattedDate}`;
         }
     }
 
