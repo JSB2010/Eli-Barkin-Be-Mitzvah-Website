@@ -786,6 +786,120 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Utilities Section Styles */
+        .utilities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .utility-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .utility-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--section-shadow);
+        }
+
+        .utility-header {
+            background-color: var(--light-blue);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .utility-header h3 {
+            color: var(--primary-blue-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .utility-content {
+            padding: 1.5rem;
+        }
+
+        .utility-content p {
+            margin-bottom: 1.25rem;
+            color: var(--dark-gray);
+        }
+
+        .utility-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .utility-results {
+            background-color: var(--white);
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--card-shadow);
+            margin-top: 1.5rem;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .utility-results-header {
+            background-color: var(--light-blue);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .utility-results-header h3 {
+            color: var(--primary-blue-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .utility-results-content {
+            padding: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .test-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .test-user-badge {
+            background-color: var(--light-blue);
+            color: var(--primary-blue-dark);
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn.warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn.warning:hover {
+            background-color: var(--warning-dark);
+        }
+
+        .btn.success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn.success:hover {
+            background-color: var(--success-dark);
+        }
+
         /* Status badges */
         .status-badge {
             display: inline-flex;
@@ -1806,6 +1920,68 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Utilities Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-tools"></i> Utilities</h2>
+                    </div>
+                    <div class="utilities-container">
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3>Google Sheet Sync</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Sync data between Firebase and Google Sheets.</p>
+                                <div class="utility-actions">
+                                    <button id="sync-sheet-to-firebase-btn" class="btn primary"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
+                                    <button id="sync-firebase-to-sheet-btn" class="btn primary"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3>Test User Management</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Reset test users to test the RSVP process again.</p>
+                                <div class="utility-actions">
+                                    <button id="reset-test-users-btn" class="btn warning"><i class="fas fa-user-edit"></i> Reset Test Users</button>
+                                </div>
+                                <div class="test-users-list">
+                                    <span class="test-user-badge">Jacob Barkin</span>
+                                    <span class="test-user-badge">Hagen Zuzu Barkin</span>
+                                    <span class="test-user-badge">Alton Barkin</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3>Data Management</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Manage your RSVP data.</p>
+                                <div class="utility-actions">
+                                    <button id="refresh-data-btn-util" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
+                                    <button id="add-guest-btn-util" class="btn success"><i class="fas fa-user-plus"></i> Add Guest</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utility Results Container -->
+                    <div id="utility-results" class="utility-results hidden">
+                        <div class="utility-results-header">
+                            <h3 id="utility-results-title">Operation Results</h3>
+                            <button id="close-utility-results" class="btn-icon"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="utility-results-content" class="utility-results-content">
+                            <!-- Results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1910,5 +2086,7 @@
     </div>
 
     <!-- RSVP System script is loaded in the head -->
+    <!-- Dashboard Utilities Script -->
+    <script src="dashboard-utilities.js"></script>
 </body>
 </html>
