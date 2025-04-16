@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Test Users</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2c5282;
+        }
+        
+        .user-list {
+            margin: 1.5rem 0;
+        }
+        
+        .user-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        #results-container {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f7fafc;
+            border-radius: 4px;
+            border-left: 4px solid #3182ce;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html">
+                <img src="images/logo.png" alt="Eli Barkin Be Mitzvah">
+            </a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="journey.html">Eli's Journey</a></li>
+                <li><a href="the-big-day.html">Game Day Details</a></li>
+                <li><a href="rsvp.html">RSVP</a></li>
+                <li><a href="family-details.html">Family & Out-of-Town Guests</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h1>Reset Test Users</h1>
+            <p>This page will reset the RSVP status for the following test users:</p>
+            
+            <div class="user-list">
+                <div class="user-item">Jacob Barkin</div>
+                <div class="user-item">Hagen Zuzu Barkin</div>
+                <div class="user-item">Alton Barkin</div>
+            </div>
+            
+            <p>Clicking the button below will:</p>
+            <ul>
+                <li>Update their entries in the guestList collection to mark them as not having responded</li>
+                <li>Delete their entries from the sheetRsvps collection</li>
+            </ul>
+            
+            <p>This will allow you to test the RSVP process with these users again.</p>
+            
+            <button id="reset-button" class="btn">Reset Test Users</button>
+            
+            <div id="results-container" class="hidden"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Eli Barkin's Be Mitzvah</p>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="journey.html">Eli's Journey</a>
+                <a href="the-big-day.html">Game Day Details</a>
+                <a href="rsvp.html">RSVP</a>
+                <a href="family-details.html">Family & Out-of-Town Guests</a>
+                <a href="rsvp-dashboard.html">RSVP Dashboard</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Reset script -->
+    <script src="reset-test-users.js"></script>
+</body>
+</html>
