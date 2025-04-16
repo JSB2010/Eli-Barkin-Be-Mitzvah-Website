@@ -660,40 +660,7 @@
             font-size: 0.95rem;
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 1.5rem;
-            gap: 0.5rem;
-        }
-
-        .pagination button {
-            background-color: var(--white);
-            border: 1px solid var(--medium-gray);
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .pagination button.active {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border-color: var(--primary-blue);
-            font-weight: 600;
-        }
-
-        .pagination button:hover:not(.active):not(:disabled) {
-            background-color: var(--light-blue);
-            border-color: var(--primary-blue-light);
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        /* Pagination styles moved to a new location */
 
         .loading {
             text-align: center;
@@ -1122,11 +1089,83 @@
             margin-bottom: 1rem;
         }
 
-        /* Toggle Buttons */
-        #toggle-guest-list-btn, #toggle-submissions-btn {
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .items-per-page {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .items-per-page-select {
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            background-color: var(--white);
+            font-size: 0.9rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--medium-gray);
+            background-color: var(--white);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--light-blue);
+            border-color: var(--primary-blue-light);
+        }
+
+        .pagination-btn.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .pagination-buttons {
+                align-items: center;
+            }
         }
 
         /* Guest list styles */
@@ -1421,14 +1460,7 @@
                             <h3>Attendance Breakdown</h3>
                             <canvas id="attendance-chart"></canvas>
                         </div>
-                        <div class="chart-card">
-                            <h3>Response Rate by Category</h3>
-                            <canvas id="category-response-chart"></canvas>
-                        </div>
-                        <div class="chart-card">
-                            <h3>Guest Distribution by Category</h3>
-                            <canvas id="category-distribution-chart"></canvas>
-                        </div>
+
                         <div class="chart-card">
                             <h3>Submissions Timeline</h3>
                             <canvas id="timeline-chart"></canvas>
@@ -1440,9 +1472,7 @@
                 <div class="dashboard-section">
                     <div class="section-header">
                         <h2><i class="fas fa-users"></i> Guest List</h2>
-                        <div class="section-actions">
-                            <button id="toggle-guest-list-btn" class="btn secondary"><i class="fas fa-table"></i> Toggle Guest List</button>
-                        </div>
+
                     </div>
                     <div id="guest-list-container" class="guest-list-container">
                         <div class="guest-list-header">
@@ -1453,10 +1483,7 @@
                                         <input type="text" id="guest-search-box" class="search-box" placeholder="Search guests...">
                                     </div>
                                     <div class="filter-group">
-                                        <select id="category-filter" class="category-filter">
-                                            <option value="all">All Categories</option>
-                                            <!-- Categories will be dynamically added -->
-                                        </select>
+
                                         <select id="response-filter" class="category-filter">
                                             <option value="all">All Responses</option>
                                             <option value="responded">Responded</option>
@@ -1475,8 +1502,8 @@
                                 <thead>
                                     <tr>
                                         <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
-                                        <th>Category</th>
-                                        <th>Max Guests</th>
+
+
                                         <th>Status</th>
                                         <th>Response</th>
                                         <th>Actual Guests</th>
@@ -1499,9 +1526,7 @@
                 <div class="dashboard-section">
                     <div class="section-header">
                         <h2><i class="fas fa-envelope-open-text"></i> RSVP Submissions</h2>
-                        <div class="section-actions">
-                            <button id="toggle-submissions-btn" class="btn secondary"><i class="fas fa-table"></i> Toggle Submissions</button>
-                        </div>
+
                     </div>
                     <div id="table-container" class="table-container">
                         <div class="table-header">

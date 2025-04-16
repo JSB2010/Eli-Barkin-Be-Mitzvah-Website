@@ -34,36 +34,8 @@ const RSVPSystem = {
 
     // Set up event listeners
     setupEventListeners: function() {
-        // Toggle sections
-        const toggleGuestListBtn = document.getElementById('toggle-guest-list-btn');
-        const guestListContainer = document.getElementById('guest-list-container');
-
-        if (toggleGuestListBtn && guestListContainer) {
-            toggleGuestListBtn.addEventListener('click', function() {
-                if (guestListContainer.classList.contains('hidden')) {
-                    guestListContainer.classList.remove('hidden');
-                    toggleGuestListBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Guest List';
-                } else {
-                    guestListContainer.classList.add('hidden');
-                    toggleGuestListBtn.innerHTML = '<i class="fas fa-eye"></i> Show Guest List';
-                }
-            });
-        }
-
-        const toggleSubmissionsBtn = document.getElementById('toggle-submissions-btn');
-        const tableContainer = document.getElementById('table-container');
-
-        if (toggleSubmissionsBtn && tableContainer) {
-            toggleSubmissionsBtn.addEventListener('click', function() {
-                if (tableContainer.classList.contains('hidden')) {
-                    tableContainer.classList.remove('hidden');
-                    toggleSubmissionsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Submissions';
-                } else {
-                    tableContainer.classList.add('hidden');
-                    toggleSubmissionsBtn.innerHTML = '<i class="fas fa-eye"></i> Show Submissions';
-                }
-            });
-        }
+        // Add event listeners for pagination, sorting, filtering, etc.
+        // This will be implemented in the next steps
     },
 
     // Show loading state
@@ -186,6 +158,7 @@ const RSVPSystem = {
         const loadingElement = document.getElementById('loading');
         const tableContainer = document.getElementById('table-container');
         const submissionsBody = document.getElementById('submissions-body');
+        const paginationContainer = document.getElementById('pagination');
 
         if (this.state.submissions.length === 0) {
             console.log('No submissions found');
@@ -193,6 +166,12 @@ const RSVPSystem = {
                 loadingElement.innerHTML = '<p>No submissions found.</p>';
                 loadingElement.style.display = 'block';
             }
+
+            // Clear pagination
+            if (paginationContainer) {
+                paginationContainer.innerHTML = '';
+            }
+
             return;
         }
 
@@ -258,9 +237,114 @@ const RSVPSystem = {
             }
         }
 
+        // Create pagination
+        this.createSubmissionsPagination();
+
         // Show table
         if (loadingElement) loadingElement.style.display = 'none';
         if (tableContainer) tableContainer.style.display = 'block';
+    },
+
+    // Create pagination for submissions
+    createSubmissionsPagination: function() {
+        const paginationContainer = document.getElementById('pagination');
+        if (!paginationContainer) return;
+
+        paginationContainer.innerHTML = '';
+
+        // Add items per page dropdown
+        const itemsPerPageContainer = document.createElement('div');
+        itemsPerPageContainer.className = 'items-per-page';
+        itemsPerPageContainer.innerHTML = `
+            <label for="submissions-items-per-page">Show:</label>
+            <select id="submissions-items-per-page" class="items-per-page-select">
+                <option value="10" ${this.state.itemsPerPage === 10 ? 'selected' : ''}>10</option>
+                <option value="25" ${this.state.itemsPerPage === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${this.state.itemsPerPage === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${this.state.itemsPerPage === 100 ? 'selected' : ''}>100</option>
+            </select>
+            <span>entries</span>
+        `;
+        paginationContainer.appendChild(itemsPerPageContainer);
+
+        // Add event listener to items per page dropdown
+        const itemsPerPageSelect = document.getElementById('submissions-items-per-page');
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', (e) => {
+                this.state.itemsPerPage = parseInt(e.target.value, 10);
+                this.state.currentPage = 1; // Reset to first page
+                this.processSubmissions();
+            });
+        }
+
+        // Calculate total pages
+        const totalPages = Math.ceil(this.state.filteredSubmissions.length / this.state.itemsPerPage);
+
+        // Create pagination buttons container
+        const paginationButtons = document.createElement('div');
+        paginationButtons.className = 'pagination-buttons';
+
+        // Add pagination info
+        const paginationInfo = document.createElement('div');
+        paginationInfo.className = 'pagination-info';
+        const startItem = Math.min((this.state.currentPage - 1) * this.state.itemsPerPage + 1, this.state.filteredSubmissions.length);
+        const endItem = Math.min(this.state.currentPage * this.state.itemsPerPage, this.state.filteredSubmissions.length);
+        paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${this.state.filteredSubmissions.length} entries`;
+        paginationButtons.appendChild(paginationInfo);
+
+        // Add buttons
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+
+        // Previous button
+        const prevButton = document.createElement('button');
+        prevButton.className = 'pagination-btn';
+        prevButton.disabled = this.state.currentPage === 1;
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i> Previous';
+        prevButton.addEventListener('click', () => {
+            if (this.state.currentPage > 1) {
+                this.state.currentPage--;
+                this.processSubmissions();
+            }
+        });
+        buttonContainer.appendChild(prevButton);
+
+        // Page buttons
+        const maxButtons = 5;
+        let startPage = Math.max(1, this.state.currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+        // Adjust if we're near the end
+        if (endPage - startPage + 1 < maxButtons && startPage > 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.className = 'pagination-btn' + (i === this.state.currentPage ? ' active' : '');
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => {
+                this.state.currentPage = i;
+                this.processSubmissions();
+            });
+            buttonContainer.appendChild(pageButton);
+        }
+
+        // Next button
+        const nextButton = document.createElement('button');
+        nextButton.className = 'pagination-btn';
+        nextButton.disabled = this.state.currentPage === totalPages;
+        nextButton.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+        nextButton.addEventListener('click', () => {
+            if (this.state.currentPage < totalPages) {
+                this.state.currentPage++;
+                this.processSubmissions();
+            }
+        });
+        buttonContainer.appendChild(nextButton);
+
+        paginationButtons.appendChild(buttonContainer);
+        paginationContainer.appendChild(paginationButtons);
     },
 
     // Process guest list data
@@ -278,162 +362,8 @@ const RSVPSystem = {
         // Update guest list statistics
         this.updateGuestListStats();
 
-        // Create category charts
-        this.createCategoryCharts();
-
         // Display guest list
         this.displayGuestList();
-    },
-
-    // Create category-based charts
-    createCategoryCharts: function() {
-        console.log('Creating category charts...');
-
-        // Clear existing charts
-        if (window.categoryResponseChart instanceof Chart) {
-            window.categoryResponseChart.destroy();
-        }
-        if (window.categoryDistributionChart instanceof Chart) {
-            window.categoryDistributionChart.destroy();
-        }
-
-        // Get chart canvases
-        const categoryResponseCanvas = document.getElementById('category-response-chart');
-        const categoryDistributionCanvas = document.getElementById('category-distribution-chart');
-
-        if (!categoryResponseCanvas || !categoryDistributionCanvas || this.state.guests.length === 0) {
-            console.log('Category chart canvases not found or no guest data');
-            return;
-        }
-
-        // Extract unique categories and count guests in each
-        const categories = {};
-        const responseByCategory = {};
-
-        this.state.guests.forEach(guest => {
-            const category = guest.category || 'Uncategorized';
-
-            // Count guests by category
-            categories[category] = (categories[category] || 0) + 1;
-
-            // Initialize response tracking for this category if needed
-            if (!responseByCategory[category]) {
-                responseByCategory[category] = {
-                    responded: 0,
-                    notResponded: 0,
-                    total: 0
-                };
-            }
-
-            // Track response status
-            if (guest.hasResponded) {
-                responseByCategory[category].responded++;
-            } else {
-                responseByCategory[category].notResponded++;
-            }
-            responseByCategory[category].total++;
-        });
-
-        // Prepare data for Response Rate by Category chart
-        const categoryLabels = Object.keys(categories).sort();
-        const responseRates = categoryLabels.map(category => {
-            const data = responseByCategory[category];
-            return data.total > 0 ? Math.round((data.responded / data.total) * 100) : 0;
-        });
-
-        // Create Response Rate by Category chart
-        console.log('Creating category response chart');
-        window.categoryResponseChart = new Chart(categoryResponseCanvas, {
-            type: 'bar',
-            data: {
-                labels: categoryLabels,
-                datasets: [{
-                    label: 'Response Rate (%)',
-                    data: responseRates,
-                    backgroundColor: '#4caf50',
-                    borderColor: '#388e3c',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Response Rate'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Guest Category'
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const category = context.label;
-                                const data = responseByCategory[category];
-                                return [
-                                    `Response Rate: ${context.raw}%`,
-                                    `Responded: ${data.responded} of ${data.total}`
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Prepare data for Guest Distribution by Category chart
-        const guestCounts = categoryLabels.map(category => categories[category]);
-
-        // Create Guest Distribution by Category chart
-        console.log('Creating category distribution chart');
-        window.categoryDistributionChart = new Chart(categoryDistributionCanvas, {
-            type: 'pie',
-            data: {
-                labels: categoryLabels,
-                datasets: [{
-                    data: guestCounts,
-                    backgroundColor: [
-                        '#1e88e5', '#4caf50', '#ff9800', '#f44336', '#9c27b0',
-                        '#00bcd4', '#ffeb3b', '#795548', '#607d8b', '#e91e63'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                return `${context.label}: ${value} guests (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
     },
 
     // Update statistics
@@ -532,6 +462,7 @@ const RSVPSystem = {
     // Display guest list
     displayGuestList: function() {
         const guestListBody = document.getElementById('guest-list-body');
+        const paginationContainer = document.getElementById('guest-list-pagination');
         if (!guestListBody) return;
 
         guestListBody.innerHTML = '';
@@ -543,8 +474,14 @@ const RSVPSystem = {
 
         if (paginatedGuests.length === 0) {
             const noDataRow = document.createElement('tr');
-            noDataRow.innerHTML = `<td colspan="7" style="text-align: center;">No guests found</td>`;
+            noDataRow.innerHTML = `<td colspan="5" style="text-align: center;">No guests found</td>`;
             guestListBody.appendChild(noDataRow);
+
+            // Clear pagination
+            if (paginationContainer) {
+                paginationContainer.innerHTML = '';
+            }
+
             return;
         }
 
@@ -567,15 +504,8 @@ const RSVPSystem = {
                 }
             }
 
-            // Format category
-            const category = guest.category ?
-                `<span class="category-badge">${guest.category}</span>` :
-                '-';
-
             row.innerHTML = `
                 <td>${guest.name || ''}</td>
-                <td>${category}</td>
-                <td>${guest.maxAllowedGuests || 1}</td>
                 <td>${responseStatus}</td>
                 <td>${rsvpResponse}</td>
                 <td>${guest.hasResponded ? (guest.actualGuestCount || 0) : '-'}</td>
@@ -588,6 +518,111 @@ const RSVPSystem = {
 
             guestListBody.appendChild(row);
         });
+
+        // Create pagination
+        this.createGuestListPagination();
+    },
+
+    // Create pagination for guest list
+    createGuestListPagination: function() {
+        const paginationContainer = document.getElementById('guest-list-pagination');
+        if (!paginationContainer) return;
+
+        paginationContainer.innerHTML = '';
+
+        // Add items per page dropdown
+        const itemsPerPageContainer = document.createElement('div');
+        itemsPerPageContainer.className = 'items-per-page';
+        itemsPerPageContainer.innerHTML = `
+            <label for="guest-items-per-page">Show:</label>
+            <select id="guest-items-per-page" class="items-per-page-select">
+                <option value="10" ${this.state.itemsPerPage === 10 ? 'selected' : ''}>10</option>
+                <option value="25" ${this.state.itemsPerPage === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${this.state.itemsPerPage === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${this.state.itemsPerPage === 100 ? 'selected' : ''}>100</option>
+            </select>
+            <span>entries</span>
+        `;
+        paginationContainer.appendChild(itemsPerPageContainer);
+
+        // Add event listener to items per page dropdown
+        const itemsPerPageSelect = document.getElementById('guest-items-per-page');
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', (e) => {
+                this.state.itemsPerPage = parseInt(e.target.value, 10);
+                this.state.guestListPage = 1; // Reset to first page
+                this.displayGuestList();
+            });
+        }
+
+        // Calculate total pages
+        const totalPages = Math.ceil(this.state.filteredGuests.length / this.state.itemsPerPage);
+
+        // Create pagination buttons container
+        const paginationButtons = document.createElement('div');
+        paginationButtons.className = 'pagination-buttons';
+
+        // Add pagination info
+        const paginationInfo = document.createElement('div');
+        paginationInfo.className = 'pagination-info';
+        const startItem = Math.min((this.state.guestListPage - 1) * this.state.itemsPerPage + 1, this.state.filteredGuests.length);
+        const endItem = Math.min(this.state.guestListPage * this.state.itemsPerPage, this.state.filteredGuests.length);
+        paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${this.state.filteredGuests.length} entries`;
+        paginationButtons.appendChild(paginationInfo);
+
+        // Add buttons
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+
+        // Previous button
+        const prevButton = document.createElement('button');
+        prevButton.className = 'pagination-btn';
+        prevButton.disabled = this.state.guestListPage === 1;
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i> Previous';
+        prevButton.addEventListener('click', () => {
+            if (this.state.guestListPage > 1) {
+                this.state.guestListPage--;
+                this.displayGuestList();
+            }
+        });
+        buttonContainer.appendChild(prevButton);
+
+        // Page buttons
+        const maxButtons = 5;
+        let startPage = Math.max(1, this.state.guestListPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+        // Adjust if we're near the end
+        if (endPage - startPage + 1 < maxButtons && startPage > 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.className = 'pagination-btn' + (i === this.state.guestListPage ? ' active' : '');
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => {
+                this.state.guestListPage = i;
+                this.displayGuestList();
+            });
+            buttonContainer.appendChild(pageButton);
+        }
+
+        // Next button
+        const nextButton = document.createElement('button');
+        nextButton.className = 'pagination-btn';
+        nextButton.disabled = this.state.guestListPage === totalPages;
+        nextButton.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+        nextButton.addEventListener('click', () => {
+            if (this.state.guestListPage < totalPages) {
+                this.state.guestListPage++;
+                this.displayGuestList();
+            }
+        });
+        buttonContainer.appendChild(nextButton);
+
+        paginationButtons.appendChild(buttonContainer);
+        paginationContainer.appendChild(paginationButtons);
     },
 
     // Create charts
