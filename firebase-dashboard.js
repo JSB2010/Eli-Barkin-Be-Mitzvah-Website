@@ -1917,3 +1917,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('No user is logged in yet, waiting for login');
     }
 });
+
+// Expose functions globally outside the DOMContentLoaded event
+fetchSubmissions = window.fetchSubmissions;
+fetchGuestList = window.fetchGuestList;
