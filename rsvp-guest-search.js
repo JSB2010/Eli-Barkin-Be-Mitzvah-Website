@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 existingSubmissionInfo.style.display = 'block';
 
                 // Update button text and style
-                submitButton.textContent = 'Update RSVP';
+                submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
                 submitButton.classList.add('update-mode');
 
                 // Update form title
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 existingSubmissionInfo.style.display = 'none';
 
                 // Reset button text and style
-                submitButton.textContent = 'Submit RSVP';
+                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
                 submitButton.classList.remove('update-mode');
             }
         } catch (error) {
