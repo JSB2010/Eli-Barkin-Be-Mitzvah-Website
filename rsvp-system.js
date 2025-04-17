@@ -498,9 +498,11 @@ const RSVPSystem = {
                     const formattedDate = submissionDate.toLocaleDateString() + ' ' +
                                          submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-                    // Format additional guests
-                    const additionalGuests = submission.additionalGuests || [];
-                    const formattedGuests = additionalGuests.join(', ');
+                    // Format adult and child guests
+                    const adultGuests = submission.adultGuests || [];
+                    const childGuests = submission.childGuests || [];
+                    const adultGuestsStr = adultGuests.length > 0 ? adultGuests.join(', ') : 'None';
+                    const childGuestsStr = childGuests.length > 0 ? childGuests.join(', ') : 'None';
 
                     row.innerHTML = `
                         <td>${formattedDate}</td>
@@ -513,7 +515,17 @@ const RSVPSystem = {
                             </span>
                         </td>
                         <td>${submission.guestCount || 1}</td>
-                        <td>${formattedGuests}</td>
+                        <td>${submission.adultCount || 0}</td>
+                        <td>${submission.childCount || 0}</td>
+                        <td>
+                            <div class="guest-names-cell">
+                                ${adultGuests.length > 0 ?
+                                    `<div class="guest-category"><span class="guest-category-label">Adults:</span> ${adultGuestsStr}</div>` : ''}
+                                ${childGuests.length > 0 ?
+                                    `<div class="guest-category"><span class="guest-category-label">Children:</span> ${childGuestsStr}</div>` : ''}
+                                ${adultGuests.length === 0 && childGuests.length === 0 ? 'None' : ''}
+                            </div>
+                        </td>
                         <td>
                             <button class="btn-icon view-details" data-id="${submission.id}" title="View Details">
                                 <i class="fas fa-eye"></i>
@@ -1206,6 +1218,36 @@ const RSVPSystem = {
 
             responseTrendElem.textContent = trendText;
         }
+
+        // Update age distribution
+        const ageDistributionElem = document.getElementById('age-distribution');
+        if (ageDistributionElem && this.state.submissions.length > 0) {
+            // Calculate adult and child counts from attending submissions
+            const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+
+            let totalAdults = 0;
+            let totalChildren = 0;
+
+            attendingSubmissions.forEach(submission => {
+                totalAdults += submission.adultCount || 0;
+                totalChildren += submission.childCount || 0;
+            });
+
+            const totalGuests = totalAdults + totalChildren;
+            const adultPercentage = totalGuests > 0 ? Math.round((totalAdults / totalGuests) * 100) : 0;
+            const childPercentage = totalGuests > 0 ? Math.round((totalChildren / totalGuests) * 100) : 0;
+
+            ageDistributionElem.innerHTML = `
+                <div class="distribution-bar">
+                    <div class="adults-bar" style="width: ${adultPercentage}%" title="${totalAdults} Adults (${adultPercentage}%)"></div>
+                    <div class="children-bar" style="width: ${childPercentage}%" title="${totalChildren} Children (${childPercentage}%)"></div>
+                </div>
+                <div class="distribution-text">
+                    <span class="adults-text">${totalAdults} Adults</span> /
+                    <span class="children-text">${totalChildren} Children</span>
+                </div>
+            `;
+        }
     },
 
     // Export guest list to CSV
@@ -1674,11 +1716,9 @@ const RSVPSystem = {
             submissionDate.toLocaleDateString() + ' ' + submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
             'Unknown';
 
-        // Format additional guests
-        const additionalGuests = submission.additionalGuests || [];
-        const formattedGuests = additionalGuests.length > 0 ?
-            `<ul class="guest-list">${additionalGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
-            'None';
+        // Get adult and child guests
+        const adultGuests = submission.adultGuests || [];
+        const childGuests = submission.childGuests || [];
 
         // Create the content
         const content = `
@@ -1710,12 +1750,32 @@ const RSVPSystem = {
                         </span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Guest Count:</span>
+                        <span class="detail-label">Total Guest Count:</span>
                         <span class="detail-value">${submission.guestCount || 1}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Additional Guests:</span>
-                        <div class="detail-value">${formattedGuests}</div>
+                        <span class="detail-label">Adult Count:</span>
+                        <span class="detail-value">${submission.adultCount || 0}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Child Count:</span>
+                        <span class="detail-value">${submission.childCount || 0}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Adult Guests:</span>
+                        <div class="detail-value">
+                            ${adultGuests.length > 0 ?
+                                `<ul class="guest-list">${adultGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
+                                'None'}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Child Guests:</span>
+                        <div class="detail-value">
+                            ${childGuests.length > 0 ?
+                                `<ul class="guest-list">${childGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
+                                'None'}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1771,11 +1831,9 @@ const RSVPSystem = {
             }
         }
 
-        // Format additional guests
-        const additionalGuests = guest.additionalGuests || [];
-        const formattedGuests = additionalGuests.length > 0 ?
-            `<ul class="guest-list">${additionalGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
-            'None';
+        // Get adult and child guests
+        const adultGuests = guest.adultGuests || [];
+        const childGuests = guest.childGuests || [];
 
         // Format submission date
         const submissionDate = guest.submittedAt;
@@ -1822,12 +1880,32 @@ const RSVPSystem = {
                         </span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Guest Count:</span>
+                        <span class="detail-label">Total Guest Count:</span>
                         <span class="detail-value">${guest.actualGuestCount || 0}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Additional Guests:</span>
-                        <div class="detail-value">${formattedGuests}</div>
+                        <span class="detail-label">Adult Count:</span>
+                        <span class="detail-value">${guest.adultCount || 0}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Child Count:</span>
+                        <span class="detail-value">${guest.childCount || 0}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Adult Guests:</span>
+                        <div class="detail-value">
+                            ${adultGuests.length > 0 ?
+                                `<ul class="guest-list">${adultGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
+                                'None'}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Child Guests:</span>
+                        <div class="detail-value">
+                            ${childGuests.length > 0 ?
+                                `<ul class="guest-list">${childGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
+                                'None'}
+                        </div>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Submission Date:</span>

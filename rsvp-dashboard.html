@@ -130,18 +130,18 @@
         .login-container {
             width: 100%;
             max-width: 450px;
-            margin: 2rem auto;
+            margin: 5rem auto;
             background-color: var(--white);
             border-radius: 16px;
             padding: 3rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 10px 15px -5px rgba(0, 0, 0, 0.05);
             text-align: center;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
             z-index: 1;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .login-container::before {
@@ -255,7 +255,8 @@
             border-radius: 12px;
             font-size: 1.05rem;
             transition: all 0.3s ease;
-            background-color: var(--white);
+            background-color: #f9fafc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .login-form input:focus {
@@ -349,13 +350,15 @@
             height: 0;
             overflow: hidden;
             transition: all 0.3s ease;
+            margin-top: 0;
         }
 
         .error-message.visible {
-            display: block;
+            display: flex;
             opacity: 1;
             height: auto;
             margin-bottom: 1.5rem;
+            align-items: center;
         }
 
         .error-message i {
@@ -855,6 +858,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            border: 1px solid var(--light-gray);
         }
 
         .utility-card:hover {
@@ -891,7 +895,7 @@
         .utility-header {
             padding: var(--spacing-md) var(--spacing-lg);
             border-bottom: 1px solid var(--medium-gray);
-            background-color: var(--white);
+            background: linear-gradient(to right, var(--white), #f8fafc);
         }
 
         .utility-header h3 {
@@ -905,8 +909,9 @@
         }
 
         .utility-header h3 i {
-            color: inherit;
+            color: var(--primary-blue);
             font-size: 1rem;
+            opacity: 0.9;
         }
 
         .utility-content {
@@ -914,6 +919,7 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            gap: var(--spacing-md);
         }
 
         .utility-content p {
@@ -927,6 +933,27 @@
             gap: var(--spacing-md);
             flex-wrap: wrap;
             margin-top: auto;
+        }
+
+        .utility-actions .btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .utility-actions .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .utility-actions .btn:hover::before {
+            left: 100%;
         }
 
         .utility-help {
@@ -1467,6 +1494,44 @@
             color: var(--danger);
         }
 
+        /* Age distribution styles */
+        .distribution-bar {
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            margin: 8px 0;
+        }
+
+        .adults-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .children-bar {
+            height: 100%;
+            background-color: var(--success);
+        }
+
+        .distribution-text {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .adults-text {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .children-text {
+            color: var(--success);
+            font-weight: 600;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -1603,6 +1668,25 @@
         .guest-list li {
             margin-bottom: 0.25rem;
             background-color: transparent;
+        }
+
+        .guest-names-cell {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .guest-category {
+            margin-bottom: 0.5rem;
+        }
+
+        .guest-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .guest-category-label {
+            font-weight: 600;
+            color: var(--primary-blue);
         }
 
         /* Form styles for add guest modal */
@@ -1933,7 +2017,7 @@
                                     </div>
                                 </div>
                                 <button id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
-                                <button id="export-guest-list-btn-main" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
+                                <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
                             </div>
                         </div>
 
@@ -1982,7 +2066,7 @@
                                         <option value="large-party">Large Parties (4+)</option>
                                     </select>
                                 </div>
-                                <button id="export-rsvps-btn-main" class="btn"><i class="fas fa-download"></i> Export CSV</button>
+                                <button id="export-rsvps-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
                             </div>
                         </div>
 
@@ -2091,18 +2175,7 @@
                             </div>
                         </div>
 
-                        <div class="utility-card">
-                            <div class="utility-header">
-                                <h3><i class="fas fa-file-export"></i> Export Data</h3>
-                            </div>
-                            <div class="utility-content">
-                                <p>Export data to CSV files for offline use.</p>
-                                <div class="utility-actions">
-                                    <button id="export-guest-list-btn" class="btn info"><i class="fas fa-users"></i> Export Guest List</button>
-                                    <button id="export-rsvps-btn" class="btn info"><i class="fas fa-clipboard-list"></i> Export RSVPs</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Export Data card removed (all buttons were duplicates) -->
 
                         <div class="utility-card">
                             <div class="utility-header">
@@ -2136,18 +2209,7 @@
                             </div>
                         </div>
 
-                        <div class="utility-card">
-                            <div class="utility-header">
-                                <h3><i class="fas fa-tools"></i> Quick Actions</h3>
-                            </div>
-                            <div class="utility-content">
-                                <p>Common dashboard actions.</p>
-                                <div class="utility-actions">
-                                    <button id="refresh-data-btn-util" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
-                                    <button id="add-guest-btn-util" class="btn success"><i class="fas fa-user-plus"></i> Add Guest</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Quick Actions card removed (all buttons were duplicates) -->
                     </div>
 
                     <!-- Utility Results Container -->
