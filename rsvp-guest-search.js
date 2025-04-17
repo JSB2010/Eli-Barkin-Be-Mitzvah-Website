@@ -198,6 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButton.textContent = 'Update RSVP';
                 submitButton.classList.add('update-mode');
 
+                // Update form title
+                const formTitle = document.getElementById('rsvp-form-title');
+                if (formTitle) {
+                    formTitle.textContent = 'Update Your RSVP';
+                }
+
                 // Pre-fill form with existing data
                 prefillFormWithExistingData(submission);
             } else {
@@ -219,6 +225,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Pre-fill form with existing submission data
     function prefillFormWithExistingData(submission) {
+        console.log('Pre-filling form with existing data:', submission);
+
         // Set email and phone
         document.getElementById('email').value = submission.email || '';
         document.getElementById('phone').value = submission.phone || '';
@@ -227,59 +235,76 @@ document.addEventListener('DOMContentLoaded', function() {
         const attendingYes = document.getElementById('attendingYes');
         const attendingNo = document.getElementById('attendingNo');
 
-        if (submission.attending === 'yes') {
+        // Determine if attending based on submission data
+        const isAttending = submission.attending === 'yes';
+
+        // Set the appropriate radio button
+        if (isAttending) {
             attendingYes.checked = true;
+        } else {
+            attendingNo.checked = true;
+        }
 
-            // Parse guest counts
+        // Parse guest counts for attending guests
+        if (isAttending) {
+            // Get adult count
             let adultCount = 1; // Default to 1 adult
-            let childCount = 0; // Default to 0 children
-
-            if (submission.adultCount) {
+            if (typeof submission.adultCount === 'number') {
                 adultCount = submission.adultCount;
-            } else if (submission.guestCount) {
+            } else if (typeof submission.guestCount === 'number') {
                 // For backward compatibility
                 adultCount = submission.guestCount;
             }
 
-            if (submission.childCount) {
+            // Get child count
+            let childCount = 0; // Default to 0 children
+            if (typeof submission.childCount === 'number') {
                 childCount = submission.childCount;
             }
 
-            // Set guest counts
+            // Set guest counts in form
             adultCountInput.value = adultCount;
             childCountInput.value = childCount;
 
-            // Update guest fields
+            // Update guest fields to create the input elements
             updateGuestFields();
 
-            // Pre-fill guest names
-            if (submission.adultGuests && submission.adultGuests.length > 0) {
-                const adultInputs = adultGuestsContainer.querySelectorAll('input');
-                submission.adultGuests.forEach((name, index) => {
-                    if (adultInputs[index]) {
-                        adultInputs[index].value = name;
+            // Wait a moment for the DOM to update
+            setTimeout(() => {
+                // Pre-fill adult guest names
+                if (submission.adultGuests && Array.isArray(submission.adultGuests) && submission.adultGuests.length > 0) {
+                    const adultInputs = adultGuestsContainer.querySelectorAll('input');
+                    submission.adultGuests.forEach((name, index) => {
+                        if (adultInputs[index]) {
+                            adultInputs[index].value = name;
+                        }
+                    });
+                } else if (submission.additionalGuests && Array.isArray(submission.additionalGuests) && submission.additionalGuests.length > 0) {
+                    // For backward compatibility
+                    const adultInputs = adultGuestsContainer.querySelectorAll('input');
+                    // Make sure the first input has the primary guest name
+                    if (adultInputs[0]) {
+                        adultInputs[0].value = submission.name || '';
                     }
-                });
-            } else if (submission.additionalGuests && submission.additionalGuests.length > 0) {
-                // For backward compatibility
-                const adultInputs = adultGuestsContainer.querySelectorAll('input');
-                submission.additionalGuests.forEach((name, index) => {
-                    if (adultInputs[index + 1]) { // +1 to skip the first input (self)
-                        adultInputs[index + 1].value = name;
-                    }
-                });
-            }
 
-            if (submission.childGuests && submission.childGuests.length > 0) {
-                const childInputs = childGuestsContainer.querySelectorAll('input');
-                submission.childGuests.forEach((name, index) => {
-                    if (childInputs[index]) {
-                        childInputs[index].value = name;
-                    }
-                });
-            }
-        } else {
-            attendingNo.checked = true;
+                    // Fill in additional guests
+                    submission.additionalGuests.forEach((name, index) => {
+                        if (adultInputs[index + 1]) { // +1 to skip the first input (self)
+                            adultInputs[index + 1].value = name;
+                        }
+                    });
+                }
+
+                // Pre-fill child guest names
+                if (submission.childGuests && Array.isArray(submission.childGuests) && submission.childGuests.length > 0) {
+                    const childInputs = childGuestsContainer.querySelectorAll('input');
+                    submission.childGuests.forEach((name, index) => {
+                        if (childInputs[index]) {
+                            childInputs[index].value = name;
+                        }
+                    });
+                }
+            }, 100); // Short delay to ensure DOM is updated
         }
 
         // Trigger change event to update form visibility
@@ -289,6 +314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             attendingNo.dispatchEvent(event);
         }
+
+        console.log('Form pre-filled successfully');
     }
 
     // Update guest fields based on adult and child counts

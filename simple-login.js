@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(message) {
         if (errorMessage) {
             errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-            errorMessage.style.display = 'block';
+            errorMessage.classList.add('visible');
         }
         console.error('Error:', message);
     }
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideError() {
         if (errorMessage) {
             errorMessage.textContent = '';
-            errorMessage.style.display = 'none';
+            errorMessage.classList.remove('visible');
         }
     }
 });

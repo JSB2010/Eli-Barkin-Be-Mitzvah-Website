@@ -38,7 +38,7 @@ async function getAuthenticatedClient() {
 
 // Update RSVP responses in Google Sheet
 exports.updateRsvpInSheet = functions.firestore
-    .document('submissions/{submissionId}')
+    .document('sheetRsvps/{submissionId}')
     .onCreate(async (snapshot, context) => {
         try {
             // Get submission data
@@ -150,7 +150,7 @@ exports.manualUpdateAllRsvps = functions.https.onCall(async (data, context) => {
 
     try {
         // Get all submissions
-        const submissionsSnapshot = await admin.firestore().collection('submissions').get();
+        const submissionsSnapshot = await admin.firestore().collection('sheetRsvps').get();
         const submissions = [];
 
         submissionsSnapshot.forEach(doc => {

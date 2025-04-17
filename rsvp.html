@@ -56,24 +56,7 @@
         .autocomplete-item.selected {
             background-color: #f0f0f0;
         }
-        .guest-found-info {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #f0f7ff;
-            border-radius: 8px;
-            border-left: 4px solid #4a89dc;
-            display: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-
-        .guest-found-info:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        .guest-found-info p {
-            margin: 5px 0;
-        }
+        /* Original guest-found-info styles - overridden below */
         .search-message {
             font-size: 0.85rem;
             color: #666;
@@ -326,6 +309,42 @@
             outline: none;
         }
 
+        /* Guest found info styles */
+        .guest-found-info {
+            display: flex;
+            flex-direction: column;
+            background-color: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .guest-found-info::before {
+            content: '✓';
+            position: absolute;
+            right: -15px;
+            top: -15px;
+            font-size: 80px;
+            color: rgba(56, 161, 105, 0.1);
+            line-height: 1;
+        }
+
+        .guest-found-info p {
+            margin: 5px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .guest-found-info p:first-child {
+            font-size: 1.1rem;
+            color: #2f855a;
+        }
+
         /* Existing submission styles */
         .existing-submission {
             display: flex;
@@ -414,7 +433,7 @@
     <section class="rsvp-form">
         <div class="container">
             <div class="form-container">
-                <h2>RSVP Form</h2>
+                <h2 id="rsvp-form-title">RSVP Form</h2>
                 <form id="rsvpForm">
                     <div id="errorMessage" class="error-message" style="display: none;"></div>
                     <div class="form-group">
