@@ -171,14 +171,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (errorMessage) {
             errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
             errorMessage.classList.add('visible');
+            errorMessage.style.display = 'flex';
+            errorMessage.style.opacity = '1';
+            errorMessage.style.height = 'auto';
         }
         console.error('Error:', message);
     }
 
     function hideError() {
         if (errorMessage) {
-            errorMessage.textContent = '';
             errorMessage.classList.remove('visible');
+            errorMessage.style.display = 'none';
+            errorMessage.style.opacity = '0';
+            errorMessage.style.height = '0';
+            errorMessage.innerHTML = '';
         }
     }
 });
