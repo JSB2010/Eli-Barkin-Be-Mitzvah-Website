@@ -1221,23 +1221,32 @@ const RSVPSystem = {
 
         // Update age distribution
         const ageDistributionElem = document.getElementById('age-distribution');
+        console.log('Age distribution element:', ageDistributionElem);
+
         if (ageDistributionElem && this.state.submissions.length > 0) {
             // Calculate adult and child counts from attending submissions
             const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+            console.log('Attending submissions:', attendingSubmissions.length);
 
             let totalAdults = 0;
             let totalChildren = 0;
 
             attendingSubmissions.forEach(submission => {
+                console.log('Submission adult/child counts:', submission.adultCount, submission.childCount);
                 totalAdults += submission.adultCount || 0;
                 totalChildren += submission.childCount || 0;
             });
+
+            console.log('Total adults:', totalAdults, 'Total children:', totalChildren);
 
             const totalGuests = totalAdults + totalChildren;
             const adultPercentage = totalGuests > 0 ? Math.round((totalAdults / totalGuests) * 100) : 0;
             const childPercentage = totalGuests > 0 ? Math.round((totalChildren / totalGuests) * 100) : 0;
 
-            ageDistributionElem.innerHTML = `
+            console.log('Adult percentage:', adultPercentage, 'Child percentage:', childPercentage);
+
+            // Create the HTML content
+            const htmlContent = `
                 <div class="distribution-bar">
                     <div class="adults-bar" style="width: ${adultPercentage}%" title="${totalAdults} Adults (${adultPercentage}%)"></div>
                     <div class="children-bar" style="width: ${childPercentage}%" title="${totalChildren} Children (${childPercentage}%)"></div>
@@ -1245,6 +1254,62 @@ const RSVPSystem = {
                 <div class="distribution-text">
                     <span class="adults-text">${totalAdults} Adults</span> /
                     <span class="children-text">${totalChildren} Children</span>
+                </div>
+            `;
+
+            console.log('Setting HTML content:', htmlContent);
+            ageDistributionElem.innerHTML = htmlContent;
+        }
+
+        // Update response rate chart
+        const responseRateElem = document.getElementById('response-rate-chart');
+        if (responseRateElem && this.state.guests.length > 0) {
+            // Calculate response rate
+            const totalGuests = this.state.guests.length;
+            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+            const notRespondedCount = totalGuests - respondedCount;
+
+            const respondedPercentage = Math.round((respondedCount / totalGuests) * 100);
+            const notRespondedPercentage = 100 - respondedPercentage;
+
+            // Create the HTML content
+            responseRateElem.innerHTML = `
+                <div class="response-rate-container">
+                    <div class="response-rate-bar">
+                        <div class="responded-bar" style="width: ${respondedPercentage}%" title="${respondedCount} Responded (${respondedPercentage}%)"></div>
+                        <div class="not-responded-bar" style="width: ${notRespondedPercentage}%" title="${notRespondedCount} Not Responded (${notRespondedPercentage}%)"></div>
+                    </div>
+                    <div class="response-rate-text">
+                        <span class="responded-text">${respondedPercentage}% Responded</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update attendance prediction
+        const attendancePredictionElem = document.getElementById('attendance-prediction');
+        if (attendancePredictionElem && this.state.guests.length > 0) {
+            // Calculate current attendance numbers
+            const totalGuests = this.state.guests.length;
+            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+            const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
+            const notAttendingCount = this.state.guests.filter(guest => guest.response === 'declined').length;
+
+            // Calculate attendance rate among those who responded
+            const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
+
+            // Predict final attendance based on current rate
+            const predictedAttendance = Math.round(totalGuests * attendanceRate);
+
+            // Calculate a range (±10%)
+            const lowerBound = Math.max(0, Math.round(predictedAttendance * 0.9));
+            const upperBound = Math.round(predictedAttendance * 1.1);
+
+            // Create the HTML content
+            attendancePredictionElem.innerHTML = `
+                <div class="prediction-container">
+                    <div class="prediction-value">${predictedAttendance} Guests</div>
+                    <div class="prediction-range">Range: ${lowerBound} - ${upperBound}</div>
                 </div>
             `;
         }

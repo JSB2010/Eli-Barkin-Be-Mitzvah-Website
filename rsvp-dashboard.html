@@ -1532,6 +1532,69 @@
             font-weight: 600;
         }
 
+        /* Response rate chart styles */
+        .response-rate-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .response-rate-bar {
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .responded-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .not-responded-bar {
+            height: 100%;
+            background-color: var(--medium-gray);
+        }
+
+        .response-rate-text {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .responded-text {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .not-responded-text {
+            color: var(--medium-gray);
+            font-weight: 600;
+        }
+
+        /* Attendance prediction styles */
+        .prediction-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .prediction-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-align: center;
+        }
+
+        .prediction-range {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            text-align: center;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -2134,6 +2197,22 @@
                                 <h4>Age Distribution</h4>
                                 <p id="age-distribution">-</p>
                                 <p class="activity-status">Adults vs. Children</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="activity-content">
+                                <h4>Response Rate</h4>
+                                <p id="response-rate-chart">-</p>
+                                <p class="activity-status">Percentage of guests who responded</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-users"></i></div>
+                            <div class="activity-content">
+                                <h4>Attendance Prediction</h4>
+                                <p id="attendance-prediction">-</p>
+                                <p class="activity-status">Estimated final attendance</p>
                             </div>
                         </div>
                     </div>
