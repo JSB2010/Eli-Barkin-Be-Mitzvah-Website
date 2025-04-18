@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 admin.initializeApp();
 
@@ -203,9 +204,147 @@ exports.addRsvpToSheet = functions.firestore
   });
 
 /**
- * Cloud Function to update the guest list sheet with RSVP information
- * This function finds the matching guest in the sheet by name and updates their row
+ * Cloud Function that sends a confirmation email to the guest when they submit an RSVP
  */
+exports.sendRsvpConfirmation = functions.firestore
+  .document('sheetRsvps/{rsvpId}')
+  .onCreate(async (snapshot, context) => {
+    // Get the RSVP data
+    const rsvpData = snapshot.data();
+
+    // Skip if no email provided
+    if (!rsvpData.email) {
+      console.log('No email provided for RSVP, skipping confirmation email');
+      return null;
+    }
+
+    // Determine guest information
+    const isAttending = rsvpData.attending === 'yes';
+    const guestInfo = isAttending
+      ? `<p>We have you down for ${rsvpData.guestCount || 1} ${rsvpData.guestCount > 1 ? 'guests' : 'guest'}.</p>`
+      : '';
+
+    // Get additional guests if any
+    let additionalGuests = '';
+    if (isAttending && rsvpData.additionalGuests && rsvpData.additionalGuests.length > 0) {
+      additionalGuests = `
+        <p>Your party includes:</p>
+        <ul style="padding-left: 20px;">
+          <li>${rsvpData.name}</li>
+          ${rsvpData.additionalGuests.map(guest => `<li>${guest}</li>`).join('')}
+        </ul>
+      `;
+    }
+
+    // Configure Brevo API client
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = functions.config().brevo.key;
+
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+    // Create the email
+    const sendSmtpEmail = {
+      sender: {
+        email: 'rsvps@elibarkin.com',
+        name: "Eli's Be Mitzvah"
+      },
+      to: [{ email: rsvpData.email }],
+      subject: 'Thank You for Your RSVP to Eli\'s Be Mitzvah',
+      htmlContent: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+            }
+            .header {
+              background-color: #1a4b84;
+              color: white;
+              padding: 20px;
+              text-align: center;
+              border-radius: 5px 5px 0 0;
+            }
+            .content {
+              padding: 20px;
+              border: 1px solid #ddd;
+              border-top: none;
+              border-radius: 0 0 5px 5px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 20px;
+              font-size: 12px;
+              color: #777;
+            }
+            .button {
+              display: inline-block;
+              background-color: #f7941d;
+              color: white;
+              padding: 10px 20px;
+              text-decoration: none;
+              border-radius: 5px;
+              margin-top: 15px;
+            }
+            .details {
+              background-color: #f9f9f9;
+              padding: 15px;
+              border-radius: 5px;
+              margin: 15px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Thank You for Your RSVP!</h1>
+          </div>
+          <div class="content">
+            <p>Dear ${rsvpData.name},</p>
+
+            <p>We've received your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025.</p>
+
+            <div class="details">
+              <p><strong>Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
+              ${guestInfo}
+              ${additionalGuests}
+            </div>
+
+            <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+
+            <p>If you need to make any changes to your RSVP, you can do so at any time:</p>
+
+            <div style="text-align: center;">
+              <a href="https://elibarkin.com/rsvp.html" class="button">Update Your RSVP</a>
+            </div>
+
+            <p>Warm regards,<br>The Barkin Family</p>
+          </div>
+          <div class="footer">
+            <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
+            <p><a href="https://elibarkin.com">elibarkin.com</a></p>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    try {
+      // Send the email
+      const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Confirmation email sent to:', rsvpData.email);
+      console.log('Brevo API response:', response);
+      return null;
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      return null;
+    }
+  });
+
 exports.updateGuestListSheet = functions.firestore
   .document('sheetRsvps/{rsvpId}')
   .onCreate(async (snapshot, context) => {
