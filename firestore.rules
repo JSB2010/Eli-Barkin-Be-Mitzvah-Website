@@ -1,13 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read access to authenticated users only for RSVP submissions
-    match /rsvps/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if true; // Allow anyone to submit an RSVP
-    }
-
-    // Allow access to the sheet-synced RSVP collection
+    // Allow access to the sheet-synced RSVP collection (primary collection)
     match /sheetRsvps/{document=**} {
       allow read: if request.auth != null;
       allow write: if true; // Allow anyone to submit an RSVP

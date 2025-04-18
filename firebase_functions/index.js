@@ -67,7 +67,7 @@ Guest Count: ${rsvpData.guestCount || 1}
 ${additionalGuestsText}
 Submitted At: ${submittedDate}
 
-View all RSVPs on your dashboard: https://jsb2010.github.io/Eli-Barkin-Be-Mitzvah-Website/rsvp-dashboard.html
+View all RSVPs on your dashboard: https://elibarkin.com/rsvp-dashboard.html
       `,
       html: `
 <h2>New RSVP Submission</h2>
@@ -84,7 +84,7 @@ ${rsvpData.additionalGuests && rsvpData.additionalGuests.length > 0 ?
   </ul>` : ''}
 <p><strong>Submitted At:</strong> ${submittedDate}</p>
 <p>
-  <a href="https://jsb2010.github.io/Eli-Barkin-Be-Mitzvah-Website/rsvp-dashboard.html"
+  <a href="https://elibarkin.com/rsvp-dashboard.html"
      style="background-color: #2563eb; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">
     View All RSVPs on Dashboard
   </a>
@@ -212,7 +212,6 @@ exports.updateGuestListSheet = functions.firestore
     try {
       // Get the RSVP data
       const rsvpData = snapshot.data();
-      const rsvpId = context.params.rsvpId;
 
       // Format the date
       const submittedDate = rsvpData.submittedAt ?
