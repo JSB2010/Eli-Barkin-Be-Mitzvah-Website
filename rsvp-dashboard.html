@@ -539,6 +539,15 @@
             transition: var(--transition);
         }
 
+        .chart-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            padding: 1rem;
+        }
+
         .chart-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
@@ -2050,6 +2059,16 @@
                         <div class="chart-card">
                             <h3>Submissions Timeline</h3>
                             <canvas id="timeline-chart"></canvas>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Response Rate</h3>
+                            <div id="response-rate-analytics" class="chart-content"></div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Attendance Prediction</h3>
+                            <div id="attendance-prediction-analytics" class="chart-content"></div>
                         </div>
                     </div>
                 </div>

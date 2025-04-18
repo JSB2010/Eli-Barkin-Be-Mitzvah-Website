@@ -1038,10 +1038,14 @@ const RSVPSystem = {
         if (window.timelineChart instanceof Chart) {
             window.timelineChart.destroy();
         }
+        if (window.ageBreakdownChart instanceof Chart) {
+            window.ageBreakdownChart.destroy();
+        }
 
         // Get chart canvases
         const attendanceChartCanvas = document.getElementById('attendance-chart');
         const timelineChartCanvas = document.getElementById('timeline-chart');
+        const ageBreakdownChartCanvas = document.getElementById('age-breakdown-chart');
 
         // Attendance breakdown chart
         const attendingCount = this.state.submissions.filter(submission => submission.attending === 'yes').length;
@@ -1080,6 +1084,110 @@ const RSVPSystem = {
                     }
                 }
             });
+        }
+
+        // Age breakdown chart
+        if (ageBreakdownChartCanvas && this.state.submissions.length > 0) {
+            console.log('Creating age breakdown chart');
+
+            // Calculate adult and child counts from attending submissions
+            const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+
+            let totalAdults = 0;
+            let totalChildren = 0;
+
+            attendingSubmissions.forEach(submission => {
+                totalAdults += submission.adultCount || 0;
+                totalChildren += submission.childCount || 0;
+            });
+
+            window.ageBreakdownChart = new Chart(ageBreakdownChartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Adults', 'Children'],
+                    datasets: [{
+                        data: [totalAdults, totalChildren],
+                        backgroundColor: ['#1e88e5', '#4caf50'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Response rate chart
+        const responseRateAnalyticsElem = document.getElementById('response-rate-analytics');
+        if (responseRateAnalyticsElem && this.state.guests.length > 0) {
+            console.log('Creating response rate analytics');
+
+            // Calculate response rate
+            const totalGuests = this.state.guests.length;
+            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+            const notRespondedCount = totalGuests - respondedCount;
+
+            const respondedPercentage = Math.round((respondedCount / totalGuests) * 100);
+            const notRespondedPercentage = 100 - respondedPercentage;
+
+            // Create the HTML content
+            responseRateAnalyticsElem.innerHTML = `
+                <div class="response-rate-container">
+                    <div class="response-rate-bar">
+                        <div class="responded-bar" style="width: ${respondedPercentage}%" title="${respondedCount} Responded (${respondedPercentage}%)"></div>
+                        <div class="not-responded-bar" style="width: ${notRespondedPercentage}%" title="${notRespondedCount} Not Responded (${notRespondedPercentage}%)"></div>
+                    </div>
+                    <div class="response-rate-text">
+                        <span class="responded-text">${respondedPercentage}% Responded</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Attendance prediction chart
+        const attendancePredictionAnalyticsElem = document.getElementById('attendance-prediction-analytics');
+        if (attendancePredictionAnalyticsElem && this.state.guests.length > 0) {
+            console.log('Creating attendance prediction analytics');
+
+            // Calculate current attendance numbers
+            const totalGuests = this.state.guests.length;
+            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+            const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
+
+            // Calculate attendance rate among those who responded
+            const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
+
+            // Predict final attendance based on current rate
+            const predictedAttendance = Math.round(totalGuests * attendanceRate);
+
+            // Calculate a range (±10%)
+            const lowerBound = Math.max(0, Math.round(predictedAttendance * 0.9));
+            const upperBound = Math.round(predictedAttendance * 1.1);
+
+            // Create the HTML content
+            attendancePredictionAnalyticsElem.innerHTML = `
+                <div class="prediction-container">
+                    <div class="prediction-value">${predictedAttendance} Guests</div>
+                    <div class="prediction-range">Range: ${lowerBound} - ${upperBound}</div>
+                </div>
+            `;
         }
 
         // Submissions timeline chart
