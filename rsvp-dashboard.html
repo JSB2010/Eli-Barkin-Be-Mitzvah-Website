@@ -19,12 +19,16 @@
     <script src="mobile-nav.js" defer></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <!-- RSVP System Script (New) -->
+    <script src="rsvp-system.js"></script>
+    <!-- Simple Login Script -->
+    <script src="simple-login.js"></script>
 
     <style>
         :root {
@@ -44,10 +48,29 @@
             --dark-gray: #374151;
             --black: #111827;
             --success: #10b981;
+            --success-light: #d1fae5;
+            --success-dark: #047857;
             --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --warning-dark: #d97706;
             --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --danger-dark: #dc2626;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --info-dark: #0284c7;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --section-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 16px;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
         }
 
         * {
@@ -72,20 +95,53 @@
             justify-content: center;
             background: linear-gradient(135deg, var(--light-blue) 0%, var(--light-gray) 100%);
             padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-page::before {
+            content: '';
+            position: absolute;
+            width: 300%;
+            height: 300%;
+            top: -100%;
+            left: -100%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: pulse 15s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, 5%); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .login-container {
             width: 100%;
             max-width: 450px;
-            margin: 2rem auto;
+            margin: 5rem auto;
             background-color: var(--white);
-            border-radius: 12px;
-            padding: 2.5rem;
-            box-shadow: var(--card-shadow);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 10px 15px -5px rgba(0, 0, 0, 0.05);
             text-align: center;
-            transition: var(--transition);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .login-container::before {
@@ -94,115 +150,170 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 5px;
+            height: 6px;
             background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-orange) 100%);
         }
 
         .login-container:hover {
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15);
-            transform: translateY(-5px);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.2);
+            transform: translateY(-8px);
         }
 
         .login-logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 2rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: var(--light-blue);
+            background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
             border-radius: 50%;
-            color: var(--primary-blue);
+            color: var(--white);
             font-size: 2.5rem;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-logo::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-container:hover .login-logo::after {
+            opacity: 1;
         }
 
         .login-container h2 {
             color: var(--primary-blue);
             margin-bottom: 1rem;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .login-container p {
             color: var(--dark-gray);
-            margin-bottom: 2rem;
-            font-size: 1rem;
-            line-height: 1.5;
+            margin-bottom: 2.5rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .login-form {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1.5rem;
         }
 
         .form-group {
             position: relative;
             text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .form-group:hover {
+            transform: translateY(-2px);
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: var(--dark-gray);
+            transition: color 0.3s ease;
+        }
+
+        .form-group:focus-within label {
+            color: var(--primary-blue);
         }
 
         .form-group i {
             position: absolute;
-            left: 1rem;
-            top: 2.3rem;
+            left: 1.2rem;
+            top: 2.5rem;
             transform: translateY(-50%);
             color: var(--medium-gray);
-            transition: var(--transition);
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
         }
 
         .login-form input {
             width: 100%;
-            padding: 0.875rem 1rem 0.875rem 2.5rem;
-            border: 1px solid var(--medium-gray);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--white);
+            padding: 1rem 1.2rem 1rem 3rem;
+            border: 2px solid var(--medium-gray);
+            border-radius: 12px;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            background-color: #f9fafc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .login-form input:focus {
             outline: none;
-            border-color: var(--primary-blue-light);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
         }
 
         .login-form input:focus + i {
             color: var(--primary-blue);
+            transform: translateY(-50%) scale(1.1);
         }
 
         .login-form button {
-            background-color: var(--primary-blue);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
             color: var(--white);
             border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 1.1rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
-            margin-top: 1rem;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-form button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s ease;
         }
 
         .login-form button:hover {
-            background-color: var(--primary-blue-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--dark-blue) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.2);
+        }
+
+        .login-form button:hover::before {
+            left: 100%;
         }
 
         .login-form button:active {
-            transform: translateY(0);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px -3px rgba(37, 99, 235, 0.3);
         }
 
         .login-form button .spinner {
@@ -211,7 +322,7 @@
         }
 
         .login-form button.loading {
-            background-color: var(--primary-blue-light);
+            background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
             pointer-events: none;
         }
 
@@ -226,51 +337,91 @@
         .error-message {
             color: var(--danger);
             margin-bottom: 1.5rem;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             background-color: rgba(239, 68, 68, 0.1);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border-left: 3px solid var(--danger);
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--danger);
             text-align: left;
             display: none;
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.4s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-top: 0;
+        }
+
+        .error-message.visible {
+            display: flex;
+            opacity: 1;
+            height: auto;
+            margin-bottom: 1.5rem;
+            align-items: center;
         }
 
         .error-message i {
-            margin-right: 0.5rem;
+            margin-right: 0.6rem;
+            font-size: 1.1rem;
         }
 
         .login-footer {
-            margin-top: 2rem;
-            font-size: 0.85rem;
+            margin-top: 2.5rem;
+            font-size: 0.9rem;
             color: var(--dark-gray);
             opacity: 0.8;
+            position: relative;
+            padding-top: 1.5rem;
+        }
+
+        .login-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 25%;
+            right: 25%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--medium-gray), transparent);
         }
 
         /* Responsive login styles */
         @media (max-width: 480px) {
             .login-container {
-                padding: 2rem 1.5rem;
+                padding: 2.5rem 1.8rem;
                 margin: 1rem auto;
+                max-width: 90%;
             }
 
             .login-logo {
-                width: 70px;
-                height: 70px;
-                font-size: 2rem;
+                width: 80px;
+                height: 80px;
+                font-size: 2.2rem;
+                margin-bottom: 1.5rem;
             }
 
             .login-container h2 {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
+            }
+
+            .login-container p {
+                font-size: 1rem;
+                margin-bottom: 2rem;
             }
 
             .login-form input {
-                font-size: 0.95rem;
-                padding: 0.75rem 1rem 0.75rem 2.5rem;
+                font-size: 1rem;
+                padding: 0.9rem 1rem 0.9rem 2.8rem;
             }
 
             .form-group i {
-                top: 2.1rem;
+                top: 2.3rem;
+                left: 1rem;
+            }
+
+            .login-form button {
+                padding: 1rem;
+                font-size: 1rem;
             }
         }
 
@@ -288,6 +439,11 @@
             margin-bottom: 2.5rem;
             padding-bottom: 1.5rem;
             border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 1rem;
         }
 
         .dashboard-title {
@@ -381,6 +537,15 @@
             padding: 1.75rem;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
+        }
+
+        .chart-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            padding: 1rem;
         }
 
         .chart-card:hover {
@@ -503,14 +668,17 @@
             font-size: 0.8rem;
             margin-left: 5px;
             opacity: 0.7;
+            transition: var(--transition);
         }
 
-        th.sort-asc .sort-icon:after {
-            content: "↑";
+        .sort-icon.active {
+            opacity: 1;
+            color: var(--primary-blue-dark);
+            font-weight: bold;
         }
 
-        th.sort-desc .sort-icon:after {
-            content: "↓";
+        th.sortable:hover .sort-icon {
+            opacity: 1;
         }
 
         tr {
@@ -530,40 +698,7 @@
             font-size: 0.95rem;
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 1.5rem;
-            gap: 0.5rem;
-        }
-
-        .pagination button {
-            background-color: var(--white);
-            border: 1px solid var(--medium-gray);
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .pagination button.active {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border-color: var(--primary-blue);
-            font-weight: 600;
-        }
-
-        .pagination button:hover:not(.active):not(:disabled) {
-            background-color: var(--light-blue);
-            border-color: var(--primary-blue-light);
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        /* Pagination styles moved to a new location */
 
         .loading {
             text-align: center;
@@ -588,6 +723,20 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .error-details {
+            font-size: 0.85rem;
+            color: var(--danger);
+            background-color: rgba(244, 67, 54, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-family: monospace;
+            max-width: 100%;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .hidden {
@@ -672,6 +821,255 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Utilities Section Styles */
+        .dashboard-section:last-child {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        /* Utilities section header - overrides the dashboard section header */
+        .dashboard-section:last-child .section-header {
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .dashboard-section:last-child .section-header h2 {
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .dashboard-section:last-child .section-header i {
+            color: var(--primary-blue);
+            font-size: 1.25rem;
+        }
+
+        .utilities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .utility-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 1px solid var(--light-gray);
+        }
+
+        .utility-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .utility-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .utility-card:nth-child(2)::before {
+            background-color: var(--warning);
+        }
+
+        .utility-card:nth-child(3)::before {
+            background-color: var(--info);
+        }
+
+        .utility-card:nth-child(4)::before {
+            background-color: var(--success);
+        }
+
+        .utility-card:nth-child(5)::before {
+            background-color: var(--danger);
+        }
+
+        .utility-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--medium-gray);
+            background: linear-gradient(to right, var(--white), #f8fafc);
+        }
+
+        .utility-header h3 {
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .utility-header h3 i {
+            color: var(--primary-blue);
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .utility-content {
+            padding: var(--spacing-lg);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .utility-content p {
+            margin-bottom: var(--spacing-lg);
+            color: var(--dark-gray);
+            line-height: 1.5;
+        }
+
+        .utility-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .utility-actions .btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .utility-actions .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .utility-actions .btn:hover::before {
+            left: 100%;
+        }
+
+        .utility-help {
+            margin-top: var(--spacing-md);
+            color: var(--dark-gray);
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .utility-results {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-top: var(--spacing-lg);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-in-out;
+            border: 1px solid var(--medium-gray);
+        }
+
+        .utility-results-header {
+            background-color: var(--light-gray);
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .utility-results-header h3 {
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .utility-results-content {
+            padding: var(--spacing-lg);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .test-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .test-user-badge {
+            background-color: var(--warning-light);
+            color: var(--warning-dark);
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .test-user-badge:hover {
+            background-color: var(--warning);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        /* Button styles are defined earlier in the document */
+
+        /* Additional button styles for utilities */
+        .btn.info {
+            background-color: var(--info);
+            color: var(--white);
+        }
+
+        .btn.info:hover {
+            background-color: var(--info-dark);
+        }
+
+        .btn.danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn.danger:hover {
+            background-color: var(--danger-dark);
+        }
+
+        @media (max-width: 768px) {
+            .utilities-container {
+                grid-template-columns: 1fr;
+            }
+
+            .utility-card {
+                margin-bottom: var(--spacing-md);
+            }
+
+            .utility-actions {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .utility-actions .btn {
+                width: 100%;
+            }
+        }
+
         /* Status badges */
         .status-badge {
             display: inline-flex;
@@ -693,33 +1091,24 @@
             color: var(--danger);
         }
 
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
+        /* Modal styles - removed duplicates */
 
-        .modal-content {
+        /* Dashboard Sections */
+        .dashboard-section {
             background-color: var(--white);
-            border-radius: 12px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
+            border-radius: var(--border-radius);
+            padding: 1.75rem;
             box-shadow: var(--card-shadow);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            overflow: hidden;
         }
 
-        .modal-header {
+        .dashboard-section:hover {
+            box-shadow: var(--section-shadow);
+        }
+
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -728,49 +1117,717 @@
             border-bottom: 1px solid var(--medium-gray);
         }
 
-        .modal-title {
+        .section-header h2 {
+            color: var(--primary-blue);
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-header h2 i {
+            color: var(--primary-blue-light);
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Metrics Section */
+        .metrics-section {
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--primary-blue) 100%);
+            color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--section-shadow);
+        }
+
+        .metrics-section .stat-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .metrics-section .stat-card::before {
+            display: none;
+        }
+
+        .metrics-section .stat-card h3 {
+            color: var(--white);
+        }
+
+        .metrics-section .stat-card .stat-value {
+            color: var(--white);
+        }
+
+        .metrics-section .stat-card .stat-subtext {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .metrics-section .stat-card.highlight {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .metrics-section .stat-card.highlight .stat-value {
+            font-size: 3rem;
+        }
+
+        /* Activity Section */
+        .activity-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .activity-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-sm);
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .activity-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--section-shadow);
+        }
+
+        .activity-card:nth-child(2) {
+            border-left-color: var(--warning);
+        }
+
+        .activity-card:nth-child(3) {
+            border-left-color: var(--success);
+        }
+
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            flex-shrink: 0;
+        }
+
+        .activity-card:nth-child(2) .activity-icon {
+            background-color: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .activity-card:nth-child(3) .activity-icon {
+            background-color: var(--success-light);
+            color: var(--success);
+        }
+
+        .activity-content {
+            flex-grow: 1;
+        }
+
+        .activity-content h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--dark-gray);
+        }
+
+        .activity-content p {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--black);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time, .activity-status {
+            font-size: 0.85rem !important;
+            color: var(--dark-gray) !important;
+            opacity: 0.8;
+            font-weight: normal !important;
+        }
+
+        /* Search and Filter Improvements */
+        .search-filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            flex-grow: 1;
+        }
+
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 350px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-gray);
+            opacity: 0.6;
+        }
+
+        /* Override search box styles for the new layout */
+        .search-container .search-box {
+            padding-left: 2.5rem;
+            width: 100%;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Table Responsive */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .items-per-page-select {
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            background-color: var(--white);
+            font-size: 0.9rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--medium-gray);
+            background-color: var(--white);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--light-blue);
+            border-color: var(--primary-blue-light);
+        }
+
+        .pagination-btn.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .pagination-buttons {
+                align-items: center;
+            }
+        }
+
+        /* Guest list styles */
+        .guest-list-container {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--card-shadow);
+            overflow-x: auto;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+        }
+
+        .guest-list-container:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .guest-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .guest-list-header h2 {
+            color: var(--primary-blue);
             font-size: 1.5rem;
             font-weight: 600;
+        }
+
+        .guest-list-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .category-filter {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background-color: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .category-filter:focus {
+            outline: none;
+            border-color: var(--primary-blue-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .response-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            gap: 0.35rem;
+        }
+
+        .status-responded {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-not-responded {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: var(--light-blue);
             color: var(--primary-blue);
         }
 
+        /* Response rate by category chart */
+        .category-chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Notification styles */
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+            font-weight: 500;
+        }
+
+        .sync-success {
+            background-color: var(--success);
+        }
+
+        .sync-error {
+            background-color: var(--danger);
+        }
+
+        .status-pending {
+            color: var(--warning);
+        }
+
+        .status-error {
+            color: var(--danger);
+        }
+
+        /* Age distribution styles */
+        .distribution-bar {
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            margin: 8px 0;
+        }
+
+        .adults-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .children-bar {
+            height: 100%;
+            background-color: var(--success);
+        }
+
+        .distribution-text {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .adults-text {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .children-text {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Response rate chart styles */
+        .response-rate-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .response-rate-bar {
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .responded-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+
+        .not-responded-bar {
+            height: 100%;
+            background-color: var(--medium-gray);
+        }
+
+        .response-rate-text {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .responded-text {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .not-responded-text {
+            color: var(--medium-gray);
+            font-weight: 600;
+        }
+
+        /* Attendance prediction styles */
+        .prediction-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .prediction-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-align: center;
+        }
+
+        .prediction-range {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            text-align: center;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            animation: slideDown 0.3s ease-out;
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            background-color: var(--primary-blue-dark);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
         .modal-close {
-            background: none;
+            background: transparent;
             border: none;
+            color: white;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--dark-gray);
+            padding: 0;
+            line-height: 1;
             transition: var(--transition);
         }
 
         .modal-close:hover {
-            color: var(--danger);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .modal-body {
-            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            background-color: white;
+            color: var(--dark-gray);
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: flex-end;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .modal-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 576px) {
+            .modal-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .detail-group {
-            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
         .detail-label {
             font-weight: 600;
-            color: var(--dark-gray);
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
+            color: var(--primary-blue-dark);
+            font-size: 0.875rem;
         }
 
         .detail-value {
-            font-size: 1.1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--dark-gray);
         }
 
-        .modal-footer {
+        .detail-value.address {
+            line-height: 1.6;
+        }
+
+        .guest-list {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.25rem;
+            color: var(--dark-gray);
+        }
+
+        .guest-list li {
+            margin-bottom: 0.25rem;
+            background-color: transparent;
+        }
+
+        .guest-names-cell {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .guest-category {
+            margin-bottom: 0.5rem;
+        }
+
+        .guest-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .guest-category-label {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        /* Form styles for add guest modal */
+        .form-row {
             display: flex;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--medium-gray);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        #add-guest-form .form-group {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+            text-align: left;
+        }
+
+        #add-guest-form .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-blue-dark);
+            font-size: 0.9rem;
+        }
+
+        #add-guest-form .form-group input,
+        #add-guest-form .form-group select,
+        #add-guest-form .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        #add-guest-form .form-group input:focus,
+        #add-guest-form .form-group select:focus,
+        #add-guest-form .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        #add-guest-error {
+            color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #add-guest-error i {
+            color: var(--danger);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Responsive styles */
@@ -820,7 +1877,15 @@
 
             .modal-content {
                 width: 95%;
-                padding: 1.5rem;
+                margin: 10% auto;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-details {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -876,19 +1941,20 @@
                 <i class="fas fa-chart-line"></i>
             </div>
             <h2>RSVP Dashboard</h2>
-            <p>Please enter your credentials to access Eli's Be Mitzvah RSVP management dashboard.</p>
+            <p>Welcome to Eli's Be Mitzvah RSVP management system. Please enter your credentials to access the dashboard.</p>
             <div id="error-message" class="error-message"></div>
             <form id="login-form" class="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" placeholder="Enter your email" required>
+                    <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
                     <i class="fas fa-envelope"></i>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter your password" required>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
                     <i class="fas fa-lock"></i>
                 </div>
+                <div id="error-message" class="error-message"></div>
                 <button type="submit">
                     <span class="btn-text">Login to Dashboard</span>
                     <i class="fas fa-spinner spinner"></i>
@@ -904,107 +1970,356 @@
         <div class="dashboard-container">
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">RSVP Dashboard</h1>
-                    <p class="dashboard-subtitle">Track and manage event responses for Eli's Be Mitzvah</p>
+                    <h1 class="dashboard-title">Guest Management Dashboard</h1>
+                    <p class="dashboard-subtitle">Track and manage guest list and RSVPs for Eli's Be Mitzvah</p>
                 </div>
-                <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <div class="dashboard-actions">
+                    <button id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
+                    <button id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
+                    <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Overview -->
+            <div class="dashboard-overview">
+                <div class="overview-header">
+                    <h2><i class="fas fa-chart-line"></i> Guest Overview</h2>
+                </div>
             </div>
 
             <div id="loading" class="loading">
                 <div class="loading-spinner"></div>
-                <p>Loading RSVP data...</p>
+                <p>Loading data...</p>
             </div>
 
-            <div class="stats-container">
-                <div class="stat-card">
-                    <h3>Total RSVPs</h3>
-                    <div id="total-submissions" class="stat-value">0</div>
-                    <div id="total-submissions-percent" class="stat-subtext"></div>
-                </div>
-                <div class="stat-card">
-                    <h3>Attending</h3>
-                    <div id="attending-count" class="stat-value">0</div>
-                    <div id="attending-percent" class="stat-subtext"></div>
-                </div>
-                <div class="stat-card">
-                    <h3>Not Attending</h3>
-                    <div id="not-attending-count" class="stat-value">0</div>
-                    <div id="not-attending-percent" class="stat-subtext"></div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Guests</h3>
-                    <div id="total-guests" class="stat-value">0</div>
-                    <div id="avg-party-size" class="stat-subtext"></div>
-                </div>
-                <div class="stat-card">
-                    <h3>Response Rate</h3>
-                    <div id="response-rate" class="stat-value">-</div>
-                    <div class="stat-subtext">Based on expected ~300 invites</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Latest RSVP</h3>
-                    <div id="latest-rsvp" class="stat-value">-</div>
-                    <div id="latest-rsvp-time" class="stat-subtext"></div>
-                </div>
-            </div>
-
-            <div class="charts-container">
-                <div class="chart-card">
-                    <h3>Attendance Breakdown</h3>
-                    <canvas id="attendance-chart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Submissions Timeline</h3>
-                    <canvas id="timeline-chart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Guest Count Distribution</h3>
-                    <canvas id="guest-count-chart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Cumulative Guests</h3>
-                    <canvas id="cumulative-guests-chart"></canvas>
-                </div>
-            </div>
-
-            <div id="table-container" class="table-container hidden">
-                <div class="table-header">
-                    <h2>RSVP Submissions</h2>
-                    <div class="table-actions">
-                        <div class="search-container">
-                            <input type="text" id="search-box" class="search-box" placeholder="Search by name, email...">
+            <!-- Unified Dashboard Content -->
+            <div id="unified-dashboard-content" class="dashboard-content">
+                <!-- Key Metrics Section -->
+                <div class="metrics-section">
+                    <div class="stats-container">
+                        <div class="stat-card highlight">
+                            <h3>Response Rate</h3>
+                            <div id="response-rate" class="stat-value">-</div>
+                            <div class="stat-subtext">Based on expected ~300 invites</div>
                         </div>
-                        <select id="filter-dropdown" class="filter-dropdown">
-                            <option value="all">All Submissions</option>
-                            <option value="attending">Attending</option>
-                            <option value="not-attending">Not Attending</option>
-                            <option value="recent">Last 7 Days</option>
-                            <option value="large-party">Large Parties (4+)</option>
-                        </select>
-                        <button id="export-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
+                        <div class="stat-card">
+                            <h3>Total Guests</h3>
+                            <div id="total-guests-count" class="stat-value">0</div>
+                            <div class="stat-subtext">From guest list</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Responded</h3>
+                            <div id="responded-count" class="stat-value">0</div>
+                            <div id="responded-percent" class="stat-subtext">0% of total</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Not Responded</h3>
+                            <div id="not-responded-count" class="stat-value">0</div>
+                            <div id="not-responded-percent" class="stat-subtext">0% of total</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Attending</h3>
+                            <div id="attending-guests-count" class="stat-value">0</div>
+                            <div id="attending-guests-percent" class="stat-subtext">0% of responded</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Not Attending</h3>
+                            <div id="not-attending-guests-count" class="stat-value">0</div>
+                            <div id="not-attending-guests-percent" class="stat-subtext">0% of responded</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Adults Attending</h3>
+                            <div id="adults-count" class="stat-value">0</div>
+                            <div id="adults-percent" class="stat-subtext">0% of total attending</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Children Attending</h3>
+                            <div id="children-count" class="stat-value">0</div>
+                            <div id="children-percent" class="stat-subtext">0% of total attending</div>
+                        </div>
                     </div>
                 </div>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="date">Date <span class="sort-icon">↕</span></th>
-                            <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
-                            <th class="sortable" data-sort="email">Email <span class="sort-icon">↕</span></th>
-                            <th class="sortable" data-sort="phone">Phone <span class="sort-icon">↕</span></th>
-                            <th class="sortable" data-sort="attending">Attending <span class="sort-icon">↕</span></th>
-                            <th class="sortable" data-sort="guestCount">Guest Count <span class="sort-icon">↕</span></th>
-                            <th>Additional Guests</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="submissions-body">
-                        <!-- Submissions will be dynamically added here -->
-                    </tbody>
-                </table>
+                <!-- Charts Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-pie"></i> Analytics</h2>
+                    </div>
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Attendance Breakdown</h3>
+                            <canvas id="attendance-chart"></canvas>
+                        </div>
 
-                <div id="pagination" class="pagination">
-                    <!-- Pagination buttons will be dynamically added here -->
+                        <div class="chart-card">
+                            <h3>Adults vs. Children</h3>
+                            <canvas id="age-breakdown-chart"></canvas>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Submissions Timeline</h3>
+                            <canvas id="timeline-chart"></canvas>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Response Rate</h3>
+                            <div id="response-rate-analytics" class="chart-content"></div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Attendance Prediction</h3>
+                            <div id="attendance-prediction-analytics" class="chart-content"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guest List Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Guest List</h2>
+
+                    </div>
+                    <div id="guest-list-container" class="guest-list-container">
+                        <div class="guest-list-header">
+                            <div class="guest-list-actions">
+                                <div class="search-filter-group">
+                                    <div class="search-container">
+                                        <i class="fas fa-search search-icon"></i>
+                                        <input type="text" id="guest-search-box" class="search-box" placeholder="Search guests...">
+                                    </div>
+                                    <div class="filter-group">
+
+                                        <select id="response-filter" class="category-filter">
+                                            <option value="all">All Responses</option>
+                                            <option value="responded">Responded</option>
+                                            <option value="not-responded">Not Responded</option>
+                                            <option value="attending">Attending</option>
+                                            <option value="not-attending">Not Attending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
+                                <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="status">Status <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="response">Response <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="guestCount">Actual Guests <span class="sort-icon">↕</span></th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guest-list-body">
+                                    <!-- Guest list will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="guest-list-pagination" class="pagination">
+                            <!-- Pagination buttons will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RSVP Submissions Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-envelope-open-text"></i> RSVP Submissions</h2>
+
+                    </div>
+                    <div id="table-container" class="table-container">
+                        <div class="table-header">
+                            <div class="table-actions">
+                                <div class="search-filter-group">
+                                    <div class="search-container">
+                                        <i class="fas fa-search search-icon"></i>
+                                        <input type="text" id="search-box" class="search-box" placeholder="Search by name, email...">
+                                    </div>
+                                    <select id="filter-dropdown" class="filter-dropdown">
+                                        <option value="all">All Submissions</option>
+                                        <option value="attending">Attending</option>
+                                        <option value="not-attending">Not Attending</option>
+                                        <option value="recent">Last 7 Days</option>
+                                        <option value="large-party">Large Parties (4+)</option>
+                                    </select>
+                                </div>
+                                <button id="export-rsvps-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="date">Date <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="email">Email <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="phone">Phone <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="attending">Attending <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="guestCount">Total Guests <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="adultCount">Adults <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="childCount">Children <span class="sort-icon">↕</span></th>
+                                        <th>Guest Names</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="submissions-body">
+                                    <!-- Submissions will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="pagination" class="pagination">
+                            <!-- Pagination buttons will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Activity Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell"></i> Latest Activity</h2>
+                    </div>
+                    <div class="activity-container">
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-user-check"></i></div>
+                            <div class="activity-content">
+                                <h4>Latest RSVP</h4>
+                                <p id="latest-rsvp-name">-</p>
+                                <p id="latest-rsvp-time" class="activity-time"></p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-sync-alt"></i></div>
+                            <div class="activity-content">
+                                <h4>Last Sync</h4>
+                                <p id="last-sync-time">-</p>
+                                <p id="sync-status" class="activity-status">Sync with Google Sheet to update</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="activity-content">
+                                <h4>Response Trend</h4>
+                                <p id="response-trend">-</p>
+                                <p class="activity-status">Based on last 7 days</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-child"></i></div>
+                            <div class="activity-content">
+                                <h4>Age Distribution</h4>
+                                <p id="age-distribution">-</p>
+                                <p class="activity-status">Adults vs. Children</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="activity-content">
+                                <h4>Response Rate</h4>
+                                <p id="response-rate-chart">-</p>
+                                <p class="activity-status">Percentage of guests who responded</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-users"></i></div>
+                            <div class="activity-content">
+                                <h4>Attendance Prediction</h4>
+                                <p id="attendance-prediction">-</p>
+                                <p class="activity-status">Estimated final attendance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Utilities Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-tools"></i> Utilities</h2>
+                    </div>
+                    <div class="utilities-container">
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-sync-alt"></i> Google Sheet Sync</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Sync data between Firebase and Google Sheets.</p>
+                                <div class="utility-actions">
+                                    <button id="sync-sheet-to-firebase-btn" class="btn primary"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
+                                    <button id="sync-firebase-to-sheet-btn" class="btn primary"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-user-edit"></i> Test User Management</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Reset test users to test the RSVP process again.</p>
+                                <div class="utility-actions">
+                                    <button id="reset-test-users-btn" class="btn warning"><i class="fas fa-undo"></i> Reset Test Users</button>
+                                </div>
+                                <div class="test-users-list">
+                                    <span class="test-user-badge">Jacob Barkin</span>
+                                    <span class="test-user-badge">Hagen Zuzu Barkin</span>
+                                    <span class="test-user-badge">Alton Barkin</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Data card removed (all buttons were duplicates) -->
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-file-import"></i> Import Data</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Import guests from a CSV file.</p>
+                                <div class="utility-actions">
+                                    <button id="bulk-add-guests-btn" class="btn success"><i class="fas fa-upload"></i> Upload CSV</button>
+                                    <input type="file" id="file-upload-input" accept=".csv" style="display: none;">
+                                </div>
+                                <div class="utility-help">
+                                    <small>CSV format: Name, Email, Phone, Address, City, State, Zip, Category</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-database"></i> Database Management</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Manage your database data.</p>
+                                <div class="utility-actions">
+                                    <button id="backup-database-btn" class="btn primary"><i class="fas fa-download"></i> Backup Database</button>
+                                    <button id="clear-test-data-btn" class="btn danger"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
+                                </div>
+                                <div class="utility-help">
+                                    <small>Warning: Clear Test Data will remove all test submissions</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions card removed (all buttons were duplicates) -->
+                    </div>
+
+                    <!-- Utility Results Container -->
+                    <div id="utility-results" class="utility-results hidden">
+                        <div class="utility-results-header">
+                            <h3 id="utility-results-title">Operation Results</h3>
+                            <button id="close-utility-results" class="btn-icon"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="utility-results-content" class="utility-results-content">
+                            <!-- Results will be displayed here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1026,6 +2341,91 @@
         </div>
     </div>
 
-    <script src="firebase-dashboard.js"></script>
+    <!-- Guest Details Modal -->
+    <div id="guest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Guest Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="guest-modal-body">
+                <!-- Guest details will be dynamically added here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Guest Modal -->
+    <div id="add-guest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Guest</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-guest-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-name">Name (First and Last) *</label>
+                            <input type="text" id="guest-name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-address-line1">Address Line 1</label>
+                            <input type="text" id="guest-address-line1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-address-line2">Address Line 2 (Apt, Suite)</label>
+                            <input type="text" id="guest-address-line2">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-city">City</label>
+                            <input type="text" id="guest-city">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-state">State</label>
+                            <input type="text" id="guest-state">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-zip">Zip Code</label>
+                            <input type="text" id="guest-zip">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-country">Country (non-US)</label>
+                            <input type="text" id="guest-country">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="guest-email">Email</label>
+                            <input type="email" id="guest-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest-phone">Phone</label>
+                            <input type="tel" id="guest-phone">
+                        </div>
+                    </div>
+                    <div id="add-guest-error" class="error-message" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary modal-close">Cancel</button>
+                <button id="add-guest-submit" class="btn primary">Add Guest</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RSVP System script is loaded in the head -->
+    <!-- Dashboard Utilities Script -->
+    <script src="dashboard-utilities.js"></script>
 </body>
 </html>
