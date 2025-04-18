@@ -256,77 +256,211 @@ exports.sendRsvpConfirmation = functions.firestore
         <html>
         <head>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+            :root {
+              --primary-blue: #1e88e5;
+              --primary-orange: #ff9800;
+              --dark-blue: #0d47a1;
+              --light-blue: #bbdefb;
+              --dark-orange: #e65100;
+              --light-orange: #ffe0b2;
+              --white: #ffffff;
+              --light-gray: #f5f5f5;
+              --dark-gray: #333333;
+            }
+
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Montserrat', sans-serif;
               line-height: 1.6;
-              color: #333;
+              color: var(--dark-gray);
               max-width: 600px;
               margin: 0 auto;
+              background-color: #f9f9f9;
             }
+
+            .email-container {
+              background-color: var(--white);
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+              margin: 20px auto;
+            }
+
             .header {
-              background-color: #1a4b84;
-              color: white;
-              padding: 20px;
+              background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+              color: var(--white);
+              padding: 30px 20px;
               text-align: center;
-              border-radius: 5px 5px 0 0;
+              position: relative;
             }
+
+            .header::after {
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 5px;
+              background: linear-gradient(90deg, var(--primary-orange), var(--dark-orange));
+            }
+
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
             .content {
+              padding: 30px;
+              background-color: var(--white);
+            }
+
+            .content p {
+              margin-bottom: 15px;
+              font-size: 16px;
+            }
+
+            .details {
+              background-color: var(--light-gray);
               padding: 20px;
-              border: 1px solid #ddd;
-              border-top: none;
-              border-radius: 0 0 5px 5px;
+              border-radius: 8px;
+              margin: 20px 0;
+              border-left: 4px solid var(--primary-blue);
             }
-            .footer {
+
+            .details p {
+              margin: 10px 0;
+            }
+
+            .details strong {
+              color: var(--dark-blue);
+              font-weight: 600;
+            }
+
+            .details ul {
+              margin: 10px 0;
+              padding-left: 25px;
+            }
+
+            .details li {
+              margin-bottom: 5px;
+            }
+
+            .button-container {
               text-align: center;
-              margin-top: 20px;
-              font-size: 12px;
-              color: #777;
+              margin: 25px 0;
             }
+
             .button {
               display: inline-block;
-              background-color: #f7941d;
-              color: white;
-              padding: 10px 20px;
+              background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+              color: var(--white);
+              padding: 12px 24px;
               text-decoration: none;
-              border-radius: 5px;
-              margin-top: 15px;
+              border-radius: 50px;
+              font-weight: 600;
+              text-transform: uppercase;
+              font-size: 14px;
+              letter-spacing: 0.5px;
+              box-shadow: 0 4px 10px rgba(246, 142, 31, 0.3);
+              transition: transform 0.3s ease, box-shadow 0.3s ease;
             }
-            .details {
-              background-color: #f9f9f9;
-              padding: 15px;
+
+            .button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 15px rgba(246, 142, 31, 0.4);
+            }
+
+            .footer {
+              text-align: center;
+              padding: 20px;
+              background-color: var(--light-gray);
+              color: var(--dark-gray);
+              font-size: 14px;
+              border-top: 1px solid #eee;
+            }
+
+            .footer a {
+              color: var(--primary-blue);
+              text-decoration: none;
+              font-weight: 500;
+              position: relative;
+              transition: color 0.3s ease;
+            }
+
+            .footer a:hover {
+              color: var(--primary-orange);
+            }
+
+            .footer a::after {
+              content: '';
+              position: absolute;
+              bottom: -2px;
+              left: 0;
+              width: 100%;
+              height: 1px;
+              background-color: var(--primary-orange);
+              transform: scaleX(0);
+              transition: transform 0.3s ease;
+            }
+
+            .footer a:hover::after {
+              transform: scaleX(1);
+            }
+
+            .logo {
+              margin-bottom: 15px;
+            }
+
+            .logo img {
+              max-height: 60px;
               border-radius: 5px;
-              margin: 15px 0;
+            }
+
+            .signature {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 1px solid #eee;
+              font-style: italic;
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>Thank You for Your RSVP!</h1>
-          </div>
-          <div class="content">
-            <p>Dear ${rsvpData.name},</p>
-
-            <p>We've received your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025.</p>
-
-            <div class="details">
-              <p><strong>Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
-              ${guestInfo}
-              ${additionalGuests}
+          <div class="email-container">
+            <div class="header">
+              <h1>Thank You for Your RSVP!</h1>
             </div>
+            <div class="content">
+              <p>Dear ${rsvpData.name},</p>
 
-            <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+              <p>We've received your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025.</p>
 
-            <p>If you need to make any changes to your RSVP, you can do so at any time:</p>
+              <div class="details">
+                <p><strong>Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
+                ${guestInfo}
+                ${additionalGuests}
+              </div>
 
-            <div style="text-align: center;">
-              <a href="https://elibarkin.com/rsvp.html" class="button">Update Your RSVP</a>
+              <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+
+              <p>If you need to make any changes to your RSVP, you can do so at any time:</p>
+
+              <div class="button-container">
+                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(rsvpData.name)}" class="button">Update Your RSVP</a>
+              </div>
+
+              <div class="signature">
+                <p>Warm regards,<br>The Barkin Family</p>
+              </div>
             </div>
-
-            <p>Warm regards,<br>The Barkin Family</p>
-          </div>
-          <div class="footer">
-            <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
-            <p><a href="https://elibarkin.com">elibarkin.com</a></p>
+            <div class="footer">
+              <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
+              <p><a href="https://elibarkin.com">elibarkin.com</a></p>
+            </div>
           </div>
         </body>
         </html>

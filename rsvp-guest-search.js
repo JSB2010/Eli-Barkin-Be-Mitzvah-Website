@@ -420,6 +420,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize guest fields on page load
     updateGuestFields();
+
+    // Check for name parameter in URL for direct RSVP updates
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name) || '';
+    }
+
+    // If name parameter exists, auto-fill and search
+    const nameParam = getUrlParameter('name');
+    if (nameParam && nameInput) {
+        console.log('Name parameter found in URL:', nameParam);
+        nameInput.value = nameParam;
+
+        // Trigger search with the provided name
+        searchGuests(nameParam).then(results => {
+            if (results.length > 0) {
+                // Find exact match if possible
+                const exactMatch = results.find(guest =>
+                    guest.name.toLowerCase() === nameParam.toLowerCase());
+
+                if (exactMatch) {
+                    console.log('Exact match found, selecting guest:', exactMatch.name);
+                    selectGuest(exactMatch.id);
+                } else {
+                    // Otherwise select the first result
+                    console.log('No exact match, selecting first result:', results[0].name);
+                    selectGuest(results[0].id);
+                }
+            } else {
+                console.log('No results found for name:', nameParam);
+            }
+        });
+    }
 });
 
 // Function to search for guests in Firestore
