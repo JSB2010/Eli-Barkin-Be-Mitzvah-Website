@@ -505,6 +505,22 @@
         }
 
         /* Original update button styling - overridden above */
+
+        /* Update notice styling */
+        .update-notice {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #3182ce;
+            font-style: italic;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
     </style>
 
 </head>
@@ -624,6 +640,7 @@
 
                     <div class="form-actions" id="submitButtonContainer" style="display: none;">
                         <button type="submit" id="submitButton" class="btn"><i class="fas fa-paper-plane"></i> Submit RSVP</button>
+                        <p id="updateNotice" class="update-notice" style="display: none;">You are updating your existing RSVP</p>
                     </div>
                 </form>
                 <div id="formConfirmation" class="hidden">

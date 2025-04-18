@@ -198,7 +198,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Check if this is an update or a new submission
-            const isUpdate = window.selectedGuest && window.selectedGuest.hasResponded;
+            // We now consider it an update if there's an existing submission in the database
+            // rather than relying on the hasResponded flag
+            const isUpdate = window.existingSubmission !== null;
             let savePromise;
 
             // Add response data to the guest list as well
@@ -241,25 +243,46 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isUpdate) {
                 // Update existing RSVP
                 console.log('Updating existing RSVP for:', formData.name);
-                savePromise = db.collection('sheetRsvps')
-                    .where('name', '==', formData.name)
-                    .get()
-                    .then(snapshot => {
-                        if (!snapshot.empty) {
-                            // Update the first matching document
-                            console.log('Found existing document, updating...');
-                            return snapshot.docs[0].ref.update(formData);
-                        } else {
-                            // If no matching document found, create a new one
-                            console.warn('Update requested but no matching document found. Creating new document instead.');
-                            return db.collection('sheetRsvps').add(formData);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error during RSVP update query:', error);
-                        // Re-throw to be caught by the main catch handler
-                        throw new Error(`Failed to update RSVP: ${error.message}`);
-                    });
+
+                // If we have the existing submission document ID, use it directly
+                if (window.existingSubmission && window.existingSubmission.id) {
+                    console.log('Using existing submission ID for update:', window.existingSubmission.id);
+                    savePromise = db.collection('sheetRsvps')
+                        .doc(window.existingSubmission.id)
+                        .update(formData)
+                        .catch(error => {
+                            console.error('Error updating RSVP with document ID:', error);
+                            // Fall back to query-based update if direct update fails
+                            return fallbackToQueryUpdate();
+                        });
+                } else {
+                    // Fall back to query-based update if we don't have the document ID
+                    savePromise = fallbackToQueryUpdate();
+                }
+
+                // Helper function for query-based update fallback
+                function fallbackToQueryUpdate() {
+                    console.log('Falling back to query-based update for:', formData.name);
+                    return db.collection('sheetRsvps')
+                        .where('name', '==', formData.name)
+                        .get()
+                        .then(snapshot => {
+                            if (!snapshot.empty) {
+                                // Update the first matching document
+                                console.log('Found existing document, updating...');
+                                return snapshot.docs[0].ref.update(formData);
+                            } else {
+                                // If no matching document found, create a new one
+                                console.warn('Update requested but no matching document found. Creating new document instead.');
+                                return db.collection('sheetRsvps').add(formData);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error during RSVP update query:', error);
+                            // Re-throw to be caught by the main catch handler
+                            throw new Error(`Failed to update RSVP: ${error.message}`);
+                        });
+                }
             } else {
                 // Create new RSVP
                 console.log('Creating new RSVP for:', formData.name);
@@ -280,6 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     return updateGuestList(formData.name);
                 })
                 .then(() => {
+                    // Save the guest name in a cookie for future visits
+                    // Set cookie to expire in 1 year
+                    const expiryDate = new Date();
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                    document.cookie = `lastRsvpName=${encodeURIComponent(formData.name)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+
                     // Show success confirmation with animation
                     form.style.opacity = '1';
                     form.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
@@ -323,12 +352,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (window.analytics) {
                         window.analytics.logEvent('rsvp_submitted', {
                             attending: formData.attending,
-                            guest_count: formData.guestCount
+                            guest_count: formData.guestCount,
+                            is_update: isUpdate
                         });
                     }
 
-                    // Reset form
+                    // Reset form and global state
                     form.reset();
+                    window.selectedGuest = null;
+                    window.existingSubmission = null;
                 })
                 .catch(error => {
                     // Log detailed error information

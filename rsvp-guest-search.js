@@ -198,6 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
                 submitButton.classList.add('update-mode');
 
+                // Show update notice
+                const updateNotice = document.getElementById('updateNotice');
+                if (updateNotice) {
+                    updateNotice.style.display = 'block';
+                }
+
                 // Update form title
                 const formTitle = document.getElementById('rsvp-form-title');
                 if (formTitle) {
@@ -217,6 +223,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset button text and style
                 submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
                 submitButton.classList.remove('update-mode');
+
+                // Hide update notice
+                const updateNotice = document.getElementById('updateNotice');
+                if (updateNotice) {
+                    updateNotice.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('Error checking existing submission:', error);
@@ -421,6 +433,40 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize guest fields on page load
     updateGuestFields();
 
+    // Function to auto-search for a guest by name
+    async function autoSearchGuest(guestName) {
+        if (!guestName || !nameInput) return;
+
+        console.log('Auto-searching for guest:', guestName);
+        nameInput.value = guestName;
+
+        try {
+            const results = await searchGuests(guestName);
+            if (results.length > 0) {
+                // Find exact match if possible
+                const exactMatch = results.find(guest =>
+                    guest.name.toLowerCase() === guestName.toLowerCase());
+
+                if (exactMatch) {
+                    console.log('Exact match found, selecting guest:', exactMatch.name);
+                    await selectGuest(exactMatch.id);
+                    return true;
+                } else {
+                    // Otherwise select the first result
+                    console.log('No exact match, selecting first result:', results[0].name);
+                    await selectGuest(results[0].id);
+                    return true;
+                }
+            } else {
+                console.log('No results found for name:', guestName);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error in auto-search:', error);
+            return false;
+        }
+    }
+
     // Check for name parameter in URL for direct RSVP updates
     function getUrlParameter(name) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -429,29 +475,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // If name parameter exists, auto-fill and search
     const nameParam = getUrlParameter('name');
-    if (nameParam && nameInput) {
-        console.log('Name parameter found in URL:', nameParam);
-        nameInput.value = nameParam;
+    if (nameParam) {
+        autoSearchGuest(nameParam);
+    } else {
+        // If no name parameter, check if there's a cookie with previous submission info
+        const lastSubmissionName = getCookie('lastRsvpName');
+        if (lastSubmissionName) {
+            console.log('Found cookie with previous submission name:', lastSubmissionName);
+            autoSearchGuest(lastSubmissionName);
+        }
+    }
 
-        // Trigger search with the provided name
-        searchGuests(nameParam).then(results => {
-            if (results.length > 0) {
-                // Find exact match if possible
-                const exactMatch = results.find(guest =>
-                    guest.name.toLowerCase() === nameParam.toLowerCase());
-
-                if (exactMatch) {
-                    console.log('Exact match found, selecting guest:', exactMatch.name);
-                    selectGuest(exactMatch.id);
-                } else {
-                    // Otherwise select the first result
-                    console.log('No exact match, selecting first result:', results[0].name);
-                    selectGuest(results[0].id);
-                }
-            } else {
-                console.log('No results found for name:', nameParam);
-            }
-        });
+    // Helper function to get cookie value
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
     }
 });
 
