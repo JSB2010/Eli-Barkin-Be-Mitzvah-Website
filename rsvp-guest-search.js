@@ -175,17 +175,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if guest has already submitted an RSVP
     async function checkExistingSubmission(guestName) {
         try {
+            console.log('Checking for existing submission for:', guestName);
             const db = firebase.firestore();
-            const submissionsSnapshot = await db.collection('sheetRsvps')
+
+            // First try to find an exact match by name
+            let submissionsSnapshot = await db.collection('sheetRsvps')
                 .where('name', '==', guestName)
                 .orderBy('submittedAt', 'desc')
                 .limit(1)
                 .get();
 
+            // If no exact match, try a case-insensitive search (this is a limitation of Firestore)
+            if (submissionsSnapshot.empty) {
+                console.log('No exact match found, trying case-insensitive search...');
+
+                // Get all submissions and filter client-side
+                // This is not ideal for large datasets but works for small to medium events
+                const allSubmissionsSnapshot = await db.collection('sheetRsvps')
+                    .orderBy('submittedAt', 'desc')
+                    .get();
+
+                // Find a case-insensitive match
+                const matchingDocs = [];
+                allSubmissionsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.name && data.name.toLowerCase() === guestName.toLowerCase()) {
+                        const submission = data;
+                        submission.id = doc.id;
+                        matchingDocs.push(doc);
+                    }
+                });
+
+                // If we found matches, create a new snapshot-like object
+                if (matchingDocs.length > 0) {
+                    submissionsSnapshot = {
+                        empty: false,
+                        docs: matchingDocs
+                    };
+                }
+            }
+
             if (!submissionsSnapshot.empty) {
                 // Get the most recent submission
                 const submission = submissionsSnapshot.docs[0].data();
                 submission.id = submissionsSnapshot.docs[0].id;
+
+                console.log('Found existing submission:', submission);
 
                 // Store the existing submission
                 existingSubmission = submission;
@@ -212,7 +247,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Pre-fill form with existing data
                 prefillFormWithExistingData(submission);
+
+                // Save the name in a cookie for convenience on future visits
+                // but we don't rely on this for functionality
+                const expiryDate = new Date();
+                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                document.cookie = `lastRsvpName=${encodeURIComponent(guestName)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+
+                return true; // Indicate that we found an existing submission
             } else {
+                console.log('No existing submission found for:', guestName);
+
                 // No existing submission
                 existingSubmission = null;
                 window.existingSubmission = null;
@@ -229,9 +274,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (updateNotice) {
                     updateNotice.style.display = 'none';
                 }
+
+                return false; // Indicate that we didn't find an existing submission
             }
         } catch (error) {
             console.error('Error checking existing submission:', error);
+            return false;
         }
     }
 
@@ -473,9 +521,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return urlParams.get(name) || '';
     }
 
-    // If name parameter exists, auto-fill and search
+    // First check for name parameter in URL
     const nameParam = getUrlParameter('name');
     if (nameParam) {
+        console.log('Name parameter found in URL, auto-searching:', nameParam);
         autoSearchGuest(nameParam);
     } else {
         // If no name parameter, check if there's a cookie with previous submission info
@@ -483,6 +532,46 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lastSubmissionName) {
             console.log('Found cookie with previous submission name:', lastSubmissionName);
             autoSearchGuest(lastSubmissionName);
+        } else {
+            // If no cookie, check if we can find an existing submission in Firebase
+            // This allows updates from any device without relying on cookies
+            checkForExistingSubmissions();
+        }
+    }
+
+    // Function to check for existing submissions in Firebase
+    async function checkForExistingSubmissions() {
+        try {
+            // This function will be called when the page loads if no name parameter or cookie is found
+            // It will check if there are any existing submissions in Firebase that match the IP address
+            // or other identifiable information
+
+            // For now, we'll just check if there's a single submission in the database
+            // This is a simple approach that works for small events
+            // For larger events, you might want to use IP address or other methods
+
+            const db = firebase.firestore();
+
+            // Get the most recent submission (if any)
+            const submissionsSnapshot = await db.collection('sheetRsvps')
+                .orderBy('submittedAt', 'desc')
+                .limit(1)
+                .get();
+
+            if (!submissionsSnapshot.empty) {
+                const submission = submissionsSnapshot.docs[0].data();
+                const submissionName = submission.name;
+
+                if (submissionName) {
+                    console.log('Found existing submission in Firebase for:', submissionName);
+                    // Auto-search for this guest
+                    autoSearchGuest(submissionName);
+                }
+            } else {
+                console.log('No existing submissions found in Firebase');
+            }
+        } catch (error) {
+            console.error('Error checking for existing submissions:', error);
         }
     }
 

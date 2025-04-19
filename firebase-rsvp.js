@@ -263,6 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Helper function for query-based update fallback
                 function fallbackToQueryUpdate() {
                     console.log('Falling back to query-based update for:', formData.name);
+
+                    // First try exact match
                     return db.collection('sheetRsvps')
                         .where('name', '==', formData.name)
                         .get()
@@ -272,9 +274,31 @@ document.addEventListener('DOMContentLoaded', function() {
                                 console.log('Found existing document, updating...');
                                 return snapshot.docs[0].ref.update(formData);
                             } else {
-                                // If no matching document found, create a new one
-                                console.warn('Update requested but no matching document found. Creating new document instead.');
-                                return db.collection('sheetRsvps').add(formData);
+                                // If no exact match, try case-insensitive search
+                                console.log('No exact match found, trying case-insensitive search...');
+                                return db.collection('sheetRsvps').get()
+                                    .then(allSnapshot => {
+                                        // Find a case-insensitive match
+                                        let matchFound = false;
+                                        let matchingDoc = null;
+
+                                        allSnapshot.forEach(doc => {
+                                            const data = doc.data();
+                                            if (data.name && data.name.toLowerCase() === formData.name.toLowerCase()) {
+                                                matchingDoc = doc;
+                                                matchFound = true;
+                                            }
+                                        });
+
+                                        if (matchFound && matchingDoc) {
+                                            console.log('Found case-insensitive match, updating document:', matchingDoc.id);
+                                            return matchingDoc.ref.update(formData);
+                                        } else {
+                                            // If still no match, create a new document
+                                            console.warn('No matching document found. Creating new document instead.');
+                                            return db.collection('sheetRsvps').add(formData);
+                                        }
+                                    });
                             }
                         })
                         .catch(error => {
