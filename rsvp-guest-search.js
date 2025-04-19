@@ -582,33 +582,57 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to reset submission state and UI
     function resetSubmissionState() {
         console.log('[resetSubmissionState] Resetting state and UI.');
+        console.log('[resetSubmissionState] CRITICAL DEBUG: Current window.existingSubmission:', window.existingSubmission);
+
         // Clear global state
-        existingSubmission = null;
-        window.existingSubmission = null;
+        try {
+            existingSubmission = null;
+            window.existingSubmission = null;
+            console.log('[resetSubmissionState] Cleared existingSubmission');
+        } catch (error) {
+            console.error('[resetSubmissionState] Error clearing existingSubmission:', error);
+        }
         // selectedGuest is handled by selectGuest start
 
+        // Get fresh references to DOM elements
+        const existingSubmissionInfoElement = document.getElementById('existingSubmissionInfo');
+        const submitButtonElement = document.getElementById('submitButton');
+        const updateNoticeElement = document.getElementById('updateNotice');
+        const formTitleElement = document.getElementById('rsvp-form-title');
+
+        console.log('[resetSubmissionState] DOM elements found:', {
+            existingSubmissionInfo: !!existingSubmissionInfoElement,
+            submitButton: !!submitButtonElement,
+            updateNotice: !!updateNoticeElement,
+            formTitle: !!formTitleElement
+        });
+
         // Hide specific sections
-        existingSubmissionInfo.style.display = 'none';
-        const updateNotice = document.getElementById('updateNotice');
-        if (updateNotice) {
-            updateNotice.style.display = 'none';
+        if (existingSubmissionInfoElement) {
+            existingSubmissionInfoElement.style.display = 'none';
+        }
+
+        if (updateNoticeElement) {
+            updateNoticeElement.style.display = 'none';
         }
         // Keep guestFoundInfo visible if a guest was selected
 
         // Reset button text and style
-        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
-        submitButton.classList.remove('update-mode');
+        if (submitButtonElement) {
+            submitButtonElement.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
+            submitButtonElement.classList.remove('update-mode');
+        }
 
         // Reset form title
-        const formTitle = document.getElementById('rsvp-form-title');
-        if (formTitle) {
-            formTitle.textContent = 'Submit Your RSVP'; // Or your default title
+        if (formTitleElement) {
+            formTitleElement.textContent = 'Submit Your RSVP'; // Or your default title
         }
 
         // Clear form fields (optional, could be done on new selection)
         // document.getElementById('rsvpForm')?.reset(); // Be careful with this, might clear name input
 
         console.log('[resetSubmissionState] Reset complete.');
+        console.log('[resetSubmissionState] CRITICAL DEBUG: Final window.existingSubmission:', window.existingSubmission);
         return false; // Indicate that we are NOT in an update state
     }
 
