@@ -368,9 +368,10 @@ nav ul li a.active {
     background-color: var(--primary-blue);
 }
 
-/* Hero Section */
+/* Hero Section - Fixed background without scrolling effects */
 .hero, .rsvp-hero {
     background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
+    background-attachment: scroll; /* Ensure no parallax/fixed effect */
     min-height: 70vh;
     width: 100%;
     display: flex;
@@ -382,11 +383,18 @@ nav ul li a.active {
     margin: 0;
     padding: 0;
     margin-top: var(--header-height);
+    /* Prevent any dynamic positioning */
+    transform: none !important;
+    transition: none !important;
 }
 
 .rsvp-hero {
     min-height: 50vh;
     background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
+    background-attachment: scroll; /* Ensure no parallax/fixed effect */
+    /* Prevent any dynamic positioning */
+    transform: none !important;
+    transition: none !important;
 }
 
 .hero::before {
