@@ -1,0 +1,28 @@
+/* Extracted inline styles from HTML files */
+
+/* From index.html */
+.hero h1 {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* From rsvp.html */
+.guest-found-info {
+    display: none;
+}
+
+.existing-submission {
+    display: none;
+}
+
+#additionalFields {
+    display: none;
+}
+
+.form-actions#submitButtonContainer {
+    display: none;
+}
+
+.update-notice {
+    display: none;
+}

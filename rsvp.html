@@ -15,13 +15,16 @@
     <link rel="manifest" href="site.webmanifest">
     <meta name="msapplication-TileImage" content="logo.PNG">
     <meta name="msapplication-TileColor" content="#2b5797">
-    <meta name="theme-color" content="#ffffff">
+    <!-- Removed theme-color meta tag for better browser compatibility -->
     <link rel="stylesheet" href="styles.css?v=1.3">
+    <link rel="stylesheet" href="inline-styles.css?v=1.0">
     <link rel="stylesheet" href="animations.css?v=1.0">
+    <link rel="stylesheet" href="optimized-animations.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="mobile-nav.js?v=1.2" defer></script>
     <script src="animations.js?v=1.0" defer></script>
+    <script src="animation-handler.js?v=1.0" defer></script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-55YBSPLJCW"></script>
@@ -348,10 +351,7 @@
             background-color: #c53030;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Animation moved to optimized-animations.css */
 
         /* New styles for guest sections */
         #guestCountsSection {
@@ -521,17 +521,30 @@
         .update-notice {
             text-align: center;
             margin-top: 10px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: #3182ce;
-            font-style: italic;
+            font-weight: 600;
+            background-color: #ebf8ff;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px dashed #4299e1;
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
+        /* Animation moved to optimized-animations.css */
+
+        /* Hide by default using CSS instead of inline styles */
+        #errorMessage { display: none; }
+        #guestFoundInfo { display: none; }
+        #guestMaxCount { display: none; }
+        #existingSubmissionInfo { display: none; }
+        #additionalFields { display: none; }
+        #submitButtonContainer { display: none; }
+        #updateNotice { display: none; }
+
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .mb-2rem { margin-bottom: 2rem; }
     </style>
 
 </head>
@@ -570,8 +583,8 @@
         <div class="container">
             <div class="form-container">
                 <h2 id="rsvp-form-title">RSVP Form</h2>
-                <form id="rsvpForm">
-                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <form id="rsvpForm" data-mode="new">
+                    <div id="errorMessage" class="error-message"></div>
                     <div class="form-group">
                         <label for="name">Full Name:</label>
                         <div class="autocomplete-container">
@@ -581,13 +594,13 @@
                         <div class="search-message">Start typing your name to find your invitation</div>
                     </div>
 
-                    <div id="guestFoundInfo" class="guest-found-info" style="display: none;">
+                    <div id="guestFoundInfo" class="guest-found-info">
                         <p><strong>We found your invitation!</strong></p>
                         <p id="guestCategory"></p>
-                        <p id="guestMaxCount" style="display: none;"></p>
+                        <p id="guestMaxCount"></p> <!-- Keep this element even if unused by JS for potential future use -->
                     </div>
 
-                    <div id="existingSubmissionInfo" class="existing-submission" style="display: none;">
+                    <div id="existingSubmissionInfo" class="existing-submission">
                         <div class="existing-submission-icon"><i class="fas fa-edit"></i></div>
                         <div class="existing-submission-content">
                             <h3>Update Your RSVP</h3>
@@ -597,7 +610,7 @@
                         </div>
                     </div>
 
-                    <div id="additionalFields" style="display: none;">
+                    <div id="additionalFields">
                         <div class="form-group">
                             <label for="email">Email:</label>
                             <input type="email" id="email" name="email" required>
@@ -620,43 +633,47 @@
                             </div>
                         </div>
 
-                        <div id="guestCountsSection">
-                            <div class="form-group" id="adultCountGroup">
-                                <label for="adultCount">Number of adults:</label>
-                                <input type="number" id="adultCount" name="adultCount" min="0" value="1">
-                                <div class="input-hint">Adults attending (can be 0 if only children are attending)</div>
+                        <!-- Wrap guest counts and guest info in attendingSection for show/hide -->
+                        <div id="attendingSection">
+                            <div id="guestCountsSection">
+                                <div class="form-group" id="adultCountGroup">
+                                    <label for="adultCount">Number of adults:</label>
+                                    <input type="number" id="adultCount" name="adultCount" min="0" value="1">
+                                    <div class="input-hint">Adults attending (can be 0 if only children are attending)</div>
+                                </div>
+
+                                <div class="form-group" id="childCountGroup">
+                                    <label for="childCount">Number of children:</label>
+                                    <input type="number" id="childCount" name="childCount" min="0" value="0">
+                                    <div class="input-hint">Children under 13 years old</div>
+                                </div>
                             </div>
 
-                            <div class="form-group" id="childCountGroup">
-                                <label for="childCount">Number of children:</label>
-                                <input type="number" id="childCount" name="childCount" min="0" value="0">
-                                <div class="input-hint">Children under 13 years old</div>
-                            </div>
-                        </div>
-
-                        <!-- Guest names will be dynamically added here -->
-                        <div id="guestsContainer">
-                            <h3 class="section-title">Guest Information</h3>
-                            <div class="guest-section">
-                                <h4>Adults</h4>
-                                <div id="adultGuestsContainer"></div>
-                            </div>
-                            <div class="guest-section" id="childGuestSection">
-                                <h4>Children</h4>
-                                <div id="childGuestsContainer"></div>
+                            <!-- Guest names will be dynamically added here -->
+                            <div id="guestsContainer">
+                                <h3 class="section-title">Guest Information</h3>
+                                <div class="guest-section">
+                                    <h4>Adults</h4>
+                                    <div id="adultGuestsContainer"></div>
+                                </div>
+                                <div class="guest-section" id="childGuestSection">
+                                    <h4>Children</h4>
+                                    <div id="childGuestsContainer"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
 
-                    <div class="form-actions" id="submitButtonContainer" style="display: none;">
+                    <div class="form-actions" id="submitButtonContainer">
                         <button type="submit" id="submitButton" class="btn"><i class="fas fa-paper-plane"></i> Submit RSVP</button>
-                        <p id="updateNotice" class="update-notice" style="display: none;">You are updating your existing RSVP</p>
+                        <p id="updateNotice" class="update-notice">You are updating your existing RSVP</p>
                     </div>
                 </form>
                 <div id="formConfirmation" class="hidden">
-                    <h3>Thank You!</h3>
+                    <h3 id="confirmation-title">Thank You!</h3>
                     <p id="confirmation-message">Your RSVP has been received. We look forward to celebrating with you!</p>
+                    <p id="confirmation-details" class="confirmation-details"></p>
                 </div>
             </div>
         </div>
@@ -665,8 +682,8 @@
     <section class="event-details-reminder">
         <div class="container">
             <h2>Event Details</h2>
-            <p style="text-align: center; margin-bottom: 2rem;">Eli's Be Mitzvah celebration will take place at Coors Field on Saturday, August 23, 2025.</p>
-            <div class="cta-buttons" style="text-align: center;">
+            <p class="text-center mb-2rem">Eli's Be Mitzvah celebration will take place at Coors Field on Saturday, August 23, 2025.</p>
+            <div class="cta-buttons text-center">
                 <a href="the-big-day.html" class="btn">View Game Day Details</a>
             </div>
         </div>
@@ -675,9 +692,9 @@
     <footer>
         <div class="container">
             <div class="footer-credits">
-                <a href="https://jacobbarkin.com" target="_blank">Designed by Jacob Barkin</a>
+                <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
                 <span class="separator">|</span>
-                <a href="https://askthekidz.com" target="_blank">Ask The Kidz</a>
+                <a href="https://askthekidz.com" target="_blank" rel="noopener">Ask The Kidz</a>
             </div>
             <div class="footer-links">
                 <a href="index.html">Home</a>

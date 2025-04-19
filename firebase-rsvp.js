@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
     // Initialize Firebase and handle errors
     let db;
     try {
@@ -108,10 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const formConfirmation = document.getElementById('formConfirmation');
     // These elements are accessed directly in the event handlers
 
-    // Show/hide guest count based on attendance
     if (rsvpForm) {
-        // Note: The guest fields are now handled by rsvp-guest-search.js
-
         // Handle form submission (for Firebase)
         rsvpForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -125,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalButtonText = submitButton.innerHTML;
 
             // Change button text to show it's submitting
-            submitButton.innerHTML = 'Submitting...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...'; // Added spinner
             submitButton.disabled = true;
 
             // Collect form data
@@ -134,48 +132,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 email: form.email.value,
                 phone: form.phone.value,
                 attending: form.attending.value,
-                submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
+                // submittedAt will be set differently for new vs update
             };
 
             // Check if attending
             if (formData.attending === 'yes') {
                 // Get adult and child counts
-                const adultCount = parseInt(form.adultCount?.value) || 1;
+                const adultCount = parseInt(form.adultCount?.value) || 0; // Default to 0 if not attending
                 const childCount = parseInt(form.childCount?.value) || 0;
 
-                // Set total guest count
-                formData.guestCount = adultCount + childCount;
-                formData.adultCount = adultCount;
-                formData.childCount = childCount;
-
-                // Collect adult guest names
-                formData.adultGuests = [];
-                for (let i = 1; i <= adultCount; i++) {
-                    const adultNameField = form[`adultName${i}`];
-                    if (adultNameField) {
-                        formData.adultGuests.push(adultNameField.value);
+                // Ensure at least one adult if attending
+                 if (adultCount === 0 && childCount > 0) {
+                     // If only children are marked, assume the primary contact is the adult
+                     formData.adultCount = 1;
+                     formData.childCount = childCount;
+                     // Ensure the primary name is captured as the adult
+                     formData.adultGuests = [form.name.value]; // Use the main name input
+                 } else if (adultCount === 0 && childCount === 0) {
+                     // If both are 0 but attending is yes, default to 1 adult
+                     formData.adultCount = 1;
+                     formData.childCount = 0;
+                     formData.adultGuests = [form.name.value];
+                 } else {
+                    formData.adultCount = adultCount;
+                    formData.childCount = childCount;
+                     // Collect adult guest names
+                    formData.adultGuests = [];
+                    for (let i = 1; i <= adultCount; i++) {
+                        const adultNameField = form[`adultName${i}`];
+                        if (adultNameField) {
+                            formData.adultGuests.push(adultNameField.value.trim());
+                        } else {
+                             formData.adultGuests.push(''); // Add empty string if field missing
+                             console.warn(`Missing adultName field for index ${i}`);
+                        }
                     }
-                }
-
-                // Collect child guest names
-                formData.childGuests = [];
-                for (let i = 1; i <= childCount; i++) {
-                    const childNameField = form[`childName${i}`];
-                    if (childNameField) {
-                        formData.childGuests.push(childNameField.value);
+                     // Collect child guest names
+                    formData.childGuests = [];
+                    for (let i = 1; i <= childCount; i++) {
+                        const childNameField = form[`childName${i}`];
+                        if (childNameField) {
+                            formData.childGuests.push(childNameField.value.trim());
+                        } else {
+                             formData.childGuests.push(''); // Add empty string if field missing
+                             console.warn(`Missing childName field for index ${i}`);
+                        }
                     }
-                }
+                 }
+                 formData.guestCount = formData.adultCount + formData.childCount;
 
-                // For backward compatibility
+
+                // For backward compatibility (if needed by other systems)
                 formData.additionalGuests = [];
-                if (adultCount > 1) {
-                    // Skip the first adult (primary guest)
-                    for (let i = 1; i < formData.adultGuests.length; i++) {
-                        formData.additionalGuests.push(formData.adultGuests[i]);
-                    }
+                // Add adults beyond the first one
+                if (formData.adultGuests.length > 1) {
+                    formData.additionalGuests = formData.additionalGuests.concat(formData.adultGuests.slice(1));
                 }
-                // Add all children to additional guests
+                // Add all children
                 formData.additionalGuests = formData.additionalGuests.concat(formData.childGuests);
+
             } else {
                 // Not attending
                 formData.guestCount = 0;
@@ -195,149 +210,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Check if this is an update or a new submission
-            // We now consider it an update if there's an existing submission in the database
-            // rather than relying on the hasResponded flag
-            const isUpdate = window.existingSubmission !== null;
+            // Determine if this is an update or a new submission
+            const formMode = form.getAttribute('data-mode');
+            const submissionId = form.getAttribute('data-submission-id'); // Get ID from form attribute
+            const isUpdate = formMode === 'update' && submissionId; // Check both mode and ID presence
+
+            // Log update status for debugging
+            console.log('Form submission details:', {
+                isUpdate,
+                formMode,
+                submissionId,
+                formDataName: formData.name,
+                windowExistingSubmission: window.existingSubmission // Log state from other script
+            });
+
             let savePromise;
 
-            // Add response data to the guest list as well
-            const updateGuestList = (name) => {
-                try {
-                    // Find the guest in the guest list and update their response
-                    return db.collection('guestList')
-                        .where('name', '==', name)
-                        .get()
-                        .then(snapshot => {
-                            if (!snapshot.empty) {
-                                // Update the guest's response
-                                return snapshot.docs[0].ref.update({
-                                    hasResponded: true,
-                                    response: formData.attending === 'yes' ? 'attending' : 'declined',
-                                    actualGuestCount: formData.guestCount || 0,
-                                    adultCount: formData.adultCount || 0,
-                                    childCount: formData.childCount || 0,
-                                    adultGuests: formData.adultGuests || [],
-                                    childGuests: formData.childGuests || [],
-                                    additionalGuests: formData.additionalGuests || [],
-                                    email: formData.email,
-                                    phone: formData.phone || '',
-                                    submittedAt: formData.submittedAt
-                                });
-                            }
-                            return Promise.resolve();
-                        })
-                        .catch(error => {
-                            // Log but don't fail the whole submission if guest list update fails
-                            console.warn('Failed to update guest list, but RSVP was saved:', error);
-                            return Promise.resolve();
-                        });
-                } catch (error) {
-                    console.warn('Error in updateGuestList:', error);
-                    return Promise.resolve();
-                }
-            };
-
-            // Completely rewritten update logic for maximum reliability
             if (isUpdate) {
                 // Update existing RSVP
-                console.log('Updating existing RSVP for:', formData.name);
-                console.log('Existing submission object:', window.existingSubmission);
+                console.log(`Updating existing RSVP (ID: ${submissionId}) for:`, formData.name);
 
-                // Direct update with document ID is the most reliable method
-                if (window.existingSubmission?.id) {
-                    const docId = window.existingSubmission.id;
-                    console.log('Using direct document ID update method with ID:', docId);
-
-                    // Add the ID to the form data for logging purposes
-                    formData.documentId = docId;
-
-                    // Use a direct document reference for the update
-                    const docRef = db.collection('sheetRsvps').doc(docId);
-
-                    // First verify the document exists
-                    savePromise = docRef.get()
-                        .then(docSnapshot => {
-                            if (docSnapshot.exists) {
-                                console.log('Document exists, performing update on ID:', docId);
-                                // Document exists, perform the update
-                                return docRef.update(formData);
-                            } else {
-                                console.warn('Document with ID does not exist, creating new document');
-                                // Document doesn't exist, create a new one
-                                return db.collection('sheetRsvps').add(formData);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error during direct document update:', error);
-                            // Try the fallback method
-                            return findAndUpdateDocument();
-                        });
+                // Add update-specific timestamp and keep original submittedAt if available
+                formData.updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
+                // Use optional chaining for submittedAt
+                if (window.existingSubmission?.submittedAt) {
+                    formData.submittedAt = window.existingSubmission.submittedAt;
                 } else {
-                    console.warn('No document ID available, using search and update method');
-                    savePromise = findAndUpdateDocument();
+                    formData.submittedAt = formData.updatedAt;
+                    console.warn("Original submittedAt not found for update, using updatedAt instead.");
                 }
+                formData.isUpdate = true; // Explicit flag
 
-                // Helper function to find and update a document
-                function findAndUpdateDocument() {
-                    console.log('Searching for existing document with name:', formData.name);
-
-                    return new Promise((resolve, reject) => {
-                        // First try an exact match query
-                        db.collection('sheetRsvps')
-                            .where('name', '==', formData.name)
-                            .get()
-                            .then(snapshot => {
-                                if (!snapshot.empty) {
-                                    // Found an exact match
-                                    const doc = snapshot.docs[0];
-                                    console.log('Found exact match document, updating ID:', doc.id);
-                                    return doc.ref.update(formData)
-                                        .then(() => resolve())
-                                        .catch(reject);
-                                } else {
-                                    // No exact match, try case-insensitive search
-                                    console.log('No exact match, trying case-insensitive search');
-                                    return db.collection('sheetRsvps').get();
-                                }
-                            })
-                            .then(snapshot => {
-                                // If we already resolved, this will be undefined
-                                if (!snapshot) return;
-
-                                // Look for case-insensitive match
-                                let matchFound = false;
-
-                                snapshot.forEach(doc => {
-                                    const data = doc.data();
-                                    if (data.name?.toLowerCase() === formData.name.toLowerCase()) {
-                                        if (!matchFound) { // Only update the first match
-                                            matchFound = true;
-                                            console.log('Found case-insensitive match, updating ID:', doc.id);
-                                            doc.ref.update(formData)
-                                                .then(() => resolve())
-                                                .catch(reject);
-                                        }
-                                    }
-                                });
-
-                                // If no match was found, create a new document
-                                if (!matchFound) {
-                                    console.log('No matching document found, creating new document');
-                                    db.collection('sheetRsvps').add(formData)
-                                        .then(() => resolve())
-                                        .catch(reject);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error in find and update process:', error);
-                                reject(new Error(`Error in find and update process: ${error.message}`));
-                            });
+                // Use the submissionId stored in the form's data attribute
+                const docRef = db.collection('sheetRsvps').doc(submissionId);
+                savePromise = docRef.update(formData)
+                    .catch(error => {
+                        console.error(`Error updating document ${submissionId}:`, error);
+                         // Add more context to the error
+                         if (error.code === 'permission-denied') {
+                             throw new Error('You don\'t have permission to update this RSVP. Please contact the event organizer.');
+                         } else if (error.code === 'not-found') {
+                             throw new Error('The RSVP you are trying to update could not be found. It might have been deleted. Please refresh and try again.');
+                         } else {
+                             throw new Error(`Failed to update RSVP: ${error.message}`);
+                         }
                     });
-                }
+
             } else {
                 // Create new RSVP
                 console.log('Creating new RSVP for:', formData.name);
+                formData.submittedAt = firebase.firestore.Timestamp.fromDate(new Date()); // Set initial submission time
+                formData.isUpdate = false; // Explicit flag
+
                 savePromise = db.collection('sheetRsvps').add(formData)
                     .catch(error => {
                         console.error('Error creating new RSVP:', error);
@@ -350,11 +274,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
 
-            savePromise.then(() => {
-                    // Also update the guest list entry
-                    return updateGuestList(formData.name);
-                })
+            // Chain the guest list update regardless of new/update
+            savePromise = savePromise.then(() => {
+                console.log('RSVP saved/updated successfully in sheetRsvps. Updating guestList entry...');
+                // Also update the guest list entry
+                return updateGuestList(formData.name, formData); // Pass full formData
+            });
+
+            // --- Guest List Update Function ---
+            // Moved inside the event listener scope to access formData easily
+            const updateGuestList = (guestName, rsvpData) => {
+                console.log(`[updateGuestList] Attempting to update guestList for: ${guestName}`);
+                try {
+                    // Find the guest in the guest list by name (case-sensitive match expected here)
+                    return db.collection('guestList')
+                        .where('name', '==', guestName)
+                        .limit(1) // Expect only one match
+                        .get()
+                        .then(snapshot => {
+                            if (!snapshot.empty) {
+                                const guestDocRef = snapshot.docs[0].ref;
+                                console.log(`[updateGuestList] Found guestList entry (ID: ${guestDocRef.id}). Updating...`);
+                                // Update the guest's response details
+                                return guestDocRef.update({
+                                    hasResponded: true,
+                                    response: rsvpData.attending === 'yes' ? 'attending' : 'declined',
+                                    // Use counts directly from rsvpData
+                                    actualGuestCount: rsvpData.guestCount || 0,
+                                    adultCount: rsvpData.adultCount || 0,
+                                    childCount: rsvpData.childCount || 0,
+                                    // Store guest names arrays
+                                    adultGuests: rsvpData.adultGuests || [],
+                                    childGuests: rsvpData.childGuests || [],
+                                    // Keep additionalGuests for compatibility if needed elsewhere
+                                    additionalGuests: rsvpData.additionalGuests || [],
+                                    email: rsvpData.email || '',
+                                    phone: rsvpData.phone || '',
+                                    // Use the appropriate timestamp (submittedAt for new, updatedAt for updates)
+                                    lastResponseTimestamp: rsvpData.updatedAt || rsvpData.submittedAt
+                                });
+                            } else {
+                                console.warn(`[updateGuestList] Guest not found in guestList for name: ${guestName}. Cannot update guestList entry.`);
+                                return Promise.resolve(); // Resolve silently if guest not found
+                            }
+                        })
+                        .catch(error => {
+                            // Log but don't fail the whole submission if guest list update fails
+                            console.warn(`[updateGuestList] Failed to update guest list entry for ${guestName}, but RSVP was saved:`, error);
+                            return Promise.resolve(); // Resolve silently on error
+                        });
+                } catch (error) {
+                    console.warn('[updateGuestList] Error during guest list update process:', error);
+                    return Promise.resolve(); // Resolve silently on unexpected error
+                }
+            };
+            // --- End Guest List Update Function ---
+
+
+            // Handle success and failure of the savePromise chain
+            savePromise
                 .then(() => {
+                    console.log('RSVP and GuestList update process completed successfully.');
                     // Save the guest name in a cookie for future visits
                     // Set cookie to expire in 1 year
                     const expiryDate = new Date();
@@ -382,41 +362,100 @@ document.addEventListener('DOMContentLoaded', function() {
                         formConfirmation.style.transform = 'translateY(20px)';
 
                         // Update confirmation message based on whether it was an update or new submission
+                        const confirmationTitle = document.getElementById('confirmation-title');
                         const confirmationMessage = document.getElementById('confirmation-message');
+                        const confirmationDetails = document.getElementById('confirmation-details');
+
+                        // Set appropriate confirmation title
+                        if (confirmationTitle) {
+                            confirmationTitle.textContent = isUpdate ? 'RSVP Updated!' : 'Thank You!';
+                        }
+
+                        // Set main confirmation message
                         if (confirmationMessage) {
                             if (isUpdate) {
-                                confirmationMessage.textContent = 'Your RSVP has been updated successfully. Thank you for keeping us informed!';
+                                if (formData.attending === 'yes') {
+                                    confirmationMessage.innerHTML = '<strong>Your RSVP has been updated successfully!</strong><br>Thank you for keeping us informed about your attendance details.';
+                                } else {
+                                    confirmationMessage.innerHTML = '<strong>Your RSVP has been updated to "Not Attending".</strong><br>Thank you for letting us know. We\'ll miss you at the celebration!';
+                                }
                             } else {
-                                confirmationMessage.textContent = 'Your RSVP has been received. We look forward to celebrating with you!';
+                                if (formData.attending === 'yes') {
+                                    confirmationMessage.innerHTML = '<strong>Your RSVP has been received!</strong><br>We look forward to celebrating with you!';
+                                } else {
+                                    confirmationMessage.innerHTML = '<strong>Your RSVP has been received.</strong><br>We\'re sorry you won\'t be able to join us, but thank you for letting us know.';
+                                }
                             }
+                        }
+
+                        // Add details about attendees for "attending" responses
+                        if (confirmationDetails && formData.attending === 'yes') {
+                            const totalGuests = formData.guestCount; // Use calculated guestCount
+                            const guestText = totalGuests === 1 ? 'guest' : 'guests';
+
+                            confirmationDetails.innerHTML = `We have you down for <strong>${totalGuests} ${guestText}</strong> ${isUpdate ? '(updated)' : ''}.`;
+
+                            // Add submission/update timestamp
+                            const timestamp = formData.updatedAt || formData.submittedAt; // Use update time if available
+                            const dateStr = timestamp.toDate().toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+
+                            confirmationDetails.innerHTML += `<br><span class="timestamp">${isUpdate ? 'Updated' : 'Submitted'} on ${dateStr}</span>`;
+                        } else if (confirmationDetails) {
+                            confirmationDetails.innerHTML = ''; // Clear details if not attending
                         }
 
                         // Animate confirmation in
                         setTimeout(() => {
-                            formConfirmation.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-                            formConfirmation.style.opacity = '1';
-                            formConfirmation.style.transform = 'translateY(0)';
-                            formConfirmation.scrollIntoView({ behavior: 'smooth' });
-                        }, 50);
-                    }, 600);
+                             formConfirmation.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                             formConfirmation.style.opacity = '1';
+                             formConfirmation.style.transform = 'translateY(0)';
+                             formConfirmation.scrollIntoView({ behavior: 'smooth' });
+                         }, 50);
+
+                    }, 600); // End of form fade out timeout
 
                     // Track successful submission with analytics if available
                     if (window.analytics) {
                         window.analytics.logEvent('rsvp_submitted', {
                             attending: formData.attending,
                             guest_count: formData.guestCount,
-                            is_update: isUpdate
+                            is_update: isUpdate // Pass the update status
                         });
                     }
 
-                    // Reset form and global state
-                    form.reset();
-                    window.selectedGuest = null;
-                    window.existingSubmission = null;
+                    // Reset form and global state AFTER confirmation is shown
+                    form.reset(); // Clear form fields
+                    form.setAttribute('data-mode', 'new'); // Reset mode
+                    form.removeAttribute('data-submission-id'); // Clear ID
+                    window.selectedGuest = null; // Clear selected guest
+                    window.existingSubmission = null; // Clear existing submission data
+
+                    // Reset UI elements managed by the other script (optional, but good practice)
+                    const formTitle = document.getElementById('rsvp-form-title');
+                    if (formTitle) formTitle.textContent = 'RSVP Form';
+                    const updateNotice = document.getElementById('updateNotice');
+                    if (updateNotice) updateNotice.style.display = 'none';
+                    const existingInfo = document.getElementById('existingSubmissionInfo');
+                    if (existingInfo) existingInfo.style.display = 'none';
+                    const guestFoundInfo = document.getElementById('guestFoundInfo');
+                    if (guestFoundInfo) guestFoundInfo.style.display = 'none'; // Hide this too after submission
+                    const additionalFields = document.getElementById('additionalFields');
+                    if (additionalFields) additionalFields.style.display = 'none'; // Hide fields section
+                     const submitContainer = document.getElementById('submitButtonContainer');
+                     if (submitContainer) submitContainer.style.display = 'none'; // Hide submit button
+
+
                 })
                 .catch(error => {
                     // Log detailed error information
-                    console.error('RSVP Submission Error:', error);
+                    console.error('RSVP Submission/Update Error:', error);
 
                     // Determine error type and show appropriate message
                     let errorTitle = 'Submission Error';
@@ -464,15 +503,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Show error message to user
                     showErrorMessage(errorTitle, errorDetails, canRetry);
+
                 })
                 .finally(() => {
+                    // Restore button state regardless of success or failure
                     submitButton.innerHTML = originalButtonText;
                     submitButton.disabled = false;
                 });
-        });
-    }
-
-    // Reset form functionality removed
+        }); // End of form submit event listener
+    } // End of if (rsvpForm)
 
     // Add active class to current nav link
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';

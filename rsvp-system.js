@@ -361,8 +361,16 @@ const RSVPSystem = {
 
     // Process submissions data
     processSubmissions: function() {
+        // Refactored to reduce cognitive complexity
         console.log('Processing submissions...');
 
+        this.prepareSubmissionsData();
+        this.filterAndSortSubmissions();
+        this.renderSubmissionsTable();
+    },
+
+    // Helper method to prepare submissions data
+    prepareSubmissionsData: function() {
         const loadingElement = document.getElementById('loading');
         const tableContainer = document.getElementById('table-container');
         const submissionsBody = document.getElementById('submissions-body');
@@ -384,12 +392,17 @@ const RSVPSystem = {
         }
 
         // Apply search filter
+        this.filterSubmissionsBySearchTerm();
+    },
+
+    // Helper method to filter submissions by search term
+    filterSubmissionsBySearchTerm: function() {
         if (this.state.searchTerm) {
             this.state.filteredSubmissions = this.state.submissions.filter(submission => {
                 return (
-                    (submission.name && submission.name.toLowerCase().includes(this.state.searchTerm)) ||
-                    (submission.email && submission.email.toLowerCase().includes(this.state.searchTerm)) ||
-                    (submission.phone && submission.phone.toLowerCase().includes(this.state.searchTerm))
+                    submission.name?.toLowerCase().includes(this.state.searchTerm) ||
+                    submission.email?.toLowerCase().includes(this.state.searchTerm) ||
+                    submission.phone?.toLowerCase().includes(this.state.searchTerm)
                 );
             });
         } else {
@@ -417,12 +430,20 @@ const RSVPSystem = {
             });
         }
 
+    // Helper method to filter and sort submissions
+    filterAndSortSubmissions: function() {
         // Apply sorting
         if (this.state.sortColumn) {
-            this.state.filteredSubmissions.sort((a, b) => {
-                let valueA, valueB;
+            this.applySorting();
+        }
+    },
 
-                // Get the values to compare based on the sort column
+    // Helper method to apply sorting
+    applySorting: function() {
+        this.state.filteredSubmissions.sort((a, b) => {
+            let valueA, valueB;
+
+            // Get the values to compare based on the sort column
                 switch (this.state.sortColumn) {
                     case 'date':
                         valueA = a.submittedAt || new Date(0);
@@ -664,9 +685,9 @@ const RSVPSystem = {
         if (this.state.guestSearchTerm) {
             this.state.filteredGuests = this.state.guests.filter(guest => {
                 return (
-                    (guest.name && guest.name.toLowerCase().includes(this.state.guestSearchTerm)) ||
-                    (guest.email && guest.email.toLowerCase().includes(this.state.guestSearchTerm)) ||
-                    (guest.phone && guest.phone.toLowerCase().includes(this.state.guestSearchTerm))
+                    guest.name?.toLowerCase().includes(this.state.guestSearchTerm) ||
+                    guest.email?.toLowerCase().includes(this.state.guestSearchTerm) ||
+                    guest.phone?.toLowerCase().includes(this.state.guestSearchTerm)
                 );
             });
         } else {
@@ -1277,9 +1298,16 @@ const RSVPSystem = {
 
     // Update activity section
     updateActivitySection: function() {
+        // Refactored to reduce cognitive complexity
         console.log('Updating activity section...');
 
-        // Update latest RSVP
+        this.updateLatestRSVP();
+        this.updateResponseStats();
+        this.updateAttendanceChart();
+    },
+
+    // Helper method to update latest RSVP
+    updateLatestRSVP: function() {
         if (this.state.submissions.length > 0) {
             const latestRsvp = this.state.submissions[0]; // Submissions are already sorted by date desc
             const latestRsvpNameElem = document.getElementById('latest-rsvp-name');
@@ -1401,7 +1429,7 @@ const RSVPSystem = {
             const totalGuests = this.state.guests.length;
             const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
             const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
-            const notAttendingCount = this.state.guests.filter(guest => guest.response === 'declined').length;
+            // Removed unused variable
 
             // Calculate attendance rate among those who responded
             const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
@@ -1797,7 +1825,7 @@ const RSVPSystem = {
             .then(result => {
                 console.log('Add guest result:', result);
 
-                if (result.data && result.data.success) {
+                if (result.data?.success) {
                     // Close the modal
                     const modal = document.getElementById('add-guest-modal');
                     if (modal) modal.style.display = 'none';
@@ -1937,17 +1965,13 @@ const RSVPSystem = {
                     <div class="detail-item">
                         <span class="detail-label">Adult Guests:</span>
                         <div class="detail-value">
-                            ${adultGuests.length > 0 ?
-                                `<ul class="guest-list">${adultGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
-                                'None'}
+                            ${this.renderGuestList(adultGuests)}
                         </div>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Child Guests:</span>
                         <div class="detail-value">
-                            ${childGuests.length > 0 ?
-                                `<ul class="guest-list">${childGuests.map(guest => `<li>${guest}</li>`).join('')}</ul>` :
-                                'None'}
+                            ${this.renderGuestList(childGuests)}
                         </div>
                     </div>
                 </div>
@@ -1961,11 +1985,28 @@ const RSVPSystem = {
         modal.style.display = 'block';
     },
 
+    // Helper method to render guest list
+    renderGuestList: function(guests) {
+        if (guests.length > 0) {
+            const listItems = guests.map(guest => `<li>${guest}</li>`).join('');
+            return `<ul class="guest-list">${listItems}</ul>`;
+        }
+        return 'None';
+    },
+
     // Show guest details in modal
     showGuestDetails: function(guestId) {
+        // Refactored to reduce cognitive complexity
         console.log('Showing guest details for ID:', guestId);
 
-        // Find the guest
+        const guest = this.findGuestById(guestId);
+        if (!guest) return;
+
+        this.displayGuestDetailsInModal(guest);
+    },
+
+    // Helper method to find guest by ID
+    findGuestById: function(guestId) {
         const guest = this.state.guests.find(g => g.id === guestId);
         if (!guest) {
             console.error('Guest not found with ID:', guestId);
@@ -2048,7 +2089,7 @@ const RSVPSystem = {
                     ${guest.hasResponded ? `
                     <div class="detail-item">
                         <span class="detail-label">Response:</span>
-                        <span class="detail-value status-badge ${guest.response === 'attending' ? 'status-attending' : 'status-not-attending'}">
+                        <span class="detail-value status-badge ${this.getResponseStatusClass(guest.response)}">
                             ${this.formatGuestResponse(guest.response)}
                         </span>
                     </div>
@@ -2067,17 +2108,13 @@ const RSVPSystem = {
                     <div class="detail-item">
                         <span class="detail-label">Adult Guests:</span>
                         <div class="detail-value">
-                            ${adultGuests.length > 0 ?
-                                `<ul class="guest-list">${adultGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
-                                'None'}
+                            ${this.renderGuestList(adultGuests)}
                         </div>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Child Guests:</span>
                         <div class="detail-value">
-                            ${childGuests.length > 0 ?
-                                `<ul class="guest-list">${childGuests.map(g => `<li>${g}</li>`).join('')}</ul>` :
-                                'None'}
+                            ${this.renderGuestList(childGuests)}
                         </div>
                     </div>
                     <div class="detail-item">
@@ -2094,6 +2131,21 @@ const RSVPSystem = {
 
         // Show the modal
         modal.style.display = 'block';
+    },
+
+    // Helper method to get response status class
+    getResponseStatusClass: function(response) {
+        return response === 'attending' ? 'status-attending' : 'status-not-attending';
+    },
+
+    // Helper method to format guest response
+    formatGuestResponse: function(response) {
+        if (response === 'attending') {
+            return '<i class="fas fa-check-circle"></i> Attending';
+        } else if (response === 'declined') {
+            return '<i class="fas fa-times-circle"></i> Not Attending';
+        }
+        return 'Unknown';
     }
 };
 

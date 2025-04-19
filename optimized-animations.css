@@ -1,0 +1,33 @@
+/* Optimized animations to improve performance */
+
+/* Use hardware acceleration for animations */
+.fade-in, .pulse {
+    /* Hardware acceleration techniques */
+
+    /* Use transform: translateZ(0) to trigger hardware acceleration */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* Apply optimized animations */
+.fade-in {
+    /* Use CSS transitions instead of keyframe animations for better performance */
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pulse {
+    /* Use CSS transitions for pulse effect */
+    transition: opacity 0.5s ease-in-out;
+    animation: none; /* Disable keyframe animation */
+    opacity: 0.8;
+}
+
+/* Note: For optimal performance, consider implementing pulse effect with JavaScript */
