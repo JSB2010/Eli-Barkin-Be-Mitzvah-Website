@@ -190,18 +190,44 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
             console.log('[selectGuest] CRITICAL DEBUG: About to check for existing submission');
 
-            // IMPORTANT: We're removing the resetSubmissionState call here as it might be clearing
-            // the state before we can properly process the existing submission
-            // resetSubmissionState();
-
             // Set the name input value
             nameInput.value = selectedGuest.name;
 
-            // Check for existing submission
-            console.log('[selectGuest] Calling checkExistingSubmission with name:', selectedGuest.name);
-            const hasExisting = await checkExistingSubmission(selectedGuest.name);
-            console.log('[selectGuest] Existing submission check result:', hasExisting);
-            console.log('[selectGuest] After check, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
+            // CRITICAL FIX: First check if there's an existing submission directly in the sheetRsvps collection
+            // This is a direct approach that bypasses the checkExistingSubmission function
+            try {
+                console.log('[selectGuest] DIRECT CHECK: Querying sheetRsvps collection for:', selectedGuest.name);
+                const directSubmissionSnapshot = await db.collection('sheetRsvps')
+                    .where('name', '==', selectedGuest.name.trim())
+                    .limit(1)
+                    .get();
+
+                if (!directSubmissionSnapshot.empty) {
+                    console.log('[selectGuest] DIRECT CHECK: Found existing submission!');
+                    const doc = directSubmissionSnapshot.docs[0];
+                    const submission = doc.data();
+                    submission.id = doc.id;
+
+                    // Process the submission directly
+                    console.log('[selectGuest] DIRECT CHECK: Processing submission directly');
+                    processExistingSubmission(submission);
+                    console.log('[selectGuest] DIRECT CHECK: After direct processing, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
+
+                    // Skip the regular check since we've already found and processed the submission
+                    // We'll use window.existingSubmission to determine if we have an existing submission
+                    console.log('[selectGuest] DIRECT CHECK: Skipping regular check, using direct match');
+                } else {
+                    console.log('[selectGuest] DIRECT CHECK: No direct match found, falling back to regular check');
+                    // Fall back to the regular check
+                    await checkExistingSubmission(selectedGuest.name);
+                    console.log('[selectGuest] After regular check, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
+                }
+            } catch (error) {
+                console.error('[selectGuest] DIRECT CHECK: Error during direct check:', error);
+                // Fall back to the regular check
+                await checkExistingSubmission(selectedGuest.name);
+                console.log('[selectGuest] After error fallback check, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
+            }
 
             // STEP 3: Show the appropriate form fields *after* checking submission
             additionalFields.style.display = 'block';
@@ -210,15 +236,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // No maximum guest limit
             adultCountInput.removeAttribute('max');
 
+            // Check if we have an existing submission
+            const hasExistingSubmission = window.existingSubmission !== null;
+            console.log('[selectGuest] hasExistingSubmission:', hasExistingSubmission);
+
             // Update guest fields (create inputs) - This needs to happen *before* prefill if attending
             // If not attending, prefill handles hiding/showing sections
-            if (!hasExisting || (existingSubmission && existingSubmission.attending === 'yes')) {
+            if (!hasExistingSubmission || (window.existingSubmission && window.existingSubmission.attending === 'yes')) {
                  updateGuestFields(); // Create fields needed for attending/new submission
             }
 
             // If an existing submission was found, prefillFormWithExistingData was already called by processExistingSubmission
             // If no existing submission, ensure the form is ready for a new entry
-            if (!hasExisting) {
+            if (!hasExistingSubmission) {
                  // Ensure attending section is visible by default for new submissions
                  document.getElementById('attendingSection').style.display = 'block';
                  // Ensure guest counts are reset/defaulted if needed
