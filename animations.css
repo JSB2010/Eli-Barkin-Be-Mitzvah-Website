@@ -3,14 +3,15 @@
 /* Page Transitions - Overlay Disabled */
 /* The blue overlay has been removed as requested */
 
-/* Page load animation */
+/* Page load animation - Disabled */
+/* Body fade-in has been removed to prevent blue flash */
 body {
-    opacity: 0;
-    transition: opacity 0.5s ease;
+    opacity: 1; /* Always fully visible */
+    transition: none; /* No transitions */
 }
 
 body.page-loaded {
-    opacity: 1;
+    /* No change needed as body is already fully visible */
 }
 
 /* Enhanced button animations */

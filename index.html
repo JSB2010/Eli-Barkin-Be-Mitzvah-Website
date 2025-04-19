@@ -39,7 +39,7 @@
         gtag('config', 'G-XXXXXXXXXX');
     </script>
 </head>
-<body class="fade-in">
+<body>
     <div class="menu-overlay"></div>
     <header>
         <div class="logo">
@@ -94,14 +94,7 @@
     <script src="script.js?v=1.2"></script>
     <script src="analytics.js?v=1.0"></script>
 
-    <!-- Initialize AOS animations -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mark the body as loaded after a short delay
-            setTimeout(function() {
-                document.body.classList.add('page-loaded');
-            }, 100);
-        });
-    </script>
+    <!-- No page load animations -->
+    <!-- Removed to prevent blue flash when navigating -->
 </body>
 </html>

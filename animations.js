@@ -19,36 +19,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Add smooth page transitions - Overlay Disabled
+    // Page transitions completely disabled
     function addPageTransitions() {
-        // Blue overlay has been removed as requested
-
-        // Add click event to all internal links
-        const internalLinks = document.querySelectorAll('a[href^="/"]:not([target]), a[href^="./"]:not([target]), a[href^="../"]:not([target]), a[href^="#"]:not([target]), a:not([href^="http"]):not([href^="mailto"]):not([href^="tel"]):not([target])');
-
-        internalLinks.forEach(link => {
-            // Skip links that should not trigger page transitions
-            if (link.classList.contains('no-transition') || link.getAttribute('href') === '#') {
-                return;
-            }
-
-            link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-
-                // Skip if it's a hash link on the same page
-                if (href.startsWith('#')) {
-                    return;
-                }
-
-                // Direct navigation without overlay
-                // No preventDefault or delay to ensure normal navigation behavior
-            });
-        });
-
-        // Add transition-in effect when page loads (keep this for a smooth fade-in)
-        window.addEventListener('load', function() {
-            document.body.classList.add('page-loaded');
-        });
+        // Function completely disabled to prevent blue flash when navigating
+        console.log('Page transitions disabled to prevent blue overlay');
+        // No event listeners or transitions added
     }
 
     // Add subtle hover effects to buttons and cards
