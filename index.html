@@ -16,17 +16,34 @@
     <meta name="msapplication-TileImage" content="logo.PNG">
     <meta name="msapplication-TileColor" content="#2b5797">
     <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" href="styles.css?v=1.2">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css?v=1.3">
+    <link rel="stylesheet" href="animations.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="mobile-nav.js?v=1.1" defer></script>
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
+    <!-- Scripts -->
+    <script src="mobile-nav.js?v=1.2" defer></script>
+    <script src="animations.js?v=1.0" defer></script>
+    <script src="optimize-images.js?v=1.0" defer></script>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
 </head>
-<body>
+<body class="fade-in">
     <div class="menu-overlay"></div>
     <header>
         <div class="logo">
-            <a href="index.html">
+            <a href="index.html" class="hover-zoom">
                 <img src="logo.PNG" alt="EZB Sports Logo">
             </a>
         </div>
@@ -46,23 +63,23 @@
         </nav>
     </header>
 
-    <div class="hero">
-        <div class="hero-content">
+    <div class="hero responsive-bg" data-bg-large="coors_field-dusk.jpeg" data-bg-medium="coors_field-dusk-medium.jpeg" data-bg-small="coors_field-dusk-small.jpeg">
+        <div class="hero-content" data-aos="fade-up" data-aos-delay="200">
             <h1 style="display: inline-block; margin-right: 10px;">Eli Zander Barkin's<br>Be Mitzvah Celebration</h1>
             <p class="tagline">Saturday, August 23, 2025</p>
             <p class="tagline">4:00 PM | Coors Field, Denver</p>
-            <a href="rsvp.html" class="btn">RSVP Now</a>
+            <a href="rsvp.html" class="btn primary-cta">RSVP Now</a>
         </div>
     </div>
 
     <footer>
         <div class="container">
-            <div class="footer-credits">
+            <div class="footer-credits" data-aos="fade-up" data-aos-delay="100">
                 <a href="https://jacobbarkin.com" target="_blank">Designed by Jacob Barkin</a>
                 <span class="separator">|</span>
                 <a href="https://askthekidz.com" target="_blank">Ask The Kidz</a>
             </div>
-            <div class="footer-links">
+            <div class="footer-links" data-aos="fade-up" data-aos-delay="200">
                 <a href="index.html">Home</a>
                 <a href="journey.html">Eli's Journey</a>
                 <a href="the-big-day.html">Game Day Details</a>
@@ -73,6 +90,18 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Core Scripts -->
+    <script src="script.js?v=1.2"></script>
+    <script src="analytics.js?v=1.0"></script>
+
+    <!-- Initialize AOS animations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mark the body as loaded after a short delay
+            setTimeout(function() {
+                document.body.classList.add('page-loaded');
+            }, 100);
+        });
+    </script>
 </body>
 </html>
