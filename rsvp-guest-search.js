@@ -188,16 +188,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // STEP 2: Check if this guest has already submitted an RSVP
             console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
+            console.log('[selectGuest] CRITICAL DEBUG: About to check for existing submission');
 
-            // Now we can reset the submission state before checking for existing submissions
-            // This ensures we start with a clean state
-            resetSubmissionState();
+            // IMPORTANT: We're removing the resetSubmissionState call here as it might be clearing
+            // the state before we can properly process the existing submission
+            // resetSubmissionState();
 
-            // Set the name input value after resetting state
+            // Set the name input value
             nameInput.value = selectedGuest.name;
 
+            // Check for existing submission
+            console.log('[selectGuest] Calling checkExistingSubmission with name:', selectedGuest.name);
             const hasExisting = await checkExistingSubmission(selectedGuest.name);
             console.log('[selectGuest] Existing submission check result:', hasExisting);
+            console.log('[selectGuest] After check, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
 
             // STEP 3: Show the appropriate form fields *after* checking submission
             additionalFields.style.display = 'block';
@@ -401,8 +405,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Call processExistingSubmission and capture the result
+                console.log('[checkExistingSubmission] CRITICAL DEBUG: About to call processExistingSubmission with submission:', submission);
                 const result = processExistingSubmission(submission);
                 console.log('[checkExistingSubmission] processExistingSubmission returned:', result);
+                console.log('[checkExistingSubmission] After processExistingSubmission, window.existingSubmission is:', window.existingSubmission ? 'SET' : 'NULL');
                 return result; // Return the result
             }
 
@@ -491,12 +497,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function processExistingSubmission(submission) {
         console.log('[processExistingSubmission] Processing submission:', submission);
         console.log('[processExistingSubmission] CRITICAL DEBUG: Function was called!');
+        console.log('[processExistingSubmission] CRITICAL DEBUG: Current window.existingSubmission:', window.existingSubmission);
 
         // Detailed logging of submission object
         console.log('[processExistingSubmission] Submission keys:', Object.keys(submission));
         console.log('[processExistingSubmission] Submission attending value:', submission.attending);
         console.log('[processExistingSubmission] Submission email:', submission.email);
         console.log('[processExistingSubmission] Submission adultGuests:', submission.adultGuests);
+        console.log('[processExistingSubmission] Submission ID:', submission.id);
 
         // Get fresh references to DOM elements to ensure they exist
         const existingSubmissionInfoElement = document.getElementById('existingSubmissionInfo');
@@ -522,10 +530,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Store the existing submission globally - make a clone to avoid reference issues
-        existingSubmission = JSON.parse(JSON.stringify(submission));
-        window.existingSubmission = existingSubmission; // Ensure global state is set
-
-        console.log('[processExistingSubmission] Set window.existingSubmission with ID:', window.existingSubmission.id);
+        try {
+            existingSubmission = JSON.parse(JSON.stringify(submission));
+            window.existingSubmission = existingSubmission; // Ensure global state is set
+            console.log('[processExistingSubmission] Set window.existingSubmission with ID:', window.existingSubmission.id);
+            console.log('[processExistingSubmission] CRITICAL DEBUG: window.existingSubmission is now:', window.existingSubmission);
+        } catch (error) {
+            console.error('[processExistingSubmission] ERROR setting existingSubmission:', error);
+        }
 
         // Show existing submission info section
         console.log('[processExistingSubmission] Setting existingSubmissionInfo display to block');
@@ -603,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Pre-fill form with existing submission data
     function prefillFormWithExistingData(submission) {
         console.log('[prefillForm] Pre-filling form with data:', submission);
+        console.log('[prefillForm] CRITICAL DEBUG: Current window.existingSubmission:', window.existingSubmission);
 
         // Ensure we have a valid submission object
         if (!submission || typeof submission !== 'object') {
@@ -610,14 +623,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Set email and phone
-        document.getElementById('email').value = submission.email || '';
-        document.getElementById('phone').value = submission.phone || '';
+        // Double-check that we have the necessary DOM elements
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const attendingYesRadio = document.getElementById('attendingYes');
+        const attendingNoRadio = document.getElementById('attendingNo');
+        const attendingSectionElement = document.getElementById('attendingSection');
 
-        // Set attending radio button
-        const attendingYes = document.getElementById('attendingYes');
-        const attendingNo = document.getElementById('attendingNo');
-        const attendingSection = document.getElementById('attendingSection');
+        if (!emailInput || !phoneInput || !attendingYesRadio || !attendingNoRadio || !attendingSectionElement) {
+            console.error('[prefillForm] Missing required DOM elements:', {
+                emailInput: !!emailInput,
+                phoneInput: !!phoneInput,
+                attendingYesRadio: !!attendingYesRadio,
+                attendingNoRadio: !!attendingNoRadio,
+                attendingSectionElement: !!attendingSectionElement
+            });
+            return;
+        }
+
+        // Set email and phone
+        emailInput.value = submission.email || '';
+        phoneInput.value = submission.phone || '';
 
         // Determine if attending based on submission data
         const isAttending = submission.attending === 'yes';
@@ -625,13 +651,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Set the appropriate radio button
         if (isAttending) {
-            attendingYes.checked = true;
-            attendingNo.checked = false;
-            attendingSection.style.display = 'block'; // Show guest count section
+            attendingYesRadio.checked = true;
+            attendingNoRadio.checked = false;
+            attendingSectionElement.style.display = 'block'; // Show guest count section
         } else {
-            attendingNo.checked = true;
-            attendingYes.checked = false;
-            attendingSection.style.display = 'none'; // Hide guest count section
+            attendingNoRadio.checked = true;
+            attendingYesRadio.checked = false;
+            attendingSectionElement.style.display = 'none'; // Hide guest count section
         }
 
         // Parse guest counts for attending guests
@@ -726,10 +752,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Trigger change events manually to ensure form is properly updated
         const event = new Event('change', { bubbles: true });
-        if (attendingYes.checked) {
-            attendingYes.dispatchEvent(event);
-        } else if (attendingNo.checked) {
-            attendingNo.dispatchEvent(event);
+        if (attendingYesRadio.checked) {
+            attendingYesRadio.dispatchEvent(event);
+        } else if (attendingNoRadio.checked) {
+            attendingNoRadio.dispatchEvent(event);
         }
 
         console.log('[prefillForm] Form pre-fill attempt complete.');
