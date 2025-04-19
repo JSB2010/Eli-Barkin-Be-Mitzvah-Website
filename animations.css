@@ -61,27 +61,27 @@ body.page-loaded {
         width: 260px; /* Slightly narrower */
         padding-top: 80px; /* Less top padding */
     }
-    
+
     nav ul li a {
         padding: 14px 20px; /* Slightly smaller padding */
         font-size: 0.95rem; /* Slightly smaller font */
     }
-    
+
     .menu-toggle {
         width: 26px; /* Slightly smaller hamburger */
         height: 18px;
     }
-    
+
     .menu-toggle span {
         height: 2px; /* Thinner lines */
     }
-    
+
     /* Improved animation for menu toggle */
-    .menu-toggle span {
-        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), 
+    .menu-toggle span.enhanced {
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55),
                     opacity 0.2s ease;
     }
-    
+
     /* Improved overlay animation */
     .menu-overlay {
         backdrop-filter: blur(3px);
@@ -89,7 +89,7 @@ body.page-loaded {
         opacity: 0;
         visibility: hidden;
     }
-    
+
     .menu-overlay.active {
         opacity: 1;
         visibility: visible;
@@ -157,10 +157,10 @@ body.page-loaded {
     animation: subtle-pulse 2s infinite;
 }
 
-/* Improved hero section with parallax support */
+/* Hero section with fixed background */
 .hero, .rsvp-hero {
-    background-attachment: fixed; /* Enable parallax effect */
-    transition: background-position 0.1s ease-out;
+    background-attachment: scroll; /* Disable parallax effect */
+    background-position: center center;
     position: relative;
     overflow: hidden;
 }
@@ -173,8 +173,8 @@ body.page-loaded {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, 
-                rgba(30, 136, 229, 0.3) 0%, 
+    background: linear-gradient(135deg,
+                rgba(30, 136, 229, 0.3) 0%,
                 rgba(255, 152, 0, 0.3) 100%);
     z-index: 1;
 }
@@ -194,7 +194,7 @@ section + section {
     section {
         padding: 3rem 0;
     }
-    
+
     section + section {
         margin-top: 0.5rem;
     }
@@ -206,9 +206,9 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus {
     outline-offset: 2px;
 }
 
-/* Smooth scrolling for the entire page */
+/* Disabled smooth scrolling for better performance */
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
 }
 
 /* Vibrant accent color for highlights */

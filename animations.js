@@ -13,22 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Parallax effect for hero sections
-    const heroElements = document.querySelectorAll('.hero, .rsvp-hero');
-    
+    // Parallax effect for hero sections - DISABLED
     function parallaxScroll() {
-        const scrollPosition = window.pageYOffset;
-        
-        heroElements.forEach(hero => {
-            // Only apply parallax if not on mobile (for performance)
-            if (window.innerWidth > 768) {
-                const parallaxSpeed = 0.5;
-                const yPos = -(scrollPosition * parallaxSpeed);
-                hero.style.backgroundPositionY = `calc(50% + ${yPos}px)`;
-            } else {
-                hero.style.backgroundPositionY = '50%';
-            }
-        });
+        // Function disabled to improve performance and cross-device compatibility
+        return;
     }
 
     // Add smooth page transitions
@@ -40,26 +28,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add click event to all internal links
         const internalLinks = document.querySelectorAll('a[href^="/"]:not([target]), a[href^="./"]:not([target]), a[href^="../"]:not([target]), a[href^="#"]:not([target]), a:not([href^="http"]):not([href^="mailto"]):not([href^="tel"]):not([target])');
-        
+
         internalLinks.forEach(link => {
             // Skip links that should not trigger page transitions
             if (link.classList.contains('no-transition') || link.getAttribute('href') === '#') {
                 return;
             }
-            
+
             link.addEventListener('click', function(e) {
                 const href = this.getAttribute('href');
-                
+
                 // Skip if it's a hash link on the same page
                 if (href.startsWith('#')) {
                     return;
                 }
-                
+
                 e.preventDefault();
-                
+
                 // Show transition overlay
                 transitionOverlay.classList.add('active');
-                
+
                 // Navigate after transition
                 setTimeout(() => {
                     window.location.href = href;
@@ -70,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add transition-in effect when page loads
         window.addEventListener('load', function() {
             document.body.classList.add('page-loaded');
-            
+
             // Hide transition overlay when coming from another page
             if (transitionOverlay) {
                 setTimeout(() => {
@@ -89,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.transform = 'translateY(-3px)';
                 this.style.boxShadow = '0 7px 14px rgba(0, 0, 0, 0.2)';
             });
-            
+
             btn.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0)';
                 this.style.boxShadow = '';
@@ -103,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.transform = 'translateY(-5px)';
                 this.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.15)';
             });
-            
+
             card.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0)';
                 this.style.boxShadow = '';
@@ -116,13 +104,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners for parallax effect
         window.addEventListener('scroll', parallaxScroll);
         window.addEventListener('resize', parallaxScroll);
-        
+
         // Initialize page transitions
         addPageTransitions();
-        
+
         // Enhance interactive elements
         enhanceInteractiveElements();
-        
+
         // Initial parallax calculation
         parallaxScroll();
     }
