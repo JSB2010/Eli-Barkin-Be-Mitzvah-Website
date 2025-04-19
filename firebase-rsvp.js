@@ -238,83 +238,102 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
 
+            // Completely rewritten update logic for maximum reliability
             if (isUpdate) {
                 // Update existing RSVP
                 console.log('Updating existing RSVP for:', formData.name);
                 console.log('Existing submission object:', window.existingSubmission);
 
-                // If we have the existing submission document ID, use it directly
+                // Direct update with document ID is the most reliable method
                 if (window.existingSubmission?.id) {
-                    console.log('Using existing submission ID for update:', window.existingSubmission.id);
+                    const docId = window.existingSubmission.id;
+                    console.log('Using direct document ID update method with ID:', docId);
 
-                    // Verify the document exists before updating
-                    savePromise = db.collection('sheetRsvps')
-                        .doc(window.existingSubmission.id)
-                        .get()
+                    // Add the ID to the form data for logging purposes
+                    formData.documentId = docId;
+
+                    // Use a direct document reference for the update
+                    const docRef = db.collection('sheetRsvps').doc(docId);
+
+                    // First verify the document exists
+                    savePromise = docRef.get()
                         .then(docSnapshot => {
                             if (docSnapshot.exists) {
-                                console.log('Document exists, updating with ID:', window.existingSubmission.id);
-                                return docSnapshot.ref.update(formData);
+                                console.log('Document exists, performing update on ID:', docId);
+                                // Document exists, perform the update
+                                return docRef.update(formData);
                             } else {
-                                console.warn('Document with ID does not exist, falling back to query update');
-                                return fallbackToQueryUpdate();
+                                console.warn('Document with ID does not exist, creating new document');
+                                // Document doesn't exist, create a new one
+                                return db.collection('sheetRsvps').add(formData);
                             }
                         })
                         .catch(error => {
-                            console.error('Error verifying document existence:', error);
-                            return fallbackToQueryUpdate();
+                            console.error('Error during direct document update:', error);
+                            // Try the fallback method
+                            return findAndUpdateDocument();
                         });
                 } else {
-                    console.warn('No existing submission ID available, falling back to query update');
-                    // Fall back to query-based update if we don't have the document ID
-                    savePromise = fallbackToQueryUpdate();
+                    console.warn('No document ID available, using search and update method');
+                    savePromise = findAndUpdateDocument();
                 }
 
-                // Helper function for query-based update fallback
-                function fallbackToQueryUpdate() {
-                    console.log('Performing query-based update for:', formData.name);
+                // Helper function to find and update a document
+                function findAndUpdateDocument() {
+                    console.log('Searching for existing document with name:', formData.name);
 
-                    // First try exact match
-                    return db.collection('sheetRsvps')
-                        .where('name', '==', formData.name)
-                        .get()
-                        .then(snapshot => {
-                            if (!snapshot.empty) {
-                                // Update the first matching document
-                                const docToUpdate = snapshot.docs[0];
-                                console.log('Found existing document by exact name match, updating document ID:', docToUpdate.id);
-                                return docToUpdate.ref.update(formData);
-                            } else {
-                                // If no exact match, try case-insensitive search
-                                console.log('No exact match found, trying case-insensitive search...');
-                                return db.collection('sheetRsvps').get()
-                                    .then(allSnapshot => {
-                                        // Find a case-insensitive match
-                                        let matchingDoc = null;
+                    return new Promise((resolve, reject) => {
+                        // First try an exact match query
+                        db.collection('sheetRsvps')
+                            .where('name', '==', formData.name)
+                            .get()
+                            .then(snapshot => {
+                                if (!snapshot.empty) {
+                                    // Found an exact match
+                                    const doc = snapshot.docs[0];
+                                    console.log('Found exact match document, updating ID:', doc.id);
+                                    return doc.ref.update(formData)
+                                        .then(() => resolve())
+                                        .catch(reject);
+                                } else {
+                                    // No exact match, try case-insensitive search
+                                    console.log('No exact match, trying case-insensitive search');
+                                    return db.collection('sheetRsvps').get();
+                                }
+                            })
+                            .then(snapshot => {
+                                // If we already resolved, this will be undefined
+                                if (!snapshot) return;
 
-                                        allSnapshot.forEach(doc => {
-                                            const data = doc.data();
-                                            if (data.name?.toLowerCase() === formData.name.toLowerCase()) {
-                                                matchingDoc = doc;
-                                            }
-                                        });
+                                // Look for case-insensitive match
+                                let matchFound = false;
 
-                                        if (matchingDoc) {
-                                            console.log('Found case-insensitive match, updating document ID:', matchingDoc.id);
-                                            return matchingDoc.ref.update(formData);
-                                        } else {
-                                            // If still no match, create a new document
-                                            console.warn('No matching document found. Creating new document instead.');
-                                            return db.collection('sheetRsvps').add(formData);
+                                snapshot.forEach(doc => {
+                                    const data = doc.data();
+                                    if (data.name?.toLowerCase() === formData.name.toLowerCase()) {
+                                        if (!matchFound) { // Only update the first match
+                                            matchFound = true;
+                                            console.log('Found case-insensitive match, updating ID:', doc.id);
+                                            doc.ref.update(formData)
+                                                .then(() => resolve())
+                                                .catch(reject);
                                         }
-                                    });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error during RSVP update query:', error);
-                            // Re-throw to be caught by the main catch handler
-                            throw new Error(`Failed to update RSVP: ${error.message}`);
-                        });
+                                    }
+                                });
+
+                                // If no match was found, create a new document
+                                if (!matchFound) {
+                                    console.log('No matching document found, creating new document');
+                                    db.collection('sheetRsvps').add(formData)
+                                        .then(() => resolve())
+                                        .catch(reject);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error in find and update process:', error);
+                                reject(new Error(`Error in find and update process: ${error.message}`));
+                            });
+                    });
                 }
             } else {
                 // Create new RSVP

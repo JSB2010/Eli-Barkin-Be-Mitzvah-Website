@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize guest fields on page load
     updateGuestFields();
 
-    // Function to auto-search for a guest by name
+    // Function to auto-search for a guest by name - completely rewritten for reliability
     async function autoSearchGuest(guestName) {
         if (!guestName || !nameInput) {
             console.log('Invalid parameters for auto-search');
@@ -501,7 +501,93 @@ document.addEventListener('DOMContentLoaded', function() {
         nameInput.value = guestName;
 
         try {
-            // First, try to find the guest in the guest list
+            // STEP 1: First check if there's an existing RSVP submission with this exact name
+            console.log('STEP 1: Checking for existing RSVP submission with name:', guestName);
+            const db = firebase.firestore();
+
+            // Try exact match first
+            let submissionSnapshot = await db.collection('sheetRsvps')
+                .where('name', '==', guestName)
+                .limit(1)
+                .get();
+
+            // If no exact match, try case-insensitive
+            if (submissionSnapshot.empty) {
+                console.log('No exact RSVP match, trying case-insensitive...');
+                const allSubmissions = await db.collection('sheetRsvps').get();
+
+                allSubmissions.forEach(doc => {
+                    const data = doc.data();
+                    if (data.name?.toLowerCase() === guestName.toLowerCase()) {
+                        // Create a synthetic snapshot with this document
+                        submissionSnapshot = {
+                            empty: false,
+                            docs: [doc]
+                        };
+                    }
+                });
+            }
+
+            // If we found a submission, try to find the matching guest
+            if (!submissionSnapshot.empty) {
+                const submission = submissionSnapshot.docs[0].data();
+                submission.id = submissionSnapshot.docs[0].id;
+                console.log('Found RSVP submission:', submission);
+
+                // STEP 2: Find the guest in the guest list that matches this submission
+                console.log('STEP 2: Finding guest that matches submission name:', submission.name);
+
+                // Try exact match first
+                const guestResults = await searchGuests(submission.name);
+                let matchedGuest = null;
+
+                if (guestResults.length > 0) {
+                    // Look for exact match first
+                    matchedGuest = guestResults.find(g =>
+                        g.name.toLowerCase() === submission.name.toLowerCase());
+
+                    // If no exact match, use the first result
+                    if (!matchedGuest) {
+                        matchedGuest = guestResults[0];
+                    }
+
+                    console.log('Found matching guest in guest list:', matchedGuest.name);
+
+                    // Select this guest and store the submission
+                    await selectGuest(matchedGuest.id);
+
+                    // Manually set the existing submission since we already have it
+                    existingSubmission = submission;
+                    window.existingSubmission = existingSubmission;
+
+                    // Show existing submission info
+                    existingSubmissionInfo.style.display = 'block';
+
+                    // Update button text and style
+                    submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
+                    submitButton.classList.add('update-mode');
+
+                    // Show update notice
+                    const updateNotice = document.getElementById('updateNotice');
+                    if (updateNotice) {
+                        updateNotice.style.display = 'block';
+                    }
+
+                    // Update form title
+                    const formTitle = document.getElementById('rsvp-form-title');
+                    if (formTitle) {
+                        formTitle.textContent = 'Update Your RSVP';
+                    }
+
+                    // Pre-fill form with existing data
+                    prefillFormWithExistingData(submission);
+
+                    return true;
+                }
+            }
+
+            // STEP 3: If no submission found, just try to find the guest directly
+            console.log('STEP 3: No submission found or no matching guest, searching guest list directly for:', guestName);
             const results = await searchGuests(guestName);
 
             if (results.length > 0) {
@@ -519,36 +605,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     await selectGuest(results[0].id);
                     return true;
                 }
-            } else {
-                // If no results in guest list, try to find a direct match in submissions
-                console.log('No results found in guest list for:', guestName);
-
-                // Try to find a direct match in the submissions collection
-                const db = firebase.firestore();
-                const submissionsSnapshot = await db.collection('sheetRsvps')
-                    .where('name', '==', guestName)
-                    .limit(1)
-                    .get();
-
-                if (!submissionsSnapshot.empty) {
-                    const submission = submissionsSnapshot.docs[0].data();
-                    console.log('Found direct match in submissions:', submission);
-
-                    // Now try to find this person in the guest list
-                    const guestResults = await searchGuests(submission.name);
-                    if (guestResults.length > 0) {
-                        console.log('Found matching guest in guest list:', guestResults[0].name);
-                        await selectGuest(guestResults[0].id);
-                        return true;
-                    } else {
-                        console.log('No matching guest found in guest list for submission:', submission.name);
-                        return false;
-                    }
-                }
-
-                console.log('No results found in submissions either for:', guestName);
-                return false;
             }
+
+            console.log('No matching guest found for:', guestName);
+            return false;
         } catch (error) {
             console.error('Error in auto-search:', error);
             return false;
@@ -561,25 +621,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return urlParams.get(name) || '';
     }
 
-    // First check for name parameter in URL
-    const nameParam = getUrlParameter('name');
-    if (nameParam) {
-        console.log('Name parameter found in URL, auto-searching:', nameParam);
-        // Decode the name parameter in case it was encoded in the URL
-        const decodedName = decodeURIComponent(nameParam);
-        console.log('Decoded name parameter:', decodedName);
+    // Initialize the RSVP form with a more reliable approach
+    function initializeRsvpForm() {
+        console.log('Initializing RSVP form...');
 
-        // Use a timeout to ensure the DOM is fully loaded
-        setTimeout(() => {
-            autoSearchGuest(decodedName).then(success => {
-                if (!success) {
-                    console.log('Auto-search with URL parameter failed, trying fallbacks...');
+        // First check for name parameter in URL
+        const nameParam = getUrlParameter('name');
+        if (nameParam) {
+            console.log('Name parameter found in URL:', nameParam);
+            // Decode the name parameter in case it was encoded in the URL
+            const decodedName = decodeURIComponent(nameParam);
+            console.log('Decoded name parameter:', decodedName);
+
+            // Use a longer timeout to ensure the DOM and Firebase are fully loaded
+            setTimeout(() => {
+                console.log('Attempting auto-search with URL parameter...');
+                autoSearchGuest(decodedName).then(success => {
+                    if (!success) {
+                        console.log('Auto-search with URL parameter failed, trying fallbacks...');
+                        tryFallbackMethods();
+                    }
+                }).catch(error => {
+                    console.error('Error in auto-search with URL parameter:', error);
                     tryFallbackMethods();
-                }
-            });
-        }, 100);
-    } else {
-        tryFallbackMethods();
+                });
+            }, 500);
+        } else {
+            // No name parameter, try fallback methods
+            console.log('No name parameter in URL, trying fallback methods...');
+            tryFallbackMethods();
+        }
     }
 
     // Function to try fallback methods for finding the guest
@@ -588,18 +659,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastSubmissionName = getCookie('lastRsvpName');
         if (lastSubmissionName) {
             console.log('Found cookie with previous submission name:', lastSubmissionName);
-            autoSearchGuest(lastSubmissionName).then(success => {
+
+            // Decode the cookie value in case it was encoded
+            const decodedName = decodeURIComponent(lastSubmissionName);
+            console.log('Decoded cookie name:', decodedName);
+
+            autoSearchGuest(decodedName).then(success => {
                 if (!success) {
                     console.log('Auto-search with cookie failed, trying Firebase...');
                     checkForExistingSubmissions();
                 }
+            }).catch(error => {
+                console.error('Error in auto-search with cookie:', error);
+                checkForExistingSubmissions();
             });
         } else {
             // If no cookie, check if we can find an existing submission in Firebase
             // This allows updates from any device without relying on cookies
+            console.log('No cookie found, checking Firebase for existing submissions...');
             checkForExistingSubmissions();
         }
     }
+
+    // Start the initialization process
+    initializeRsvpForm();
 
     // Function to check for existing submissions in Firebase
     async function checkForExistingSubmissions() {
