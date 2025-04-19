@@ -23,6 +23,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const childGuestsContainer = document.getElementById('childGuestsContainer');
     const childGuestSection = document.getElementById('childGuestSection');
 
+    // Log DOM elements to verify they exist
+    console.log('DOM Elements loaded:', {
+        nameInput: !!nameInput,
+        autocompleteResults: !!autocompleteResults,
+        additionalFields: !!additionalFields,
+        submitButtonContainer: !!submitButtonContainer,
+        submitButton: !!submitButton,
+        guestFoundInfo: !!guestFoundInfo,
+        existingSubmissionInfo: !!existingSubmissionInfo,
+        guestCategoryElement: !!guestCategoryElement,
+        adultCountInput: !!adultCountInput,
+        childCountInput: !!childCountInput,
+        adultGuestsContainer: !!adultGuestsContainer,
+        childGuestsContainer: !!childGuestsContainer,
+        childGuestSection: !!childGuestSection
+    });
+
     // Variables to store selected guest data
     // Make it accessible to other scripts
     window.selectedGuest = null;
@@ -123,13 +140,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Select a guest from the autocomplete results - completely rewritten for reliability
     async function selectGuest(guestId) {
-        // Clear previous state first
-        resetSubmissionState(); // Reset UI and state before processing new selection
+        console.log('[selectGuest] Starting guest selection for ID:', guestId);
+
+        // Don't reset submission state immediately - we'll do it after checking for existing submissions
+        // This allows us to properly handle the case where a guest has an existing submission
+
+        // Just hide UI elements until we confirm the guest
         additionalFields.style.display = 'none'; // Hide fields until guest is confirmed
         submitButtonContainer.style.display = 'none';
         guestFoundInfo.style.display = 'none';
         existingSubmissionInfo.style.display = 'none';
-        nameInput.value = ''; // Clear input initially
+        // Don't clear the name input yet - we'll set it to the selected guest's name later
 
         try {
             console.log('[selectGuest] Started for guest ID:', guestId);
@@ -167,6 +188,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // STEP 2: Check if this guest has already submitted an RSVP
             console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
+
+            // Now we can reset the submission state before checking for existing submissions
+            // This ensures we start with a clean state
+            resetSubmissionState();
+
+            // Set the name input value after resetting state
+            nameInput.value = selectedGuest.name;
+
             const hasExisting = await checkExistingSubmission(selectedGuest.name);
             console.log('[selectGuest] Existing submission check result:', hasExisting);
 
@@ -179,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Update guest fields (create inputs) - This needs to happen *before* prefill if attending
             // If not attending, prefill handles hiding/showing sections
-            if (!hasExisting || existingSubmission?.attending === 'yes') {
+            if (!hasExisting || (existingSubmission && existingSubmission.attending === 'yes')) {
                  updateGuestFields(); // Create fields needed for attending/new submission
             }
 
@@ -229,35 +258,189 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // STEP 1: Try to find an exact match by name (case-sensitive)
             console.log('[checkExistingSubmission] Step 1: Trying exact match search for:', guestName);
-            let submissionSnapshot = await db.collection('sheetRsvps')
-                .where('name', '==', guestName.trim()) // Use trimmed name
-                .orderBy('submittedAt', 'desc')
-                .limit(1)
-                .get();
+            console.log('[checkExistingSubmission] CRITICAL DEBUG: Querying Firestore sheetRsvps collection');
+
+            // Check if Firebase is properly initialized
+            if (!db) {
+                console.error('[checkExistingSubmission] ERROR: Firebase db is not initialized');
+                return resetSubmissionState();
+            }
+
+            // Log all collections to verify sheetRsvps exists
+            try {
+                console.log('[checkExistingSubmission] DEBUG: Attempting to list all collections');
+                const collections = await db.listCollections();
+                console.log('[checkExistingSubmission] Available collections:', collections.map(c => c.id));
+            } catch (e) {
+                console.warn('[checkExistingSubmission] Could not list collections:', e);
+            }
+
+            // Try to get all submissions first to verify data exists
+            try {
+                const allDocs = await db.collection('sheetRsvps').limit(10).get();
+                console.log('[checkExistingSubmission] Sample submissions exist?', !allDocs.empty, 'Count:', allDocs.size);
+                if (!allDocs.empty) {
+                    console.log('[checkExistingSubmission] Sample submission data:', allDocs.docs[0].data());
+
+                    // Log all submission names for debugging
+                    console.log('[checkExistingSubmission] All submission names:',
+                        allDocs.docs.map(doc => {
+                            const data = doc.data();
+                            return { id: doc.id, name: data.name };
+                        })
+                    );
+
+                    // Check if any submission matches our guest name directly
+                    const matchingDocs = allDocs.docs.filter(doc => {
+                        const data = doc.data();
+                        return data.name && (
+                            data.name.trim() === guestName.trim() ||
+                            data.name.toLowerCase().trim() === guestNameLower
+                        );
+                    });
+
+                    if (matchingDocs.length > 0) {
+                        console.log('[checkExistingSubmission] Found direct match in sample data:',
+                            matchingDocs.map(doc => ({ id: doc.id, name: doc.data().name })));
+                    }
+                }
+            } catch (e) {
+                console.error('[checkExistingSubmission] Error getting sample submissions:', e);
+            }
+
+            // Try the query without the orderBy which might be causing issues
+            let submissionSnapshot;
+            try {
+                submissionSnapshot = await db.collection('sheetRsvps')
+                    .where('name', '==', guestName.trim()) // Use trimmed name
+                    .limit(1)
+                    .get();
+
+                console.log('[checkExistingSubmission] Simple query without orderBy result empty?', submissionSnapshot.empty);
+
+                // If that didn't work, try with orderBy
+                if (submissionSnapshot.empty) {
+                    submissionSnapshot = await db.collection('sheetRsvps')
+                        .where('name', '==', guestName.trim()) // Use trimmed name
+                        .orderBy('submittedAt', 'desc')
+                        .limit(1)
+                        .get();
+
+                    console.log('[checkExistingSubmission] Query with orderBy result empty?', submissionSnapshot.empty);
+                }
+            } catch (e) {
+                console.error('[checkExistingSubmission] Error with query:', e);
+
+                // If there was an error, try a simpler query without any conditions
+                try {
+                    submissionSnapshot = await db.collection('sheetRsvps').limit(10).get();
+                    console.log('[checkExistingSubmission] Fallback query result empty?', submissionSnapshot.empty);
+
+                    // If we got results, manually filter for our guest
+                    if (!submissionSnapshot.empty) {
+                        const matchingDocs = submissionSnapshot.docs.filter(doc => {
+                            const data = doc.data();
+                            return data.name && (
+                                data.name.trim() === guestName.trim() ||
+                                data.name.toLowerCase().trim() === guestNameLower
+                            );
+                        });
+
+                        if (matchingDocs.length > 0) {
+                            // Create a new snapshot with just the matching docs
+                            submissionSnapshot = {
+                                empty: false,
+                                docs: matchingDocs
+                            };
+                            console.log('[checkExistingSubmission] Found matches through manual filtering');
+
+                            // Pre-process the first matching document to ensure it has all required fields
+                            const firstMatch = matchingDocs[0];
+                            const matchData = firstMatch.data();
+
+                            // Make sure we have all the required fields
+                            if (!matchData.name) {
+                                matchData.name = guestName; // Use the guest name if missing in submission
+                            }
+
+                            // Ensure attending field exists
+                            if (!matchData.attending) {
+                                matchData.attending = 'yes'; // Default to yes if missing
+                                console.warn('[checkExistingSubmission] Manual match missing attending field, defaulting to yes');
+                            }
+
+                            // Update the document in the snapshot
+                            firstMatch.data = () => matchData;
+                        } else {
+                            submissionSnapshot = { empty: true, docs: [] };
+                        }
+                    }
+                } catch (innerError) {
+                    console.error('[checkExistingSubmission] Error with fallback query:', innerError);
+                    submissionSnapshot = { empty: true, docs: [] };
+                }
+            }
+
+            console.log('[checkExistingSubmission] Query result empty?', submissionSnapshot.empty);
 
             if (!submissionSnapshot.empty) {
                 const doc = submissionSnapshot.docs[0];
                 const submission = doc.data();
                 submission.id = doc.id; // IMPORTANT: Store the document ID
                 console.log('[checkExistingSubmission] SUCCESS: Found exact match submission (ID:', submission.id, ')');
-                return processExistingSubmission(submission); // Found, process it
+
+                // Make sure we have all the required fields
+                if (!submission.name) {
+                    submission.name = guestName; // Use the guest name if missing in submission
+                }
+
+                // Ensure attending field exists
+                if (!submission.attending) {
+                    submission.attending = 'yes'; // Default to yes if missing
+                    console.warn('[checkExistingSubmission] Submission missing attending field, defaulting to yes');
+                }
+
+                // Call processExistingSubmission and capture the result
+                const result = processExistingSubmission(submission);
+                console.log('[checkExistingSubmission] processExistingSubmission returned:', result);
+                return result; // Return the result
             }
 
             // STEP 2: If no exact match, try a case-insensitive search
             console.log('[checkExistingSubmission] Step 2: No exact match found, trying case-insensitive search.');
             // Firestore doesn't support case-insensitive queries directly. Fetch potential matches.
             // This might be inefficient for very large datasets, but necessary here.
+            console.log('[checkExistingSubmission] CRITICAL DEBUG: Fetching all submissions for case-insensitive check');
             const allSubmissionsSnapshot = await db.collection('sheetRsvps').get();
+            console.log('[checkExistingSubmission] Found total submissions:', allSubmissionsSnapshot.size);
+
             let caseInsensitiveMatch = null;
 
             allSubmissionsSnapshot.forEach(doc => {
                 const data = doc.data();
                 // Check if name exists and matches case-insensitively
                 if (data.name && data.name.toLowerCase().trim() === guestNameLower) {
-                    if (!caseInsensitiveMatch || (data.submittedAt && data.submittedAt > caseInsensitiveMatch.submittedAt)) {
-                         // Found a match, store it along with ID
-                        caseInsensitiveMatch = data;
+                    console.log('[checkExistingSubmission] Found case-insensitive match:', data.name);
+
+                    // Store submittedAt as a JavaScript Date if it's a Firebase timestamp
+                    let submittedAt;
+                    if (data.submittedAt) {
+                        if (data.submittedAt.toDate) {
+                            submittedAt = data.submittedAt.toDate();
+                            console.log('[checkExistingSubmission] Converted timestamp to date:', submittedAt);
+                        } else {
+                            submittedAt = data.submittedAt;
+                            console.log('[checkExistingSubmission] Using raw submittedAt:', submittedAt);
+                        }
+                    }
+
+                    if (!caseInsensitiveMatch ||
+                        (submittedAt && (!caseInsensitiveMatch.submittedAt ||
+                         submittedAt > caseInsensitiveMatch.submittedAt))) {
+                        // Found a match, store it along with ID
+                        caseInsensitiveMatch = JSON.parse(JSON.stringify(data));  // Deep clone the data
                         caseInsensitiveMatch.id = doc.id; // IMPORTANT: Store the document ID
+                        console.log('[checkExistingSubmission] Selected as best match (ID):', caseInsensitiveMatch.id);
                         // Keep the most recent submission if multiple matches found
                     }
                 }
@@ -265,7 +448,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (caseInsensitiveMatch) {
                 console.log('[checkExistingSubmission] SUCCESS: Found case-insensitive match submission (ID:', caseInsensitiveMatch.id, ')');
-                return processExistingSubmission(caseInsensitiveMatch); // Found, process it
+                // Make sure we have a complete object with ID before processing
+                if (!caseInsensitiveMatch.id) {
+                    console.error('[checkExistingSubmission] ERROR: Match is missing ID, cannot process');
+                    return resetSubmissionState();
+                }
+
+                // Make sure we have all the required fields
+                if (!caseInsensitiveMatch.name) {
+                    caseInsensitiveMatch.name = guestName; // Use the guest name if missing in submission
+                }
+
+                // Ensure attending field exists
+                if (!caseInsensitiveMatch.attending) {
+                    caseInsensitiveMatch.attending = 'yes'; // Default to yes if missing
+                    console.warn('[checkExistingSubmission] Case-insensitive match missing attending field, defaulting to yes');
+                }
+
+                console.log('[checkExistingSubmission] CRITICAL DEBUG: About to call processExistingSubmission');
+                const result = processExistingSubmission(caseInsensitiveMatch);
+                console.log('[checkExistingSubmission] processExistingSubmission returned:', result);
+                return result; // Return the result from processing
             }
 
             // STEP 3: Optional - Add more lenient matching if needed (e.g., partial match)
@@ -287,35 +490,68 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to process an existing submission
     function processExistingSubmission(submission) {
         console.log('[processExistingSubmission] Processing submission:', submission);
+        console.log('[processExistingSubmission] CRITICAL DEBUG: Function was called!');
+
+        // Detailed logging of submission object
+        console.log('[processExistingSubmission] Submission keys:', Object.keys(submission));
+        console.log('[processExistingSubmission] Submission attending value:', submission.attending);
+        console.log('[processExistingSubmission] Submission email:', submission.email);
+        console.log('[processExistingSubmission] Submission adultGuests:', submission.adultGuests);
+
+        // Get fresh references to DOM elements to ensure they exist
+        const existingSubmissionInfoElement = document.getElementById('existingSubmissionInfo');
+        if (!existingSubmissionInfoElement) {
+            console.error('[processExistingSubmission] CRITICAL ERROR: Could not find existingSubmissionInfo element!');
+            return false;
+        }
+
+        const submitButtonElement = document.getElementById('submitButton');
+        if (!submitButtonElement) {
+            console.error('[processExistingSubmission] CRITICAL ERROR: Could not find submitButton element!');
+            return false;
+        }
+
+        // Use the fresh references for the rest of the function
+        const localExistingSubmissionInfo = existingSubmissionInfoElement;
+        const localSubmitButton = submitButtonElement;
+
         // Use optional chaining for cleaner check
         if (!submission?.id) {
              console.error('[processExistingSubmission] ERROR: Invalid submission object received (missing ID):', submission);
              return resetSubmissionState(); // Cannot process without valid data/ID
         }
 
-        // Store the existing submission globally
-        existingSubmission = submission;
+        // Store the existing submission globally - make a clone to avoid reference issues
+        existingSubmission = JSON.parse(JSON.stringify(submission));
         window.existingSubmission = existingSubmission; // Ensure global state is set
 
         console.log('[processExistingSubmission] Set window.existingSubmission with ID:', window.existingSubmission.id);
 
         // Show existing submission info section
-        existingSubmissionInfo.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
+        console.log('[processExistingSubmission] Setting existingSubmissionInfo display to block');
+        localExistingSubmissionInfo.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
 
         // Update button text and style
-        submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
-        submitButton.classList.add('update-mode');
+        console.log('[processExistingSubmission] Updating submit button to Update RSVP mode');
+        localSubmitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
+        localSubmitButton.classList.add('update-mode');
 
         // Show update notice (if element exists)
         const updateNotice = document.getElementById('updateNotice');
         if (updateNotice) {
+            console.log('[processExistingSubmission] Setting updateNotice display to block');
             updateNotice.style.display = 'block';
+        } else {
+            console.warn('[processExistingSubmission] updateNotice element not found');
         }
 
         // Update form title
         const formTitle = document.getElementById('rsvp-form-title');
         if (formTitle) {
+            console.log('[processExistingSubmission] Updating form title to Update Your RSVP');
             formTitle.textContent = 'Update Your RSVP';
+        } else {
+            console.warn('[processExistingSubmission] formTitle element not found');
         }
 
         // Pre-fill form with existing data
@@ -367,6 +603,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Pre-fill form with existing submission data
     function prefillFormWithExistingData(submission) {
         console.log('[prefillForm] Pre-filling form with data:', submission);
+
+        // Ensure we have a valid submission object
+        if (!submission || typeof submission !== 'object') {
+            console.error('[prefillForm] Invalid submission object:', submission);
+            return;
+        }
 
         // Set email and phone
         document.getElementById('email').value = submission.email || '';
@@ -430,8 +672,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update guest fields to create the input elements *before* filling them
             updateGuestFields();
 
-            // Use requestAnimationFrame to ensure DOM is updated before filling inputs
-            requestAnimationFrame(() => {
+            // Use setTimeout with a short delay instead of requestAnimationFrame
+            // This ensures the DOM has time to fully update before we try to fill guest names
+            setTimeout(() => {
                 console.log('[prefillForm] DOM updated, attempting to fill guest names.');
                 // Pre-fill adult guest names
                 if (submission.adultGuests && Array.isArray(submission.adultGuests) && submission.adultGuests.length > 0) {
@@ -472,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      console.log('[prefillForm] No childGuests array found or empty.');
                 }
                  console.log('[prefillForm] Finished filling guest names.');
-            });
+            }, 50); // Short 50ms delay
         } else {
              // If not attending, clear/hide guest count fields
              adultCountInput.value = 0;
@@ -481,10 +724,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-        // Trigger change event manually if needed, but direct style change might be sufficient
-        // const event = new Event('change');
-        // if (attendingYes.checked) attendingYes.dispatchEvent(event);
-        // else attendingNo.dispatchEvent(event);
+        // Trigger change events manually to ensure form is properly updated
+        const event = new Event('change', { bubbles: true });
+        if (attendingYes.checked) {
+            attendingYes.dispatchEvent(event);
+        } else if (attendingNo.checked) {
+            attendingNo.dispatchEvent(event);
+        }
 
         console.log('[prefillForm] Form pre-fill attempt complete.');
     }
