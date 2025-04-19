@@ -1,0 +1,98 @@
+/* Styles for RSVP update mode */
+
+/* Form container in update mode */
+.form-container.update-mode {
+    border-left: 4px solid #3182ce;
+    background-color: #f0f7ff;
+}
+
+.form-container.update-mode::before {
+    background: linear-gradient(90deg, #3182ce, #2b6cb0);
+}
+
+.form-container.update-mode h2 {
+    color: #2b6cb0;
+}
+
+/* Update notice styling */
+.update-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #2b6cb0;
+    font-weight: 600;
+    background-color: #ebf8ff;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px dashed #4299e1;
+}
+
+.update-notice i {
+    font-size: 1.2rem;
+    color: #3182ce;
+}
+
+/* Guest found info box for update mode */
+#existingSubmissionInfo {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ebf8ff;
+    border: 1px solid #bee3f8;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+#existingSubmissionInfo i {
+    font-size: 1.5rem;
+    color: #3182ce;
+    margin-right: 10px;
+}
+
+/* Update mode submit button */
+#submitButton.update-mode {
+    background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+    box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+}
+
+#submitButton.update-mode:hover {
+    background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+    box-shadow: 0 6px 15px rgba(49, 130, 206, 0.4);
+}
+
+/* Highlight changed fields */
+.form-group.changed input {
+    border-color: #3182ce;
+    background-color: #ebf8ff;
+}
+
+/* Confirmation styles for update */
+#formConfirmation.update-mode h3 {
+    color: #3182ce;
+}
+
+#formConfirmation.update-mode {
+    background-color: #ebf8ff;
+}
+
+/* Fallback notice for limited data access */
+.fallback-notice {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #fffaf0;
+    border-left: 3px solid #ed8936;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #c05621;
+}
+
+.fallback-notice i {
+    margin-right: 5px;
+    color: #ed8936;
+}

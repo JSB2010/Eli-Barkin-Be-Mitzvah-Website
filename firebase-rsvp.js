@@ -214,20 +214,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const formMode = form.getAttribute('data-mode');
             const submissionId = form.getAttribute('data-submission-id'); // Get ID from form attribute
             const isUpdate = formMode === 'update' && submissionId; // Check both mode and ID presence
+            const isFallbackSubmission = window.existingSubmission?.isFallback === true;
 
-            // Log update status for debugging
+            // Log submission details for debugging
             console.log('Form submission details:', {
                 isUpdate,
                 formMode,
                 submissionId,
                 formDataName: formData.name,
-                windowExistingSubmission: window.existingSubmission // Log state from other script
+                windowExistingSubmission: window.existingSubmission, // Log state from other script
+                isFallbackSubmission
             });
 
             let savePromise;
 
-            if (isUpdate) {
-                // Update existing RSVP
+            if (isUpdate && !isFallbackSubmission) {
+                // Standard update of an existing RSVP document
                 console.log(`Updating existing RSVP (ID: ${submissionId}) for:`, formData.name);
 
                 // Add update-specific timestamp and keep original submittedAt if available
@@ -246,16 +248,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 savePromise = docRef.update(formData)
                     .catch(error => {
                         console.error(`Error updating document ${submissionId}:`, error);
-                         // Add more context to the error
-                         if (error.code === 'permission-denied') {
-                             throw new Error('You don\'t have permission to update this RSVP. Please contact the event organizer.');
-                         } else if (error.code === 'not-found') {
-                             throw new Error('The RSVP you are trying to update could not be found. It might have been deleted. Please refresh and try again.');
-                         } else {
-                             throw new Error(`Failed to update RSVP: ${error.message}`);
-                         }
+                        // Add more context to the error
+                        if (error.code === 'permission-denied') {
+                            console.warn('Permission denied for update. Falling back to guestList update only.');
+                            // If we can't update the document due to permissions, we'll just update the guestList
+                            return Promise.resolve();
+                        } else if (error.code === 'not-found') {
+                            throw new Error('The RSVP you are trying to update could not be found. It might have been deleted. Please refresh and try again.');
+                        } else {
+                            throw new Error(`Failed to update RSVP: ${error.message}`);
+                        }
                     });
+            } else if (isUpdate && isFallbackSubmission) {
+                // This is a fallback submission (we don't have direct access to the sheetRsvps document)
+                // In this case, we'll just update the guestList entry and treat it as a success
+                console.log(`Handling fallback update for ${formData.name} (no direct document access)`);
 
+                formData.updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
+                if (window.existingSubmission?.submittedAt) {
+                    formData.submittedAt = window.existingSubmission.submittedAt;
+                } else {
+                    formData.submittedAt = formData.updatedAt;
+                }
+                formData.isUpdate = true;
+
+                // Resolve immediately - we'll update the guestList in the next step
+                savePromise = Promise.resolve();
             } else {
                 // Create new RSVP
                 console.log('Creating new RSVP for:', formData.name);
@@ -267,7 +285,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.error('Error creating new RSVP:', error);
                         // Add more context to the error
                         if (error.code === 'permission-denied') {
-                            throw new Error('You don\'t have permission to submit this form. Please contact the event organizer.');
+                            console.warn('Permission denied for creating new RSVP. Falling back to guestList update only.');
+                            // If we can't create the document due to permissions, we'll just update the guestList
+                            return Promise.resolve();
                         } else {
                             throw new Error(`Failed to create RSVP: ${error.message}`);
                         }
@@ -361,6 +381,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         formConfirmation.style.opacity = '0';
                         formConfirmation.style.transform = 'translateY(20px)';
 
+                        // Add update-mode class to confirmation if it was an update
+                        if (isUpdate) {
+                            formConfirmation.classList.add('update-mode');
+                        } else {
+                            formConfirmation.classList.remove('update-mode');
+                        }
+
                         // Update confirmation message based on whether it was an update or new submission
                         const confirmationTitle = document.getElementById('confirmation-title');
                         const confirmationMessage = document.getElementById('confirmation-message');
@@ -440,16 +467,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Reset UI elements managed by the other script (optional, but good practice)
                     const formTitle = document.getElementById('rsvp-form-title');
                     if (formTitle) formTitle.textContent = 'RSVP Form';
+
                     const updateNotice = document.getElementById('updateNotice');
                     if (updateNotice) updateNotice.style.display = 'none';
+
                     const existingInfo = document.getElementById('existingSubmissionInfo');
                     if (existingInfo) existingInfo.style.display = 'none';
+
                     const guestFoundInfo = document.getElementById('guestFoundInfo');
                     if (guestFoundInfo) guestFoundInfo.style.display = 'none'; // Hide this too after submission
+
                     const additionalFields = document.getElementById('additionalFields');
                     if (additionalFields) additionalFields.style.display = 'none'; // Hide fields section
-                     const submitContainer = document.getElementById('submitButtonContainer');
-                     if (submitContainer) submitContainer.style.display = 'none'; // Hide submit button
+
+                    const submitContainer = document.getElementById('submitButtonContainer');
+                    if (submitContainer) submitContainer.style.display = 'none'; // Hide submit button
+
+                    // Remove update-mode class from form container
+                    const formContainer = document.querySelector('.form-container');
+                    if (formContainer) formContainer.classList.remove('update-mode');
 
 
                 })

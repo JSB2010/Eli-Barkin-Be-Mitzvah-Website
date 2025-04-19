@@ -173,6 +173,43 @@ document.addEventListener('DOMContentLoaded', function() {
         updateNotice.style.display = 'none';
         // Don't clear the name input yet
 
+        // Show loading indicator
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'rsvp-loading';
+        loadingIndicator.innerHTML = '<div class="spinner"></div><p>Checking RSVP status...</p>';
+        loadingIndicator.style.position = 'fixed';
+        loadingIndicator.style.top = '50%';
+        loadingIndicator.style.left = '50%';
+        loadingIndicator.style.transform = 'translate(-50%, -50%)';
+        loadingIndicator.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        loadingIndicator.style.padding = '20px';
+        loadingIndicator.style.borderRadius = '8px';
+        loadingIndicator.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        loadingIndicator.style.zIndex = '1000';
+        loadingIndicator.style.display = 'flex';
+        loadingIndicator.style.flexDirection = 'column';
+        loadingIndicator.style.alignItems = 'center';
+        loadingIndicator.style.justifyContent = 'center';
+
+        const spinner = document.createElement('style');
+        spinner.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            #rsvp-loading .spinner {
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3182ce;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 10px;
+            }
+        `;
+        document.head.appendChild(spinner);
+        document.body.appendChild(loadingIndicator);
+
         try {
             console.log('[selectGuest] Fetching guest data for ID:', guestId);
             const db = firebase.firestore();
@@ -237,10 +274,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             console.log('[selectGuest] Completed successfully for:', selectedGuest.name);
+            // Remove loading indicator
+            document.body.removeChild(loadingIndicator);
             return true; // Indicate success
 
         } catch (error) {
             console.error('[selectGuest] CRITICAL ERROR during guest selection:', error);
+            // Remove loading indicator
+            if (document.body.contains(loadingIndicator)) {
+                document.body.removeChild(loadingIndicator);
+            }
             showErrorMessage('Error Loading Guest', `An unexpected error occurred while loading guest information: ${error.message}. Please try again.`);
             resetSubmissionState(); // Ensure clean state on error
             return false; // Indicate failure
@@ -260,23 +303,88 @@ document.addEventListener('DOMContentLoaded', function() {
             const db = firebase.firestore();
             const guestNameLower = guestName.toLowerCase().trim(); // Normalize search name
 
-            console.log('[checkExistingSubmission] Querying sheetRsvps for potential matches...');
-            const querySnapshot = await db.collection('sheetRsvps').get();
+            // First try to check if the guest has responded in the guestList collection
+            // This is a workaround for permission issues with sheetRsvps collection
+            console.log('[checkExistingSubmission] Checking guestList for response status...');
+            const guestListQuery = await db.collection('guestList')
+                .where('name', '==', guestName)
+                .limit(1)
+                .get();
 
-            let latestMatch = findLatestSubmission(querySnapshot, guestNameLower);
+            let guestDoc = null;
+            let guestData = null;
 
-            if (latestMatch) {
-                console.log('[checkExistingSubmission] SUCCESS: Found latest matching submission (ID:', latestMatch.id, ')');
-                normalizeSubmissionData(latestMatch); // Ensure essential fields exist
-                return latestMatch; // Return the full submission data including ID
-            } else {
-                console.log('[checkExistingSubmission] RESULT: No existing submission found for:', guestName);
-                return null; // No submission found
+            if (!guestListQuery.empty) {
+                guestDoc = guestListQuery.docs[0];
+                guestData = guestDoc.data();
+
+                // If the guest has not responded, we can return null immediately
+                if (!guestData.hasResponded) {
+                    console.log('[checkExistingSubmission] Guest found in guestList but has not responded yet.');
+                    return null;
+                }
+
+                // If the guest has responded, we'll try to get their submission from sheetRsvps
+                console.log('[checkExistingSubmission] Guest has previously responded. Checking for submission details...');
+            }
+
+            // Try to query the sheetRsvps collection directly
+            try {
+                console.log('[checkExistingSubmission] Querying sheetRsvps for potential matches...');
+                const querySnapshot = await db.collection('sheetRsvps').get();
+
+                let latestMatch = findLatestSubmission(querySnapshot, guestNameLower);
+
+                if (latestMatch) {
+                    console.log('[checkExistingSubmission] SUCCESS: Found latest matching submission (ID:', latestMatch.id, ')');
+                    normalizeSubmissionData(latestMatch); // Ensure essential fields exist
+                    return latestMatch; // Return the full submission data including ID
+                } else {
+                    console.log('[checkExistingSubmission] RESULT: No existing submission found for:', guestName);
+                    return null; // No submission found
+                }
+            } catch (innerError) {
+                // If we get a permission error, we'll try an alternative approach
+                if (innerError.code === 'permission-denied') {
+                    console.warn('[checkExistingSubmission] Permission denied for sheetRsvps. Using fallback method...');
+
+                    // If we found the guest in guestList and they have responded, create a basic submission object
+                    if (guestDoc && guestData && guestData.hasResponded) {
+                        console.log('[checkExistingSubmission] Creating submission from guestList data');
+
+                        // Create a basic submission object from guestList data
+                        const fallbackSubmission = {
+                            id: `fallback-${guestDoc.id}`, // Create a fallback ID
+                            name: guestData.name,
+                            email: guestData.email || '',
+                            phone: guestData.phone || '',
+                            attending: guestData.response === 'attending' ? 'yes' : 'no',
+                            adultGuests: guestData.adultGuests || [],
+                            childGuests: guestData.childGuests || [],
+                            adultCount: guestData.adultCount || 0,
+                            childCount: guestData.childCount || 0,
+                            submittedAt: guestData.lastResponseTimestamp || firebase.firestore.Timestamp.now(),
+                            isFallback: true // Mark this as a fallback submission
+                        };
+
+                        normalizeSubmissionData(fallbackSubmission);
+                        return fallbackSubmission;
+                    }
+
+                    // If we couldn't create a fallback, return null without showing an error
+                    return null;
+                } else {
+                    // For other errors, propagate to the outer catch block
+                    throw innerError;
+                }
             }
 
         } catch (error) {
             console.error('[checkExistingSubmission] CRITICAL ERROR checking for submission:', error);
-            showErrorMessage('Error Checking RSVP', `Failed to check for existing RSVP: ${error.message}. Please try again.`);
+            // Don't show permission errors to the user, just handle them gracefully
+            if (error.code !== 'permission-denied') {
+                showErrorMessage('Error Checking RSVP', `Failed to check for existing RSVP: ${error.message}. Please try again.`);
+            }
             return null; // Return null on error
         }
     }
@@ -318,6 +426,13 @@ document.addEventListener('DOMContentLoaded', function() {
         submission.childGuests = submission.childGuests ?? [];
         submission.adultCount = submission.adultCount ?? (submission.adultGuests.length || (submission.attending === 'yes' ? 1 : 0));
         submission.childCount = submission.childCount ?? (submission.childGuests.length || 0);
+        submission.email = submission.email ?? '';
+        submission.phone = submission.phone ?? '';
+        // Ensure timestamps are properly handled
+        if (submission.submittedAt && typeof submission.submittedAt.toDate !== 'function') {
+            console.warn('[normalizeSubmissionData] submittedAt is not a Firestore timestamp, converting...');
+            submission.submittedAt = firebase.firestore.Timestamp.fromDate(new Date(submission.submittedAt));
+        }
     }
 
     // Helper function to process an existing submission and update UI
@@ -337,14 +452,46 @@ document.addEventListener('DOMContentLoaded', function() {
         existingSubmissionInfo.style.display = 'flex'; // Show the info box
         guestFoundInfo.style.display = 'none'; // Hide the basic "found" box
 
+        // Add update-mode class to form container
+        const formContainer = document.querySelector('.form-container');
+        if (formContainer) {
+            formContainer.classList.add('update-mode');
+        }
+
         submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
         submitButton.classList.add('update-mode');
 
         formTitle.textContent = 'Update Your RSVP';
 
+        // If this is a fallback submission (created from guestList), show a special notice
+        if (submission.isFallback) {
+            console.log('[processExistingSubmission] Processing fallback submission');
+            const existingSubmissionContent = document.querySelector('.existing-submission-content');
+            if (existingSubmissionContent) {
+                const fallbackNotice = document.createElement('p');
+                fallbackNotice.className = 'fallback-notice';
+                fallbackNotice.innerHTML = '<i class="fas fa-info-circle"></i> Some of your previous details may not be available, but we\'ll update your RSVP with any changes you make.';
+                existingSubmissionContent.appendChild(fallbackNotice);
+            }
+        }
+
+        // Format date for display
+        let dateDisplay = 'a previous date';
+        if (submission.submittedAt?.toDate) {
+            try {
+                dateDisplay = new Date(submission.submittedAt.toDate()).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                console.warn('[processExistingSubmission] Error formatting date:', e);
+            }
+        }
+
         updateNotice.style.display = 'block';
-        updateNotice.textContent = 'You are updating your existing RSVP submitted on ' +
-            (submission.submittedAt?.toDate ? new Date(submission.submittedAt.toDate()).toLocaleDateString() : 'a previous date');
+        updateNotice.textContent = `You are updating your existing RSVP submitted on ${dateDisplay}`;
+        updateNotice.innerHTML = `<i class="fas fa-info-circle"></i> You are updating your existing RSVP submitted on <strong>${dateDisplay}</strong>`;
 
         // Mark the form as being in update mode and store the ID
         rsvpForm.setAttribute('data-mode', 'update');
@@ -392,6 +539,12 @@ document.addEventListener('DOMContentLoaded', function() {
         existingSubmissionInfo.style.display = 'none';
         updateNotice.style.display = 'none';
 
+        // Remove update-mode class from form container
+        const formContainer = document.querySelector('.form-container');
+        if (formContainer) {
+            formContainer.classList.remove('update-mode');
+        }
+
         // Reset button text and style
         submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
         submitButton.classList.remove('update-mode');
@@ -423,13 +576,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const attendingYesRadio = document.getElementById('attendingYes');
         const attendingNoRadio = document.getElementById('attendingNo');
         const attendingSectionElement = document.getElementById('attendingSection');
-        const adultCountInput = document.getElementById('adultCount'); // Added
-        const childCountInput = document.getElementById('childCount'); // Added
-        const adultGuestsContainer = document.getElementById('adultGuestsContainer'); // Added
-        const childGuestsContainer = document.getElementById('childGuestsContainer'); // Added
+        const adultCountInput = document.getElementById('adultCount');
+        const childCountInput = document.getElementById('childCount');
+        const adultGuestsContainer = document.getElementById('adultGuestsContainer');
+        const childGuestsContainer = document.getElementById('childGuestsContainer');
+        const guestsContainer = document.getElementById('guestsContainer');
 
-
-        if (!emailInput || !phoneInput || !attendingYesRadio || !attendingNoRadio || !attendingSectionElement || !adultCountInput || !childCountInput || !adultGuestsContainer || !childGuestsContainer) {
+        if (!emailInput || !phoneInput || !attendingYesRadio || !attendingNoRadio || !attendingSectionElement ||
+            !adultCountInput || !childCountInput || !adultGuestsContainer || !childGuestsContainer) {
             console.error('[prefillForm] Missing required DOM elements for prefill.');
             return;
         }
@@ -447,10 +601,12 @@ document.addEventListener('DOMContentLoaded', function() {
             attendingYesRadio.checked = true;
             attendingNoRadio.checked = false;
             attendingSectionElement.style.display = 'block'; // Show guest count section
+            if (guestsContainer) guestsContainer.style.display = 'block';
         } else {
             attendingNoRadio.checked = true;
             attendingYesRadio.checked = false;
             attendingSectionElement.style.display = 'none'; // Hide guest count section
+            if (guestsContainer) guestsContainer.style.display = 'none';
         }
 
         // Parse guest counts for attending guests
@@ -488,42 +644,41 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.warn(`[prefillForm] Could not find input field for Adult ${index + 1}`);
                         }
                     });
-                     // Ensure the primary guest name field (index 0) is filled even if adultGuests array was empty but adultCount > 0
-                     if (adultInputs[0] && !adultInputs[0].value && submission.name) {
-                         adultInputs[0].value = submission.name;
-                         console.log(`[prefillForm] Set primary adult name from submission.name: ${submission.name}`);
-                     }
+                    // Ensure the primary guest name field (index 0) is filled even if adultGuests array was empty but adultCount > 0
+                    if (adultInputs[0] && !adultInputs[0].value && submission.name) {
+                        adultInputs[0].value = submission.name;
+                        console.log(`[prefillForm] Set primary adult name from submission.name: ${submission.name}`);
+                    }
                 } else if (adultCount > 0) {
-                     // Handle case where adultCount > 0 but adultGuests array is missing/empty
-                     const firstAdultInput = adultGuestsContainer.querySelector('input');
-                     if (firstAdultInput && submission.name) {
-                         firstAdultInput.value = submission.name;
-                         console.log(`[prefillForm] Set primary adult name from submission.name (no array): ${submission.name}`);
-                     }
+                    // Handle case where adultCount > 0 but adultGuests array is missing/empty
+                    const firstAdultInput = adultGuestsContainer.querySelector('input');
+                    if (firstAdultInput && submission.name) {
+                        firstAdultInput.value = submission.name;
+                        console.log(`[prefillForm] Set primary adult name from submission.name (no array): ${submission.name}`);
+                    }
                 }
-
 
                 // Pre-fill child guest names
                 if (submission.childGuests && Array.isArray(submission.childGuests)) {
                     const childInputs = childGuestsContainer.querySelectorAll('input');
-                     console.log(`[prefillForm] Found ${childInputs.length} child input fields.`);
+                    console.log(`[prefillForm] Found ${childInputs.length} child input fields.`);
                     submission.childGuests.forEach((name, index) => {
                         if (childInputs[index]) {
                             childInputs[index].value = name || '';
                             console.log(`[prefillForm] Set Child ${index + 1} to: ${name}`);
                         } else {
-                             console.warn(`[prefillForm] Could not find input field for Child ${index + 1}`);
+                            console.warn(`[prefillForm] Could not find input field for Child ${index + 1}`);
                         }
                     });
                 }
-                 console.log('[prefillForm] Finished filling guest names.');
-            }, 100); // Increased delay slightly to 100ms
+                console.log('[prefillForm] Finished filling guest names.');
+            }, 200); // Increased delay to 200ms for more reliable DOM updates
 
         } else {
-             // If not attending, clear/hide guest count fields and clear names
-             adultCountInput.value = 0;
-             childCountInput.value = 0;
-             updateGuestFields(); // Clear the fields
+            // If not attending, clear/hide guest count fields and clear names
+            adultCountInput.value = 0;
+            childCountInput.value = 0;
+            updateGuestFields(); // Clear the fields
         }
 
         // Trigger change events manually AFTER setting values
@@ -534,7 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
         childCountInput.dispatchEvent(event);
         if (attendingYesRadio.checked) attendingYesRadio.dispatchEvent(event);
         if (attendingNoRadio.checked) attendingNoRadio.dispatchEvent(event);
-
 
         console.log('[prefillForm] Form pre-fill attempt complete.');
     }

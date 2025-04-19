@@ -429,6 +429,7 @@ const RSVPSystem = {
                 }
             });
         }
+    },
 
     // Helper method to filter and sort submissions
     filterAndSortSubmissions: function() {
