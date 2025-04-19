@@ -536,6 +536,32 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[processExistingSubmission] Submission adultGuests:', submission.adultGuests);
         console.log('[processExistingSubmission] Submission ID:', submission.id);
 
+        // CRITICAL FIX: Make sure we have all required fields in the submission
+        if (!submission.attending) {
+            submission.attending = 'yes'; // Default to yes if missing
+            console.warn('[processExistingSubmission] Added missing attending field with default value "yes"');
+        }
+
+        if (!submission.adultGuests) {
+            submission.adultGuests = [];
+            console.warn('[processExistingSubmission] Added missing adultGuests field with empty array');
+        }
+
+        if (!submission.childGuests) {
+            submission.childGuests = [];
+            console.warn('[processExistingSubmission] Added missing childGuests field with empty array');
+        }
+
+        if (!submission.adultCount && submission.adultCount !== 0) {
+            submission.adultCount = submission.adultGuests.length || 1;
+            console.warn('[processExistingSubmission] Added missing adultCount field with value:', submission.adultCount);
+        }
+
+        if (!submission.childCount && submission.childCount !== 0) {
+            submission.childCount = submission.childGuests.length || 0;
+            console.warn('[processExistingSubmission] Added missing childCount field with value:', submission.childCount);
+        }
+
         // Get fresh references to DOM elements to ensure they exist
         const existingSubmissionInfoElement = document.getElementById('existingSubmissionInfo');
         if (!existingSubmissionInfoElement) {
@@ -569,44 +595,69 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('[processExistingSubmission] ERROR setting existingSubmission:', error);
         }
 
-        // Show existing submission info section
-        console.log('[processExistingSubmission] Setting existingSubmissionInfo display to block');
-        localExistingSubmissionInfo.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
+        // CRITICAL FIX: Make sure all UI elements are properly updated
+        try {
+            // Show existing submission info section
+            console.log('[processExistingSubmission] Setting existingSubmissionInfo display to block');
+            localExistingSubmissionInfo.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
 
-        // Update button text and style
-        console.log('[processExistingSubmission] Updating submit button to Update RSVP mode');
-        localSubmitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
-        localSubmitButton.classList.add('update-mode');
+            // Update button text and style
+            console.log('[processExistingSubmission] Updating submit button to Update RSVP mode');
+            localSubmitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
+            localSubmitButton.classList.add('update-mode');
 
-        // Show update notice (if element exists)
-        const updateNotice = document.getElementById('updateNotice');
-        if (updateNotice) {
-            console.log('[processExistingSubmission] Setting updateNotice display to block');
-            updateNotice.style.display = 'block';
-        } else {
-            console.warn('[processExistingSubmission] updateNotice element not found');
+            // Show update notice (if element exists)
+            const updateNotice = document.getElementById('updateNotice');
+            if (updateNotice) {
+                console.log('[processExistingSubmission] Setting updateNotice display to block');
+                updateNotice.style.display = 'block';
+            } else {
+                console.warn('[processExistingSubmission] updateNotice element not found');
+            }
+
+            // Update form title
+            const formTitle = document.getElementById('rsvp-form-title');
+            if (formTitle) {
+                console.log('[processExistingSubmission] Updating form title to Update Your RSVP');
+                formTitle.textContent = 'Update Your RSVP';
+            } else {
+                console.warn('[processExistingSubmission] formTitle element not found');
+            }
+
+            // Make sure additional fields are visible
+            const additionalFields = document.getElementById('additionalFields');
+            if (additionalFields) {
+                console.log('[processExistingSubmission] Setting additionalFields display to block');
+                additionalFields.style.display = 'block';
+            } else {
+                console.warn('[processExistingSubmission] additionalFields element not found');
+            }
+
+            // Make sure submit button container is visible
+            const submitButtonContainer = document.getElementById('submitButtonContainer');
+            if (submitButtonContainer) {
+                console.log('[processExistingSubmission] Setting submitButtonContainer display to block');
+                submitButtonContainer.style.display = 'block';
+            } else {
+                console.warn('[processExistingSubmission] submitButtonContainer element not found');
+            }
+
+            // CRITICAL FIX: Pre-fill form with existing data
+            console.log('[processExistingSubmission] Calling prefillFormWithExistingData with submission:', submission);
+            prefillFormWithExistingData(submission);
+
+            // Save the name in a cookie for convenience on future visits
+            // Consider security implications if sensitive data is involved
+            const expiryDate = new Date();
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+            document.cookie = `lastRsvpName=${encodeURIComponent(submission.name)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+            console.log('[processExistingSubmission] Cookie set for:', submission.name);
+
+            return true; // Indicate that we found and processed an existing submission
+        } catch (error) {
+            console.error('[processExistingSubmission] ERROR updating UI:', error);
+            return false;
         }
-
-        // Update form title
-        const formTitle = document.getElementById('rsvp-form-title');
-        if (formTitle) {
-            console.log('[processExistingSubmission] Updating form title to Update Your RSVP');
-            formTitle.textContent = 'Update Your RSVP';
-        } else {
-            console.warn('[processExistingSubmission] formTitle element not found');
-        }
-
-        // Pre-fill form with existing data
-        prefillFormWithExistingData(submission);
-
-        // Save the name in a cookie for convenience on future visits
-        // Consider security implications if sensitive data is involved
-        const expiryDate = new Date();
-        expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-        document.cookie = `lastRsvpName=${encodeURIComponent(submission.name)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
-        console.log('[processExistingSubmission] Cookie set for:', submission.name);
-
-        return true; // Indicate that we found and processed an existing submission
     }
 
     // Helper function to reset submission state and UI
