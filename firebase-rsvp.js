@@ -106,9 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle RSVP form submission
     const rsvpForm = document.getElementById('rsvpForm');
     const formConfirmation = document.getElementById('formConfirmation');
-    // Get guest count sections
-    const guestCountsSection = document.getElementById('guestCountsSection');
-    const guestsContainer = document.getElementById('guestsContainer');
+    // These elements are accessed directly in the event handlers
 
     // Show/hide guest count based on attendance
     if (rsvpForm) {
@@ -243,26 +241,38 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isUpdate) {
                 // Update existing RSVP
                 console.log('Updating existing RSVP for:', formData.name);
+                console.log('Existing submission object:', window.existingSubmission);
 
                 // If we have the existing submission document ID, use it directly
-                if (window.existingSubmission && window.existingSubmission.id) {
+                if (window.existingSubmission?.id) {
                     console.log('Using existing submission ID for update:', window.existingSubmission.id);
+
+                    // Verify the document exists before updating
                     savePromise = db.collection('sheetRsvps')
                         .doc(window.existingSubmission.id)
-                        .update(formData)
+                        .get()
+                        .then(docSnapshot => {
+                            if (docSnapshot.exists) {
+                                console.log('Document exists, updating with ID:', window.existingSubmission.id);
+                                return docSnapshot.ref.update(formData);
+                            } else {
+                                console.warn('Document with ID does not exist, falling back to query update');
+                                return fallbackToQueryUpdate();
+                            }
+                        })
                         .catch(error => {
-                            console.error('Error updating RSVP with document ID:', error);
-                            // Fall back to query-based update if direct update fails
+                            console.error('Error verifying document existence:', error);
                             return fallbackToQueryUpdate();
                         });
                 } else {
+                    console.warn('No existing submission ID available, falling back to query update');
                     // Fall back to query-based update if we don't have the document ID
                     savePromise = fallbackToQueryUpdate();
                 }
 
                 // Helper function for query-based update fallback
                 function fallbackToQueryUpdate() {
-                    console.log('Falling back to query-based update for:', formData.name);
+                    console.log('Performing query-based update for:', formData.name);
 
                     // First try exact match
                     return db.collection('sheetRsvps')
@@ -271,27 +281,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         .then(snapshot => {
                             if (!snapshot.empty) {
                                 // Update the first matching document
-                                console.log('Found existing document, updating...');
-                                return snapshot.docs[0].ref.update(formData);
+                                const docToUpdate = snapshot.docs[0];
+                                console.log('Found existing document by exact name match, updating document ID:', docToUpdate.id);
+                                return docToUpdate.ref.update(formData);
                             } else {
                                 // If no exact match, try case-insensitive search
                                 console.log('No exact match found, trying case-insensitive search...');
                                 return db.collection('sheetRsvps').get()
                                     .then(allSnapshot => {
                                         // Find a case-insensitive match
-                                        let matchFound = false;
                                         let matchingDoc = null;
 
                                         allSnapshot.forEach(doc => {
                                             const data = doc.data();
-                                            if (data.name && data.name.toLowerCase() === formData.name.toLowerCase()) {
+                                            if (data.name?.toLowerCase() === formData.name.toLowerCase()) {
                                                 matchingDoc = doc;
-                                                matchFound = true;
                                             }
                                         });
 
-                                        if (matchFound && matchingDoc) {
-                                            console.log('Found case-insensitive match, updating document:', matchingDoc.id);
+                                        if (matchingDoc) {
+                                            console.log('Found case-insensitive match, updating document ID:', matchingDoc.id);
                                             return matchingDoc.ref.update(formData);
                                         } else {
                                             // If still no match, create a new document
@@ -426,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (error.name === 'TypeError') {
                         errorTitle = 'Type Error';
                         errorDetails = 'There was a problem with the data format. This might be a bug in our system.';
-                    } else if (error.name === 'NetworkError' || error.message && error.message.includes('network')) {
+                    } else if (error.name === 'NetworkError' || error.message?.includes('network')) {
                         errorTitle = 'Network Error';
                         errorDetails = 'There was a problem with your internet connection. Please check your connection and try again.';
                     } else {
