@@ -123,35 +123,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Select a guest from the autocomplete results - completely rewritten for reliability
     async function selectGuest(guestId) {
+        // Clear previous state first
+        resetSubmissionState(); // Reset UI and state before processing new selection
+        additionalFields.style.display = 'none'; // Hide fields until guest is confirmed
+        submitButtonContainer.style.display = 'none';
+        guestFoundInfo.style.display = 'none';
+        existingSubmissionInfo.style.display = 'none';
+        nameInput.value = ''; // Clear input initially
+
         try {
-            console.log('CRITICAL FUNCTION: Selecting guest with ID:', guestId);
+            console.log('[selectGuest] Started for guest ID:', guestId);
             const db = firebase.firestore();
 
             // STEP 1: Get the guest document
             const guestDoc = await db.collection('guestList').doc(guestId).get();
 
             if (!guestDoc.exists) {
-                console.error('ERROR: Guest not found with ID:', guestId);
-                return false;
+                console.error('[selectGuest] ERROR: Guest not found in guestList with ID:', guestId);
+                // Optionally show an error to the user here
+                return false; // Indicate failure
             }
 
             // Store the selected guest
             selectedGuest = guestDoc.data();
-            selectedGuest.id = guestId;
-            window.selectedGuest = selectedGuest;
+            selectedGuest.id = guestId; // Ensure ID is attached
+            window.selectedGuest = selectedGuest; // Update global state
 
-            console.log('SUCCESS: Found guest in guest list:', selectedGuest.name);
+            console.log('[selectGuest] Found guest in guestList:', selectedGuest.name);
 
-            // Set the name input value
+            // Set the name input value *after* confirmation
             nameInput.value = selectedGuest.name;
 
             // Hide autocomplete results
             autocompleteResults.style.display = 'none';
 
-            // Show guest info
+            // Show guest info (category, etc.)
             guestFoundInfo.style.display = 'block';
-
-            // Set guest category if available
             if (selectedGuest.category) {
                 guestCategoryElement.textContent = `Category: ${selectedGuest.category}`;
             } else {
@@ -159,151 +166,147 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // STEP 2: Check if this guest has already submitted an RSVP
-            console.log('STEP 2: Checking if guest has already submitted an RSVP...');
+            console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
+            const hasExisting = await checkExistingSubmission(selectedGuest.name);
+            console.log('[selectGuest] Existing submission check result:', hasExisting);
 
-            // First check if the guest has a response flag in their record
-            if (selectedGuest.hasResponded === true) {
-                console.log('Guest record indicates they have already responded, checking for submission...');
-            }
-
-            // Always check for existing submission in the database
-            // This is the most reliable way to find existing submissions
-            const hasExistingSubmission = await checkExistingSubmission(selectedGuest.name);
-
-            console.log('Existing submission check result:', hasExistingSubmission ? 'Found' : 'Not found');
-
-            // STEP 3: Show the appropriate form fields
-            // Show additional fields regardless of whether there's an existing submission
+            // STEP 3: Show the appropriate form fields *after* checking submission
             additionalFields.style.display = 'block';
             submitButtonContainer.style.display = 'block';
 
             // No maximum guest limit
             adultCountInput.removeAttribute('max');
 
-            // Update guest fields
-            updateGuestFields();
+            // Update guest fields (create inputs) - This needs to happen *before* prefill if attending
+            // If not attending, prefill handles hiding/showing sections
+            if (!hasExisting || existingSubmission?.attending === 'yes') {
+                 updateGuestFields(); // Create fields needed for attending/new submission
+            }
 
-            return true;
+            // If an existing submission was found, prefillFormWithExistingData was already called by processExistingSubmission
+            // If no existing submission, ensure the form is ready for a new entry
+            if (!hasExisting) {
+                 // Ensure attending section is visible by default for new submissions
+                 document.getElementById('attendingSection').style.display = 'block';
+                 // Ensure guest counts are reset/defaulted if needed
+                 adultCountInput.value = 1;
+                 childCountInput.value = 0;
+                 updateGuestFields(); // Ensure fields match default counts
+            }
+
+             // Ensure correct sections are visible based on attending status (handled by radio button change event in prefill or default state)
+            const attendingYesRadio = document.getElementById('attendingYes');
+            const attendingNoRadio = document.getElementById('attendingNo');
+            if (attendingYesRadio.checked) {
+                document.getElementById('attendingSection').style.display = 'block';
+            } else if (attendingNoRadio.checked) {
+                 document.getElementById('attendingSection').style.display = 'none';
+            }
+
+
+            console.log('[selectGuest] Completed successfully for:', selectedGuest.name);
+            return true; // Indicate success
+
         } catch (error) {
-            console.error('ERROR in selectGuest:', error);
-            return false;
+            console.error('[selectGuest] CRITICAL ERROR:', error);
+            // Optionally show a user-facing error message
+            resetSubmissionState(); // Ensure clean state on error
+            return false; // Indicate failure
         }
     }
 
     // Check if guest has already submitted an RSVP - completely rewritten for reliability
     async function checkExistingSubmission(guestName) {
-        try {
-            console.log('CRITICAL FUNCTION: Checking for existing submission for:', guestName);
-            const db = firebase.firestore();
+        console.log('[checkExistingSubmission] Started for guest name:', guestName);
+        if (!guestName) {
+            console.warn('[checkExistingSubmission] No guest name provided.');
+            return resetSubmissionState(); // Cannot check without a name
+        }
 
-            // STEP 1: Try to find an exact match by name
-            console.log('Step 1: Trying exact match search for:', guestName);
+        try {
+            const db = firebase.firestore();
+            const guestNameLower = guestName.toLowerCase().trim(); // Normalize search name
+
+            // STEP 1: Try to find an exact match by name (case-sensitive)
+            console.log('[checkExistingSubmission] Step 1: Trying exact match search for:', guestName);
             let submissionSnapshot = await db.collection('sheetRsvps')
-                .where('name', '==', guestName)
+                .where('name', '==', guestName.trim()) // Use trimmed name
                 .orderBy('submittedAt', 'desc')
                 .limit(1)
                 .get();
 
-            // If we found an exact match, use it
             if (!submissionSnapshot.empty) {
                 const doc = submissionSnapshot.docs[0];
                 const submission = doc.data();
-                submission.id = doc.id;
-
-                console.log('SUCCESS: Found exact match submission:', submission);
-                return processExistingSubmission(submission);
+                submission.id = doc.id; // IMPORTANT: Store the document ID
+                console.log('[checkExistingSubmission] SUCCESS: Found exact match submission (ID:', submission.id, ')');
+                return processExistingSubmission(submission); // Found, process it
             }
 
             // STEP 2: If no exact match, try a case-insensitive search
-            console.log('Step 2: No exact match found, trying case-insensitive search for:', guestName);
+            console.log('[checkExistingSubmission] Step 2: No exact match found, trying case-insensitive search.');
+            // Firestore doesn't support case-insensitive queries directly. Fetch potential matches.
+            // This might be inefficient for very large datasets, but necessary here.
+            const allSubmissionsSnapshot = await db.collection('sheetRsvps').get();
+            let caseInsensitiveMatch = null;
 
-            // Get all submissions
-            const allSubmissions = await db.collection('sheetRsvps').get();
-            let matchFound = false;
-            let matchingDoc = null;
-
-            // Find a case-insensitive match
-            allSubmissions.forEach(doc => {
+            allSubmissionsSnapshot.forEach(doc => {
                 const data = doc.data();
-                if (!matchFound && data.name && data.name.toLowerCase() === guestName.toLowerCase()) {
-                    matchFound = true;
-                    matchingDoc = doc;
-                }
-            });
-
-            // If we found a case-insensitive match, use it
-            if (matchFound && matchingDoc) {
-                const submission = matchingDoc.data();
-                submission.id = matchingDoc.id;
-
-                console.log('SUCCESS: Found case-insensitive match submission:', submission);
-                return processExistingSubmission(submission);
-            }
-
-            // STEP 3: Try a more flexible search (partial match)
-            console.log('Step 3: No case-insensitive match found, trying partial match search for:', guestName);
-
-            // Convert name to lowercase for comparison
-            const searchNameLower = guestName.toLowerCase();
-            let bestMatch = null;
-            let bestMatchScore = 0;
-
-            // Find the best partial match
-            allSubmissions.forEach(doc => {
-                const data = doc.data();
-                if (data.name) {
-                    const docNameLower = data.name.toLowerCase();
-
-                    // Check if names share significant parts
-                    if (docNameLower.includes(searchNameLower) || searchNameLower.includes(docNameLower)) {
-                        // Calculate a simple match score (higher is better)
-                        const score = Math.min(docNameLower.length, searchNameLower.length) /
-                                     Math.max(docNameLower.length, searchNameLower.length);
-
-                        // Keep the best match
-                        if (score > bestMatchScore) {
-                            bestMatchScore = score;
-                            bestMatch = doc;
-                        }
+                // Check if name exists and matches case-insensitively
+                if (data.name && data.name.toLowerCase().trim() === guestNameLower) {
+                    if (!caseInsensitiveMatch || (data.submittedAt && data.submittedAt > caseInsensitiveMatch.submittedAt)) {
+                         // Found a match, store it along with ID
+                        caseInsensitiveMatch = data;
+                        caseInsensitiveMatch.id = doc.id; // IMPORTANT: Store the document ID
+                        // Keep the most recent submission if multiple matches found
                     }
                 }
             });
 
-            // If we found a good partial match (score > 0.5 means significant overlap)
-            if (bestMatch && bestMatchScore > 0.5) {
-                const submission = bestMatch.data();
-                submission.id = bestMatch.id;
-
-                console.log(`SUCCESS: Found partial match submission (score ${bestMatchScore.toFixed(2)}):`, submission);
-                return processExistingSubmission(submission);
+            if (caseInsensitiveMatch) {
+                console.log('[checkExistingSubmission] SUCCESS: Found case-insensitive match submission (ID:', caseInsensitiveMatch.id, ')');
+                return processExistingSubmission(caseInsensitiveMatch); // Found, process it
             }
 
+            // STEP 3: Optional - Add more lenient matching if needed (e.g., partial match)
+            // For now, exact and case-insensitive should cover most cases.
+            console.log('[checkExistingSubmission] Step 3: No case-insensitive match found.');
+
+
             // No submission found after all attempts
-            console.log('RESULT: No existing submission found for:', guestName);
-            return resetSubmissionState();
+            console.log('[checkExistingSubmission] RESULT: No existing submission found for:', guestName);
+            return resetSubmissionState(); // Explicitly reset state
 
         } catch (error) {
-            console.error('ERROR in checkExistingSubmission:', error);
-            return resetSubmissionState();
+            console.error('[checkExistingSubmission] CRITICAL ERROR:', error);
+            // Optionally show a user-facing error
+            return resetSubmissionState(); // Ensure clean state on error
         }
     }
 
     // Helper function to process an existing submission
     function processExistingSubmission(submission) {
-        // Store the existing submission
+        console.log('[processExistingSubmission] Processing submission:', submission);
+        // Use optional chaining for cleaner check
+        if (!submission?.id) {
+             console.error('[processExistingSubmission] ERROR: Invalid submission object received (missing ID):', submission);
+             return resetSubmissionState(); // Cannot process without valid data/ID
+        }
+
+        // Store the existing submission globally
         existingSubmission = submission;
-        window.existingSubmission = existingSubmission;
+        window.existingSubmission = existingSubmission; // Ensure global state is set
 
-        console.log('Setting existingSubmission:', existingSubmission);
+        console.log('[processExistingSubmission] Set window.existingSubmission with ID:', window.existingSubmission.id);
 
-        // Show existing submission info
-        existingSubmissionInfo.style.display = 'block';
+        // Show existing submission info section
+        existingSubmissionInfo.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
 
         // Update button text and style
         submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
         submitButton.classList.add('update-mode');
 
-        // Show update notice
+        // Show update notice (if element exists)
         const updateNotice = document.getElementById('updateNotice');
         if (updateNotice) {
             updateNotice.style.display = 'block';
@@ -319,38 +322,51 @@ document.addEventListener('DOMContentLoaded', function() {
         prefillFormWithExistingData(submission);
 
         // Save the name in a cookie for convenience on future visits
+        // Consider security implications if sensitive data is involved
         const expiryDate = new Date();
         expiryDate.setFullYear(expiryDate.getFullYear() + 1);
         document.cookie = `lastRsvpName=${encodeURIComponent(submission.name)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+        console.log('[processExistingSubmission] Cookie set for:', submission.name);
 
-        return true; // Indicate that we found an existing submission
+        return true; // Indicate that we found and processed an existing submission
     }
 
-    // Helper function to reset submission state
+    // Helper function to reset submission state and UI
     function resetSubmissionState() {
-        // No existing submission
+        console.log('[resetSubmissionState] Resetting state and UI.');
+        // Clear global state
         existingSubmission = null;
         window.existingSubmission = null;
+        // selectedGuest is handled by selectGuest start
 
-        // Hide existing submission info
+        // Hide specific sections
         existingSubmissionInfo.style.display = 'none';
+        const updateNotice = document.getElementById('updateNotice');
+        if (updateNotice) {
+            updateNotice.style.display = 'none';
+        }
+        // Keep guestFoundInfo visible if a guest was selected
 
         // Reset button text and style
         submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
         submitButton.classList.remove('update-mode');
 
-        // Hide update notice
-        const updateNotice = document.getElementById('updateNotice');
-        if (updateNotice) {
-            updateNotice.style.display = 'none';
+        // Reset form title
+        const formTitle = document.getElementById('rsvp-form-title');
+        if (formTitle) {
+            formTitle.textContent = 'Submit Your RSVP'; // Or your default title
         }
 
-        return false; // Indicate that we didn't find an existing submission
+        // Clear form fields (optional, could be done on new selection)
+        // document.getElementById('rsvpForm')?.reset(); // Be careful with this, might clear name input
+
+        console.log('[resetSubmissionState] Reset complete.');
+        return false; // Indicate that we are NOT in an update state
     }
 
     // Pre-fill form with existing submission data
     function prefillFormWithExistingData(submission) {
-        console.log('Pre-filling form with existing data:', submission);
+        console.log('[prefillForm] Pre-filling form with data:', submission);
 
         // Set email and phone
         document.getElementById('email').value = submission.email || '';
@@ -359,88 +375,118 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set attending radio button
         const attendingYes = document.getElementById('attendingYes');
         const attendingNo = document.getElementById('attendingNo');
+        const attendingSection = document.getElementById('attendingSection');
 
         // Determine if attending based on submission data
         const isAttending = submission.attending === 'yes';
+        console.log('[prefillForm] Is Attending:', isAttending);
 
         // Set the appropriate radio button
         if (isAttending) {
             attendingYes.checked = true;
+            attendingNo.checked = false;
+            attendingSection.style.display = 'block'; // Show guest count section
         } else {
             attendingNo.checked = true;
+            attendingYes.checked = false;
+            attendingSection.style.display = 'none'; // Hide guest count section
         }
 
         // Parse guest counts for attending guests
         if (isAttending) {
             // Get adult count
             let adultCount = 1; // Default to 1 adult
-            if (typeof submission.adultCount === 'number') {
-                adultCount = submission.adultCount;
-            } else if (typeof submission.guestCount === 'number') {
-                // For backward compatibility
-                adultCount = submission.guestCount;
+            // Check for adultCount first, then guestCount for backward compatibility
+            if (typeof submission.adultCount === 'number' && submission.adultCount >= 0) {
+                 adultCount = submission.adultCount;
+            } else if (typeof submission.guestCount === 'number' && submission.guestCount >= 1) {
+                 // Assume guestCount was adults if adultCount is missing
+                 adultCount = submission.guestCount;
+                 console.warn('[prefillForm] Using guestCount for adultCount (backward compatibility).');
+            } else if (submission.adultGuests && Array.isArray(submission.adultGuests)) {
+                 // Infer from adultGuests array if counts are missing
+                 adultCount = submission.adultGuests.length > 0 ? submission.adultGuests.length : 1;
+                 console.warn('[prefillForm] Inferring adultCount from adultGuests array.');
             }
+
 
             // Get child count
             let childCount = 0; // Default to 0 children
-            if (typeof submission.childCount === 'number') {
+            if (typeof submission.childCount === 'number' && submission.childCount >= 0) {
                 childCount = submission.childCount;
+            } else if (submission.childGuests && Array.isArray(submission.childGuests)) {
+                 // Infer from childGuests array if count is missing
+                 childCount = submission.childGuests.length;
+                 console.warn('[prefillForm] Inferring childCount from childGuests array.');
             }
+
+
+            console.log(`[prefillForm] Setting counts - Adults: ${adultCount}, Children: ${childCount}`);
 
             // Set guest counts in form
             adultCountInput.value = adultCount;
             childCountInput.value = childCount;
 
-            // Update guest fields to create the input elements
+            // Update guest fields to create the input elements *before* filling them
             updateGuestFields();
 
-            // Wait a moment for the DOM to update
-            setTimeout(() => {
+            // Use requestAnimationFrame to ensure DOM is updated before filling inputs
+            requestAnimationFrame(() => {
+                console.log('[prefillForm] DOM updated, attempting to fill guest names.');
                 // Pre-fill adult guest names
                 if (submission.adultGuests && Array.isArray(submission.adultGuests) && submission.adultGuests.length > 0) {
                     const adultInputs = adultGuestsContainer.querySelectorAll('input');
+                    console.log(`[prefillForm] Found ${adultInputs.length} adult input fields.`);
                     submission.adultGuests.forEach((name, index) => {
                         if (adultInputs[index]) {
-                            adultInputs[index].value = name;
+                            adultInputs[index].value = name || ''; // Ensure value is not undefined
+                            console.log(`[prefillForm] Set Adult ${index + 1} to: ${name}`);
+                        } else {
+                            console.warn(`[prefillForm] Could not find input field for Adult ${index + 1}`);
                         }
                     });
-                } else if (submission.additionalGuests && Array.isArray(submission.additionalGuests) && submission.additionalGuests.length > 0) {
-                    // For backward compatibility
-                    const adultInputs = adultGuestsContainer.querySelectorAll('input');
-                    // Make sure the first input has the primary guest name
-                    if (adultInputs[0]) {
-                        adultInputs[0].value = submission.name || '';
-                    }
-
-                    // Fill in additional guests
-                    submission.additionalGuests.forEach((name, index) => {
-                        if (adultInputs[index + 1]) { // +1 to skip the first input (self)
-                            adultInputs[index + 1].value = name;
-                        }
-                    });
+                } else {
+                     console.log('[prefillForm] No adultGuests array found or empty.');
+                     // Ensure the first adult field (primary guest) is filled if possible
+                     const firstAdultInput = adultGuestsContainer.querySelector('input');
+                     if (firstAdultInput && !firstAdultInput.value) {
+                         firstAdultInput.value = submission.name || '';
+                         console.log(`[prefillForm] Set primary adult name from submission.name: ${submission.name}`);
+                     }
                 }
+
 
                 // Pre-fill child guest names
                 if (submission.childGuests && Array.isArray(submission.childGuests) && submission.childGuests.length > 0) {
                     const childInputs = childGuestsContainer.querySelectorAll('input');
+                     console.log(`[prefillForm] Found ${childInputs.length} child input fields.`);
                     submission.childGuests.forEach((name, index) => {
                         if (childInputs[index]) {
-                            childInputs[index].value = name;
+                            childInputs[index].value = name || ''; // Ensure value is not undefined
+                            console.log(`[prefillForm] Set Child ${index + 1} to: ${name}`);
+                        } else {
+                             console.warn(`[prefillForm] Could not find input field for Child ${index + 1}`);
                         }
                     });
+                } else {
+                     console.log('[prefillForm] No childGuests array found or empty.');
                 }
-            }, 100); // Short delay to ensure DOM is updated
-        }
-
-        // Trigger change event to update form visibility
-        const event = new Event('change');
-        if (attendingYes.checked) {
-            attendingYes.dispatchEvent(event);
+                 console.log('[prefillForm] Finished filling guest names.');
+            });
         } else {
-            attendingNo.dispatchEvent(event);
+             // If not attending, clear/hide guest count fields
+             adultCountInput.value = 0;
+             childCountInput.value = 0;
+             updateGuestFields(); // Clear the fields
         }
 
-        console.log('Form pre-filled successfully');
+
+        // Trigger change event manually if needed, but direct style change might be sufficient
+        // const event = new Event('change');
+        // if (attendingYes.checked) attendingYes.dispatchEvent(event);
+        // else attendingNo.dispatchEvent(event);
+
+        console.log('[prefillForm] Form pre-fill attempt complete.');
     }
 
     // Update guest fields based on adult and child counts
@@ -523,24 +569,33 @@ document.addEventListener('DOMContentLoaded', function() {
         childCountInput.addEventListener('input', updateGuestFields);
     }
 
-    // Show/hide guest count based on attendance
-    const attendingRadios = document.querySelectorAll('input[name="attending"]');
-    if (attendingRadios.length) {
-        attendingRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                const guestCountsSection = document.getElementById('guestCountsSection');
-                const guestsContainer = document.getElementById('guestsContainer');
+    // Add event listeners for radio buttons to show/hide attending section
+    const attendingYesRadio = document.getElementById('attendingYes');
+    const attendingNoRadio = document.getElementById('attendingNo');
+    const attendingSection = document.getElementById('attendingSection');
 
-                if (this.value === 'yes') {
-                    guestCountsSection.style.display = 'flex';
-                    guestsContainer.style.display = 'block';
-                    updateGuestFields(); // Update guest fields when showing the section
-                } else {
-                    guestCountsSection.style.display = 'none';
-                    guestsContainer.style.display = 'none';
-                }
-            });
-        });
+    function handleAttendingChange() {
+        if (attendingYesRadio.checked) {
+            attendingSection.style.display = 'block';
+            // Ensure guest counts are reasonable if switching to yes
+            if (parseInt(adultCountInput.value) === 0 && parseInt(childCountInput.value) === 0) {
+                 adultCountInput.value = 1; // Default to 1 adult
+            }
+            updateGuestFields(); // Update fields based on current counts
+        } else {
+            attendingSection.style.display = 'none';
+            // Optionally clear guest names when switching to No
+             adultCountInput.value = 0;
+             childCountInput.value = 0;
+             updateGuestFields(); // Clear guest name fields
+        }
+    }
+
+    if (attendingYesRadio && attendingNoRadio && attendingSection) {
+        attendingYesRadio.addEventListener('change', handleAttendingChange);
+        attendingNoRadio.addEventListener('change', handleAttendingChange);
+        // Initial check in case the form is pre-filled by the browser or existing submission
+         handleAttendingChange();
     }
 
     // Initialize guest fields on page load
@@ -750,39 +805,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Function to search for guests in Firestore
+// Function to search for guests (assuming it exists and returns a promise)
+// Example structure:
 async function searchGuests(searchTerm) {
-    if (!searchTerm || searchTerm.length < 2) return [];
+    // This function needs to query the 'guestList' collection in Firestore
+    // based on the searchTerm and return an array of matching guests
+    // e.g., [{ id: '...', name: '...' }, ...]
+    console.log(`[searchGuests] Searching for: ${searchTerm}`);
+     const db = firebase.firestore();
+     const searchTermLower = searchTerm.toLowerCase();
+     const results = [];
 
-    try {
-        const db = firebase.firestore();
-        const guestListRef = db.collection('guestList');
+     try {
+         // Example: Simple prefix search (adjust as needed)
+         const querySnapshot = await db.collection('guestList')
+             // .where('nameLower', '>=', searchTermLower) // Requires a 'nameLower' field
+             // .where('nameLower', '<=', searchTermLower + '\uf8ff')
+             .orderBy('name') // Order results for consistency
+             .get();
 
-        // Convert search term to lowercase for case-insensitive search
-        const searchTermLower = searchTerm.toLowerCase();
+         querySnapshot.forEach(doc => {
+             const guest = doc.data();
+             // Perform client-side filtering for case-insensitivity if needed
+             // Use optional chaining
+             if (guest?.name?.toLowerCase().includes(searchTermLower)) {
+                 results.push({ id: doc.id, name: guest.name });
+             }
+         });
 
-        // Get all guests (we'll filter client-side)
-        const snapshot = await guestListRef.get();
-
-        if (snapshot.empty) {
-            console.log('No guests found in database');
-            return [];
-        }
-
-        // Filter guests whose names contain the search term
-        const results = [];
-        snapshot.forEach(doc => {
-            const guest = doc.data();
-            guest.id = doc.id; // Add document ID to the guest object
-
-            if (guest.name?.toLowerCase().includes(searchTermLower)) {
-                results.push(guest);
-            }
-        });
-
-        return results;
-    } catch (error) {
-        console.error('Error searching guests:', error);
-        return [];
-    }
+         console.log(`[searchGuests] Found ${results.length} potential matches.`);
+         return results.slice(0, 10); // Limit results shown
+     } catch (error) {
+         console.error('[searchGuests] Error searching guests:', error);
+         return []; // Return empty array on error
+     }
 }
