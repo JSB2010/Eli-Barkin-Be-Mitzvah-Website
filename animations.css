@@ -1,24 +1,7 @@
 /* Enhanced animations and visual effects for Eli's Be Mitzvah website */
 
-/* Page Transitions */
-.page-transition-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--primary-blue);
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-    pointer-events: none;
-}
-
-.page-transition-overlay.active {
-    opacity: 0.9;
-    visibility: visible;
-}
+/* Page Transitions - Overlay Disabled */
+/* The blue overlay has been removed as requested */
 
 /* Page load animation */
 body {

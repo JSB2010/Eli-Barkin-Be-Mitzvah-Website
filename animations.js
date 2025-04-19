@@ -19,12 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Add smooth page transitions
+    // Add smooth page transitions - Overlay Disabled
     function addPageTransitions() {
-        // Add transition overlay to the body
-        const transitionOverlay = document.createElement('div');
-        transitionOverlay.className = 'page-transition-overlay';
-        document.body.appendChild(transitionOverlay);
+        // Blue overlay has been removed as requested
 
         // Add click event to all internal links
         const internalLinks = document.querySelectorAll('a[href^="/"]:not([target]), a[href^="./"]:not([target]), a[href^="../"]:not([target]), a[href^="#"]:not([target]), a:not([href^="http"]):not([href^="mailto"]):not([href^="tel"]):not([target])');
@@ -43,28 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                e.preventDefault();
-
-                // Show transition overlay
-                transitionOverlay.classList.add('active');
-
-                // Navigate after transition
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 400);
+                // Direct navigation without overlay
+                // No preventDefault or delay to ensure normal navigation behavior
             });
         });
 
-        // Add transition-in effect when page loads
+        // Add transition-in effect when page loads (keep this for a smooth fade-in)
         window.addEventListener('load', function() {
             document.body.classList.add('page-loaded');
-
-            // Hide transition overlay when coming from another page
-            if (transitionOverlay) {
-                setTimeout(() => {
-                    transitionOverlay.classList.remove('active');
-                }, 100);
-            }
         });
     }
 
