@@ -30,6 +30,8 @@
     <script src="firebase-config.js"></script>
     <!-- RSVP System Script (New) -->
     <script src="rsvp-system.js"></script>
+    <!-- Sysadmin Dashboard Script -->
+    <script src="sysadmin-dashboard.js"></script>
     <!-- Simple Login Script -->
     <script src="simple-login.js"></script>
 
@@ -1498,6 +1500,142 @@
             background-color: var(--danger);
         }
 
+        /* Dashboard Tabs Styles */
+        .dashboard-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            cursor: pointer;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-button:hover {
+            background-color: var(--light-gray);
+            color: var(--primary-blue);
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Sysadmin Dashboard Styles */
+        .section-description {
+            color: var(--dark-gray);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .subsection-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin: 1.5rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .status-indicator.online {
+            color: var(--success);
+        }
+
+        .status-indicator.offline {
+            color: var(--danger);
+        }
+
+        .status-indicator.warning {
+            color: var(--warning);
+        }
+
+        .status-indicator i {
+            font-size: 0.8rem;
+        }
+
+        /* Responsive adjustments for sysadmin dashboard */
+        @media (max-width: 768px) {
+            .dashboard-tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1 1 auto;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+
+        /* Additional styles for sysadmin dashboard */
+        #sysadmin-tab .charts-container {
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        }
+
+        #sysadmin-tab .chart-card {
+            height: 300px;
+        }
+
+        /* Responsive adjustments for sysadmin dashboard */
+        @media (max-width: 768px) {
+            #sysadmin-tab .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            #sysadmin-tab .stats-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+
         .status-pending {
             color: var(--warning);
         }
@@ -1983,6 +2121,12 @@
                 </div>
             </div>
 
+            <!-- Dashboard Tabs -->
+            <div class="dashboard-tabs">
+                <button class="tab-button active" data-tab="rsvp-tab"><i class="fas fa-envelope-open-text"></i> RSVP Management</button>
+                <button class="tab-button" data-tab="sysadmin-tab"><i class="fas fa-server"></i> System Admin</button>
+            </div>
+
             <!-- Dashboard Overview -->
             <div class="dashboard-overview">
                 <div class="overview-header">
@@ -1995,8 +2139,9 @@
                 <p>Loading data...</p>
             </div>
 
-            <!-- Unified Dashboard Content -->
-            <div id="unified-dashboard-content" class="dashboard-content">
+            <!-- Tab Content Containers -->
+            <div id="rsvp-tab" class="tab-content active">
+                <!-- RSVP Dashboard Content -->
                 <!-- Key Metrics Section -->
                 <div class="metrics-section">
                     <div class="stats-container">
@@ -2321,6 +2466,389 @@
                         </div>
                         <div id="utility-results-content" class="utility-results-content">
                             <!-- Results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Admin Tab Content -->
+            <div id="sysadmin-tab" class="tab-content">
+                <!-- System Admin Header -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-server"></i> System Administration</h2>
+                        <div class="section-actions">
+                            <button id="refresh-sysadmin-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh All Data</button>
+                        </div>
+                    </div>
+                    <p class="section-description">Comprehensive monitoring and analytics for all connected services.</p>
+                </div>
+
+                <!-- System Status Overview -->
+                <div class="metrics-section">
+                    <div class="section-header" style="border-bottom-color: rgba(255,255,255,0.1);">
+                        <h2 style="color: white;"><i class="fas fa-heartbeat"></i> System Status</h2>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-card" id="cloudflare-status">
+                            <h3>Cloudflare</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Website Hosting</div>
+                        </div>
+                        <div class="stat-card" id="firebase-status">
+                            <h3>Firebase</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Database & Functions</div>
+                        </div>
+                        <div class="stat-card" id="github-status">
+                            <h3>GitHub</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Code Repository</div>
+                        </div>
+                        <div class="stat-card" id="analytics-status">
+                            <h3>Google Analytics</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Visitor Tracking</div>
+                        </div>
+                        <div class="stat-card" id="sheets-status">
+                            <h3>Google Sheets</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Guest Data Storage</div>
+                        </div>
+                        <div class="stat-card" id="brevo-status">
+                            <h3>Brevo</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Email Notifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Website Analytics -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> Website Analytics</h2>
+                        <div class="section-actions">
+                            <select id="analytics-timeframe" class="filter-dropdown">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected>Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Overview -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="visitors-card">
+                            <h3>Total Visitors</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Unique visitors</div>
+                        </div>
+                        <div class="stat-card" id="pageviews-card">
+                            <h3>Page Views</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Total views</div>
+                        </div>
+                        <div class="stat-card" id="avg-time-card">
+                            <h3>Avg. Time on Site</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Per session</div>
+                        </div>
+                        <div class="stat-card" id="bounce-rate-card">
+                            <h3>Bounce Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Single page visits</div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Visitors Over Time</h3>
+                            <canvas id="visitors-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Top Pages</h3>
+                            <canvas id="pages-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Traffic Sources</h3>
+                            <canvas id="sources-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Device Breakdown</h3>
+                            <canvas id="devices-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Firebase Usage -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-database"></i> Firebase Usage</h2>
+                    </div>
+
+                    <!-- Firebase Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="db-reads-card">
+                            <h3>Database Reads</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="db-writes-card">
+                            <h3>Database Writes</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="function-calls-card">
+                            <h3>Function Calls</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="storage-used-card">
+                            <h3>Storage Used</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Of 5GB free tier</div>
+                        </div>
+                    </div>
+
+                    <!-- Firebase Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Database Operations</h3>
+                            <canvas id="db-ops-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Function Executions</h3>
+                            <canvas id="function-exec-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Notifications -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-envelope"></i> Email Notifications</h2>
+                    </div>
+
+                    <!-- Email Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="emails-sent-card">
+                            <h3>Emails Sent</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="delivery-rate-card">
+                            <h3>Delivery Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Successfully delivered</div>
+                        </div>
+                        <div class="stat-card" id="open-rate-card">
+                            <h3>Open Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Emails opened</div>
+                        </div>
+                        <div class="stat-card" id="click-rate-card">
+                            <h3>Click Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Links clicked</div>
+                        </div>
+                    </div>
+
+                    <!-- Email Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Email Activity</h3>
+                            <canvas id="email-activity-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Email Performance</h3>
+                            <canvas id="email-performance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub Repository -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fab fa-github"></i> GitHub Repository</h2>
+                        <div class="section-actions">
+                            <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" class="btn"><i class="fas fa-external-link-alt"></i> View on GitHub</a>
+                        </div>
+                    </div>
+
+                    <!-- GitHub Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="commits-card">
+                            <h3>Total Commits</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">All time</div>
+                        </div>
+                        <div class="stat-card" id="branches-card">
+                            <h3>Branches</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Active branches</div>
+                        </div>
+                        <div class="stat-card" id="contributors-card">
+                            <h3>Contributors</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Total contributors</div>
+                        </div>
+                        <div class="stat-card" id="last-commit-card">
+                            <h3>Last Commit</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Time since last commit</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Commits -->
+                    <div class="table-responsive">
+                        <h3 class="subsection-title"><i class="fas fa-code-commit"></i> Recent Commits</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Author</th>
+                                    <th>Message</th>
+                                    <th>Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commits-table-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading commit history...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cloudflare Analytics -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-cloud"></i> Cloudflare Analytics</h2>
+                    </div>
+
+                    <!-- Cloudflare Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="bandwidth-card">
+                            <h3>Bandwidth Used</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="requests-card">
+                            <h3>Total Requests</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="cache-rate-card">
+                            <h3>Cache Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Cache hit ratio</div>
+                        </div>
+                        <div class="stat-card" id="performance-score-card">
+                            <h3>Performance Score</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Cloudflare rating</div>
+                        </div>
+                    </div>
+
+                    <!-- Cloudflare Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Traffic Over Time</h3>
+                            <canvas id="traffic-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Status Codes</h3>
+                            <canvas id="status-codes-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Sheets Integration -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-table"></i> Google Sheets Integration</h2>
+                    </div>
+
+                    <!-- Sheets Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="sheet-rows-card">
+                            <h3>Total Rows</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">In guest spreadsheet</div>
+                        </div>
+                        <div class="stat-card" id="last-sync-card">
+                            <h3>Last Sync</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Time since last sync</div>
+                        </div>
+                        <div class="stat-card" id="sync-status-card">
+                            <h3>Sync Status</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Current status</div>
+                        </div>
+                        <div class="stat-card" id="api-quota-card">
+                            <h3>API Quota</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Remaining today</div>
+                        </div>
+                    </div>
+
+                    <!-- Sync History -->
+                    <div class="table-responsive">
+                        <h3 class="subsection-title"><i class="fas fa-history"></i> Sync History</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Records Synced</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sync-history-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading sync history...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- System Logs -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-clipboard-list"></i> System Logs</h2>
+                        <div class="section-actions">
+                            <select id="log-filter" class="filter-dropdown">
+                                <option value="all">All Logs</option>
+                                <option value="error">Errors Only</option>
+                                <option value="warning">Warnings & Errors</option>
+                                <option value="info">Info & Above</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Log Table -->
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Level</th>
+                                    <th>Source</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading system logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div id="logs-pagination" class="pagination">
+                            <!-- Pagination will be added here -->
                         </div>
                     </div>
                 </div>
