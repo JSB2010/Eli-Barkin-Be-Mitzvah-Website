@@ -479,6 +479,375 @@ exports.sendRsvpConfirmation = functions.firestore
     }
   });
 
+/**
+ * Cloud Function that sends a confirmation email when a guest updates their RSVP
+ */
+exports.sendRsvpUpdateConfirmation = functions.firestore
+  .document('sheetRsvps/{rsvpId}')
+  .onUpdate(async (change, context) => {
+    // Get the before and after data
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    // Skip if no email provided
+    if (!afterData.email) {
+      console.log('No email provided for RSVP update, skipping confirmation email');
+      return null;
+    }
+
+    // Check if there are meaningful changes to notify about
+    const hasAttendanceChanged = beforeData.attending !== afterData.attending;
+    const hasGuestCountChanged = beforeData.guestCount !== afterData.guestCount;
+    const hasAdditionalGuestsChanged = JSON.stringify(beforeData.additionalGuests || []) !==
+                                      JSON.stringify(afterData.additionalGuests || []);
+    const hasAdultGuestsChanged = JSON.stringify(beforeData.adultGuests || []) !==
+                                 JSON.stringify(afterData.adultGuests || []);
+    const hasChildGuestsChanged = JSON.stringify(beforeData.childGuests || []) !==
+                                 JSON.stringify(afterData.childGuests || []);
+
+    // If nothing significant changed, don't send an email
+    if (!hasAttendanceChanged && !hasGuestCountChanged && !hasAdditionalGuestsChanged &&
+        !hasAdultGuestsChanged && !hasChildGuestsChanged) {
+      console.log('No significant changes detected in RSVP update, skipping email');
+      return null;
+    }
+
+    // Determine guest information
+    const isAttending = afterData.attending === 'yes';
+
+    // Format guest count information
+    let guestInfo = '';
+    if (isAttending) {
+      // Check if we have adult/child counts (new format)
+      if (typeof afterData.adultCount === 'number' || typeof afterData.childCount === 'number') {
+        const adultCount = afterData.adultCount || 0;
+        const childCount = afterData.childCount || 0;
+        const totalCount = adultCount + childCount;
+
+        guestInfo = `<p>We have you down for ${totalCount} ${totalCount > 1 ? 'guests' : 'guest'} `;
+
+        if (adultCount > 0 && childCount > 0) {
+          guestInfo += `(${adultCount} adult${adultCount > 1 ? 's' : ''} and ${childCount} child${childCount > 1 ? 'ren' : ''}).`;
+        } else if (adultCount > 0) {
+          guestInfo += `(${adultCount} adult${adultCount > 1 ? 's' : ''}).`;
+        } else if (childCount > 0) {
+          guestInfo += `(${childCount} child${childCount > 1 ? 'ren' : ''}).`;
+        }
+
+        guestInfo += '</p>';
+      } else {
+        // Fall back to old format
+        guestInfo = `<p>We have you down for ${afterData.guestCount || 1} ${afterData.guestCount > 1 ? 'guests' : 'guest'}.</p>`;
+      }
+    }
+
+    // Get additional guests if any
+    let additionalGuests = '';
+    if (isAttending) {
+      // Check if we have adult/child guests (new format)
+      if (afterData.adultGuests && afterData.adultGuests.length > 0) {
+        additionalGuests = `
+          <p>Your party includes:</p>
+          <ul style="padding-left: 20px;">
+        `;
+
+        // Add adult guests
+        afterData.adultGuests.forEach(guest => {
+          additionalGuests += `<li>${guest} (Adult)</li>`;
+        });
+
+        // Add child guests if any
+        if (afterData.childGuests && afterData.childGuests.length > 0) {
+          afterData.childGuests.forEach(guest => {
+            additionalGuests += `<li>${guest} (Child)</li>`;
+          });
+        }
+
+        additionalGuests += '</ul>';
+      } else if (afterData.additionalGuests && afterData.additionalGuests.length > 0) {
+        // Fall back to old format
+        additionalGuests = `
+          <p>Your party includes:</p>
+          <ul style="padding-left: 20px;">
+            <li>${afterData.name}</li>
+            ${afterData.additionalGuests.map(guest => `<li>${guest}</li>`).join('')}
+          </ul>
+        `;
+      }
+    }
+
+    // Highlight what changed
+    let changesInfo = '<p><strong>You updated the following information:</strong></p><ul style="padding-left: 20px;">';
+
+    if (hasAttendanceChanged) {
+      changesInfo += `<li>Attendance: Changed from "${beforeData.attending === 'yes' ? 'Attending' : 'Not Attending'}" to "${afterData.attending === 'yes' ? 'Attending' : 'Not Attending'}"</li>`;
+    }
+
+    if (hasGuestCountChanged) {
+      changesInfo += `<li>Guest Count: Changed from ${beforeData.guestCount || 1} to ${afterData.guestCount || 1}</li>`;
+    }
+
+    if (hasAdditionalGuestsChanged || hasAdultGuestsChanged || hasChildGuestsChanged) {
+      changesInfo += '<li>Guest List: Your list of guests has been updated</li>';
+    }
+
+    changesInfo += '</ul>';
+
+    // Configure Brevo API client
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = functions.config().brevo.key;
+
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+    // Create the email
+    const sendSmtpEmail = {
+      sender: {
+        email: 'rsvps@elibarkin.com',
+        name: "Eli's Be Mitzvah"
+      },
+      to: [{ email: afterData.email }],
+      subject: 'Your RSVP to Eli\'s Be Mitzvah Has Been Updated',
+      htmlContent: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+            :root {
+              --primary-blue: #1e88e5;
+              --primary-orange: #ff9800;
+              --dark-blue: #0d47a1;
+              --light-blue: #bbdefb;
+              --dark-orange: #e65100;
+              --light-orange: #ffe0b2;
+              --white: #ffffff;
+              --light-gray: #f5f5f5;
+              --dark-gray: #333333;
+            }
+
+            body {
+              font-family: 'Montserrat', sans-serif;
+              line-height: 1.6;
+              color: var(--dark-gray);
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #f9f9f9;
+            }
+
+            .email-container {
+              background-color: var(--white);
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+              margin: 20px auto;
+            }
+
+            .header {
+              background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+              color: var(--white);
+              padding: 30px 20px;
+              text-align: center;
+              position: relative;
+            }
+
+            .header::after {
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 5px;
+              background: linear-gradient(90deg, var(--primary-orange), var(--dark-orange));
+            }
+
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            .content {
+              padding: 30px;
+              background-color: var(--white);
+            }
+
+            .content p {
+              margin-bottom: 15px;
+              font-size: 16px;
+            }
+
+            .details {
+              background-color: var(--light-gray);
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+              border-left: 4px solid var(--primary-blue);
+            }
+
+            .changes {
+              background-color: var(--light-orange);
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+              border-left: 4px solid var(--dark-orange);
+            }
+
+            .details p, .changes p {
+              margin: 10px 0;
+            }
+
+            .details strong, .changes strong {
+              color: var(--dark-blue);
+              font-weight: 600;
+            }
+
+            .details ul, .changes ul {
+              margin: 10px 0;
+              padding-left: 25px;
+            }
+
+            .details li, .changes li {
+              margin-bottom: 5px;
+            }
+
+            .button-container {
+              text-align: center;
+              margin: 25px 0;
+            }
+
+            .button {
+              display: inline-block;
+              background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+              color: var(--white);
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 50px;
+              font-weight: 600;
+              text-transform: uppercase;
+              font-size: 14px;
+              letter-spacing: 0.5px;
+              box-shadow: 0 4px 10px rgba(246, 142, 31, 0.3);
+              transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            .button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 15px rgba(246, 142, 31, 0.4);
+            }
+
+            .footer {
+              text-align: center;
+              padding: 20px;
+              background-color: var(--light-gray);
+              color: var(--dark-gray);
+              font-size: 14px;
+              border-top: 1px solid #eee;
+            }
+
+            .footer a {
+              color: var(--primary-blue);
+              text-decoration: none;
+              font-weight: 500;
+              position: relative;
+              transition: color 0.3s ease;
+            }
+
+            .footer a:hover {
+              color: var(--primary-orange);
+            }
+
+            .footer a::after {
+              content: '';
+              position: absolute;
+              bottom: -2px;
+              left: 0;
+              width: 100%;
+              height: 1px;
+              background-color: var(--primary-orange);
+              transform: scaleX(0);
+              transition: transform 0.3s ease;
+            }
+
+            .footer a:hover::after {
+              transform: scaleX(1);
+            }
+
+            .logo {
+              margin-bottom: 15px;
+            }
+
+            .logo img {
+              max-height: 60px;
+              border-radius: 5px;
+            }
+
+            .signature {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 1px solid #eee;
+              font-style: italic;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <h1>RSVP Updated</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${afterData.name},</p>
+
+              <p>Your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025 has been successfully updated.</p>
+
+              <div class="changes">
+                ${changesInfo}
+              </div>
+
+              <div class="details">
+                <p><strong>Your updated response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
+                ${guestInfo}
+                ${additionalGuests}
+              </div>
+
+              <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+
+              <p>If you need to make any further changes to your RSVP, you can do so at any time:</p>
+
+              <div class="button-container">
+                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(afterData.name)}" class="button">Update Your RSVP</a>
+              </div>
+
+              <div class="signature">
+                <p>Warm regards,<br>The Barkin Family</p>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
+              <p><a href="https://elibarkin.com">elibarkin.com</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    try {
+      // Send the email
+      const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Update confirmation email sent to:', afterData.email);
+      console.log('Brevo API response:', response);
+      return null;
+    } catch (error) {
+      console.error('Error sending update confirmation email:', error);
+      return null;
+    }
+  });
+
 exports.updateGuestListSheet = functions.firestore
   .document('sheetRsvps/{rsvpId}')
   .onCreate(async (snapshot, context) => {
