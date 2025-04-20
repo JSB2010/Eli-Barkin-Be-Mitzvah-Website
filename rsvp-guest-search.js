@@ -241,6 +241,24 @@ document.addEventListener('DOMContentLoaded', function() {
             guestFoundInfo.style.display = 'block';
             guestCategoryElement.textContent = selectedGuest.category ? `Category: ${selectedGuest.category}` : '';
 
+            // Check if this is an out-of-town guest
+            const outOfTownEventsSection = document.getElementById('outOfTownEventsSection');
+            const isOutOfTown = isOutOfTownGuest(selectedGuest);
+
+            if (isOutOfTown) {
+                console.log('[selectGuest] Out-of-town guest detected (non-Colorado resident)');
+                if (outOfTownEventsSection) {
+                    outOfTownEventsSection.style.display = 'block';
+                    outOfTownEventsSection.classList.add('visible');
+                }
+            } else {
+                console.log('[selectGuest] Colorado resident detected');
+                if (outOfTownEventsSection) {
+                    outOfTownEventsSection.style.display = 'none';
+                    outOfTownEventsSection.classList.remove('visible');
+                }
+            }
+
             // STEP 2: Check for an existing RSVP submission in sheetRsvps
             console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
             const foundSubmission = await checkExistingSubmission(selectedGuest.name);
@@ -536,6 +554,23 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('[normalizeSubmissionData] submittedAt is not a Firestore timestamp, converting...');
             submission.submittedAt = firebase.firestore.Timestamp.fromDate(new Date(submission.submittedAt));
         }
+
+        // Ensure out-of-town event fields exist
+        submission.fridayDinner = submission.fridayDinner ?? 'no';
+        submission.sundayBrunch = submission.sundayBrunch ?? 'no';
+        submission.isOutOfTown = submission.isOutOfTown ?? false;
+    }
+
+    // Helper function to check if a guest is from out-of-town (not from Colorado)
+    function isOutOfTownGuest(guestData) {
+        // Check if the guest has address data
+        if (!guestData || !guestData.address) {
+            return false;
+        }
+
+        // Check if the state is not CO (Colorado)
+        const state = guestData.address.state?.toUpperCase();
+        return state && state !== 'CO' && state !== 'COLORADO';
     }
 
     // Helper function to process an existing submission and update UI
@@ -812,6 +847,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (e) {
             console.warn(`[prefillForm] Failed to force radio button update: ${e.message}`);
+        }
+
+        // Handle out-of-town event fields if the section is visible
+        const outOfTownEventsSection = document.getElementById('outOfTownEventsSection');
+        if (outOfTownEventsSection && window.getComputedStyle(outOfTownEventsSection).display !== 'none' && isAttending) {
+            // Set Friday dinner radio buttons
+            const fridayDinnerYes = document.getElementById('fridayDinnerYes');
+            const fridayDinnerNo = document.getElementById('fridayDinnerNo');
+            if (fridayDinnerYes && fridayDinnerNo) {
+                if (submission.fridayDinner === 'yes') {
+                    fridayDinnerYes.checked = true;
+                    fridayDinnerNo.checked = false;
+                } else {
+                    fridayDinnerNo.checked = true;
+                    fridayDinnerYes.checked = false;
+                }
+            }
+
+            // Set Sunday brunch radio buttons
+            const sundayBrunchYes = document.getElementById('sundayBrunchYes');
+            const sundayBrunchNo = document.getElementById('sundayBrunchNo');
+            if (sundayBrunchYes && sundayBrunchNo) {
+                if (submission.sundayBrunch === 'yes') {
+                    sundayBrunchYes.checked = true;
+                    sundayBrunchNo.checked = false;
+                } else {
+                    sundayBrunchNo.checked = true;
+                    sundayBrunchYes.checked = false;
+                }
+            }
         }
 
         // Parse guest counts for attending guests

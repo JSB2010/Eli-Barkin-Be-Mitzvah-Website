@@ -135,6 +135,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 // submittedAt will be set differently for new vs update
             };
 
+            // Check if out-of-town events section is visible
+            const outOfTownEventsSection = document.getElementById('outOfTownEventsSection');
+            const isOutOfTownGuest = outOfTownEventsSection &&
+                                    window.getComputedStyle(outOfTownEventsSection).display !== 'none';
+
+            // If this is an out-of-town guest and they're attending, collect additional event responses
+            if (isOutOfTownGuest && formData.attending === 'yes') {
+                // Get Friday dinner response
+                const fridayDinnerYes = document.getElementById('fridayDinnerYes');
+                formData.fridayDinner = fridayDinnerYes && fridayDinnerYes.checked ? 'yes' : 'no';
+
+                // Get Sunday brunch response
+                const sundayBrunchYes = document.getElementById('sundayBrunchYes');
+                formData.sundayBrunch = sundayBrunchYes && sundayBrunchYes.checked ? 'yes' : 'no';
+
+                // Flag this as an out-of-town guest
+                formData.isOutOfTown = true;
+            } else {
+                // Set default values for non-out-of-town guests
+                formData.fridayDinner = 'no';
+                formData.sundayBrunch = 'no';
+                formData.isOutOfTown = false;
+            }
+
             // Check if attending
             if (formData.attending === 'yes') {
                 // Get adult and child counts
@@ -330,6 +354,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                     additionalGuests: rsvpData.additionalGuests || [],
                                     email: rsvpData.email || '',
                                     phone: rsvpData.phone || '',
+                                    // Store out-of-town event responses
+                                    isOutOfTown: rsvpData.isOutOfTown || false,
+                                    fridayDinner: rsvpData.fridayDinner || 'no',
+                                    sundayBrunch: rsvpData.sundayBrunch || 'no',
                                     // Use the appropriate timestamp (submittedAt for new, updatedAt for updates)
                                     lastResponseTimestamp: rsvpData.updatedAt || rsvpData.submittedAt
                                 });
@@ -422,6 +450,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             confirmationDetails.innerHTML = `We have you down for <strong>${totalGuests} ${guestText}</strong> ${isUpdate ? '(updated)' : ''}.`;
 
+                            // Add information about additional events for out-of-town guests
+                            if (formData.isOutOfTown) {
+                                confirmationDetails.innerHTML += '<br><br><strong>Additional Events:</strong>';
+
+                                if (formData.fridayDinner === 'yes') {
+                                    confirmationDetails.innerHTML += '<br>• You will be attending the <strong>Friday Night Dinner</strong> at Linger.';
+                                } else {
+                                    confirmationDetails.innerHTML += '<br>• You will not be attending the Friday Night Dinner.';
+                                }
+
+                                if (formData.sundayBrunch === 'yes') {
+                                    confirmationDetails.innerHTML += '<br>• You will be attending the <strong>Sunday Brunch</strong> at Eli\'s home.';
+                                } else {
+                                    confirmationDetails.innerHTML += '<br>• You will not be attending the Sunday Brunch.';
+                                }
+                            }
+
                             // Add submission/update timestamp
                             const timestamp = formData.updatedAt || formData.submittedAt; // Use update time if available
                             const dateStr = timestamp.toDate().toLocaleDateString('en-US', {
@@ -433,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 minute: '2-digit'
                             });
 
-                            confirmationDetails.innerHTML += `<br><span class="timestamp">${isUpdate ? 'Updated' : 'Submitted'} on ${dateStr}</span>`;
+                            confirmationDetails.innerHTML += `<br><br><span class="timestamp">${isUpdate ? 'Updated' : 'Submitted'} on ${dateStr}</span>`;
                         } else if (confirmationDetails) {
                             confirmationDetails.innerHTML = ''; // Clear details if not attending
                         }
