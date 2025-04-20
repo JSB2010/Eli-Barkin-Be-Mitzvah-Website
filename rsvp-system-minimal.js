@@ -13,6 +13,8 @@ const RSVPSystem = {
         currentPage: 1,
         guestListPage: 1,
         itemsPerPage: 10,
+        guestItemsPerPage: 10,
+        pageSizeOptions: [5, 10, 25, 50, 100],
         expectedInvites: 300,
         sortColumn: 'name',
         sortDirection: 'asc',
@@ -863,6 +865,15 @@ const RSVPSystem = {
         this.updateSubmissionsTable(currentPageSubmissions, totalPages);
         this.updateStats();
 
+        // Update pagination controls with enhanced version
+        this.createEnhancedPagination(
+            this.state.filteredSubmissions.length,
+            this.state.currentPage,
+            this.state.itemsPerPage,
+            'pagination',
+            false
+        );
+
         // Only hide loading if both submissions and guest list are loaded
         if (this.state.submissionsLoaded && this.state.guestListLoaded) {
             this.hideLoading();
@@ -872,6 +883,151 @@ const RSVPSystem = {
             this.debug.info(`Processed ${this.state.filteredSubmissions.length} submissions, displaying page ${this.state.currentPage} of ${totalPages}`);
         } catch (e) {
             console.error('Error logging to debug panel:', e);
+        }
+    },
+
+    // Create enhanced pagination controls
+    createEnhancedPagination: function(totalItems, currentPage, itemsPerPage, containerId, isGuestList = false) {
+        try {
+            this.debug.info(`Creating enhanced pagination for ${containerId}...`);
+        } catch (e) {
+            console.error('Error logging to debug panel:', e);
+        }
+
+        const paginationContainer = document.getElementById(containerId);
+        if (!paginationContainer) return;
+
+        // Clear the container
+        paginationContainer.innerHTML = '';
+
+        // Calculate total pages
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        // Calculate start and end item numbers
+        const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+        const endItem = Math.min(startItem + itemsPerPage - 1, totalItems);
+
+        // Create pagination HTML
+        let paginationHTML = `
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span>Showing ${startItem}-${endItem} of ${totalItems} items</span>
+                </div>
+                <div class="pagination-controls">
+                    <button type="button" class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" data-page="first" title="First Page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button type="button" class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" data-page="prev" title="Previous Page">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+        `;
+
+        // Page numbers
+        if (totalPages > 1) {
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            // Adjust if we're near the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // First page button if not visible
+            if (startPage > 1) {
+                paginationHTML += `<button type="button" class="pagination-btn" data-page="1">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+                }
+            }
+
+            // Page buttons
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button type="button" class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>
+                `;
+            }
+
+            // Last page button if not visible
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+                }
+                paginationHTML += `<button type="button" class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+            }
+        } else {
+            paginationHTML += `<span class="pagination-current">Page ${currentPage} of ${Math.max(1, totalPages)}</span>`;
+        }
+
+        paginationHTML += `
+                    <button type="button" class="pagination-btn ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}" data-page="next" title="Next Page">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button type="button" class="pagination-btn ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}" data-page="last" title="Last Page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+                <div class="pagination-size">
+                    <label for="${containerId}-page-size">Items per page:</label>
+                    <select id="${containerId}-page-size" class="page-size-select">
+                        ${this.state.pageSizeOptions.map(size =>
+                            `<option value="${size}" ${size === itemsPerPage ? 'selected' : ''}>${size}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            </div>
+        `;
+
+        // Set the HTML
+        paginationContainer.innerHTML = paginationHTML;
+
+        // Add event listeners
+        document.querySelectorAll(`#${containerId} .pagination-btn`).forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.classList.contains('disabled')) return;
+
+                const page = button.getAttribute('data-page');
+                let newPage = currentPage;
+
+                if (page === 'first') {
+                    newPage = 1;
+                } else if (page === 'prev') {
+                    newPage = Math.max(1, currentPage - 1);
+                } else if (page === 'next') {
+                    newPage = Math.min(totalPages, currentPage + 1);
+                } else if (page === 'last') {
+                    newPage = totalPages;
+                } else {
+                    newPage = parseInt(page);
+                }
+
+                if (newPage !== currentPage) {
+                    if (isGuestList) {
+                        this.state.guestListPage = newPage;
+                        this.processGuestList();
+                    } else {
+                        this.state.currentPage = newPage;
+                        this.processSubmissions();
+                    }
+                }
+            });
+        });
+
+        // Add event listener for page size selector
+        const pageSizeSelect = document.getElementById(`${containerId}-page-size`);
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', (e) => {
+                const newSize = parseInt(e.target.value);
+                if (isGuestList) {
+                    this.state.guestItemsPerPage = newSize;
+                    this.state.guestListPage = 1;
+                    this.processGuestList();
+                } else {
+                    this.state.itemsPerPage = newSize;
+                    this.state.currentPage = 1;
+                    this.processSubmissions();
+                }
+            });
         }
     },
 
@@ -976,6 +1132,15 @@ const RSVPSystem = {
         // Update the UI
         this.updateGuestListTable(currentPageGuests, totalPages);
         this.updateStats();
+
+        // Update pagination controls with enhanced version
+        this.createEnhancedPagination(
+            this.state.filteredGuests.length,
+            this.state.guestListPage,
+            this.state.guestItemsPerPage,
+            'guest-list-pagination',
+            true
+        );
 
         // Only hide loading if both submissions and guest list are loaded
         if (this.state.submissionsLoaded && this.state.guestListLoaded) {
