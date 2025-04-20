@@ -26,7 +26,7 @@
     --dark-gray: #4b5563;
     --darker-gray: #1f2937;
     --black: #111827;
-    
+
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --font-size-xs: 0.75rem;
@@ -37,7 +37,7 @@
     --font-size-2xl: 1.5rem;
     --font-size-3xl: 1.875rem;
     --font-size-4xl: 2.25rem;
-    
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -45,21 +45,21 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-2xl: 3rem;
-    
+
     /* Borders */
     --border-radius-sm: 0.25rem;
     --border-radius: 0.5rem;
     --border-radius-lg: 0.75rem;
     --border-radius-xl: 1rem;
     --border-radius-full: 9999px;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    
+
     /* Transitions */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -823,13 +823,13 @@ tr:hover {
     .dashboard-container {
         margin: 1rem;
     }
-    
+
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .dashboard-actions {
         width: 100%;
         justify-content: flex-start;
@@ -841,37 +841,37 @@ tr:hover {
     .stats-container {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
-    
+
     .charts-container {
         grid-template-columns: 1fr;
     }
-    
+
     .table-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .table-actions {
         width: 100%;
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .search-filter-group {
         width: 100%;
         flex-direction: column;
     }
-    
+
     .search-box, .filter-dropdown {
         width: 100%;
     }
-    
+
     th, td {
         padding: 0.75rem 0.5rem;
         font-size: var(--font-size-xs);
     }
-    
+
     .modal-content {
         width: 95%;
     }
@@ -881,42 +881,42 @@ tr:hover {
     .dashboard-container {
         margin: 0.5rem;
     }
-    
+
     .dashboard-header {
         padding: 1rem;
     }
-    
+
     .metrics-section, .table-container, .chart-card {
         padding: 1rem;
     }
-    
+
     .dashboard-title {
         font-size: var(--font-size-xl);
     }
-    
+
     .dashboard-subtitle {
         font-size: var(--font-size-sm);
     }
-    
+
     .btn {
         padding: 0.5rem 1rem;
         font-size: var(--font-size-xs);
     }
-    
+
     .stat-card .stat-value {
         font-size: var(--font-size-2xl);
     }
-    
+
     .pagination {
         flex-direction: column;
         gap: 1rem;
         align-items: center;
     }
-    
+
     .pagination-info {
         text-align: center;
     }
-    
+
     /* Hide less important columns on very small screens */
     td:nth-child(3), /* Phone column */
     th:nth-child(3),
@@ -929,6 +929,14 @@ tr:hover {
 /* Utility classes */
 .hidden {
     display: none !important;
+}
+
+.text-white {
+    color: white;
+}
+
+.system-status-header {
+    border-bottom-color: rgba(255,255,255,0.1);
 }
 
 .text-center {

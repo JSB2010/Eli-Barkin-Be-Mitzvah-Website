@@ -447,15 +447,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
             margin: -2rem -2rem 0 -2rem;
             padding: 2rem;
             border-radius: 15px 15px 0 0;
             color: white;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .dashboard-tabs {
@@ -2991,8 +2989,8 @@
                             <div class="utility-content">
                                 <p>Sync data between Firebase and Google Sheets.</p>
                                 <div class="utility-actions">
-                                    <button id="sync-sheet-to-firebase-btn" class="btn primary"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
-                                    <button id="sync-firebase-to-sheet-btn" class="btn primary"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
+                                    <button type="button" id="sync-sheet-to-firebase-btn" class="btn primary"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
+                                    <button type="button" id="sync-firebase-to-sheet-btn" class="btn primary"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
                                 </div>
                             </div>
                         </div>
@@ -3004,7 +3002,7 @@
                             <div class="utility-content">
                                 <p>Reset test users to test the RSVP process again.</p>
                                 <div class="utility-actions">
-                                    <button id="reset-test-users-btn" class="btn warning"><i class="fas fa-undo"></i> Reset Test Users</button>
+                                    <button type="button" id="reset-test-users-btn" class="btn warning"><i class="fas fa-undo"></i> Reset Test Users</button>
                                 </div>
                                 <div class="test-users-list">
                                     <span class="test-user-badge">Jacob Barkin</span>
@@ -3024,8 +3022,8 @@
                             <div class="utility-content">
                                 <p>Import guests from a CSV file.</p>
                                 <div class="utility-actions">
-                                    <button id="bulk-add-guests-btn" class="btn success"><i class="fas fa-upload"></i> Upload CSV</button>
-                                    <input type="file" id="file-upload-input" accept=".csv" style="display: none;">
+                                    <button type="button" id="bulk-add-guests-btn" class="btn success"><i class="fas fa-upload"></i> Upload CSV</button>
+                                    <input type="file" id="file-upload-input" accept=".csv" class="file-input-hidden">
                                 </div>
                                 <div class="utility-help">
                                     <small>CSV format: Name, Email, Phone, Address, City, State, Zip, Category</small>
@@ -3040,8 +3038,8 @@
                             <div class="utility-content">
                                 <p>Manage your database data.</p>
                                 <div class="utility-actions">
-                                    <button id="backup-database-btn" class="btn primary"><i class="fas fa-download"></i> Backup Database</button>
-                                    <button id="clear-test-data-btn" class="btn danger"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
+                                    <button type="button" id="backup-database-btn" class="btn primary"><i class="fas fa-download"></i> Backup Database</button>
+                                    <button type="button" id="clear-test-data-btn" class="btn danger"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
                                 </div>
                                 <div class="utility-help">
                                     <small>Warning: Clear Test Data will remove all test submissions</small>
@@ -3056,7 +3054,7 @@
                     <div id="utility-results" class="utility-results hidden">
                         <div class="utility-results-header">
                             <h3 id="utility-results-title">Operation Results</h3>
-                            <button id="close-utility-results" class="btn-icon"><i class="fas fa-times"></i></button>
+                            <button type="button" id="close-utility-results" class="btn-icon"><i class="fas fa-times"></i></button>
                         </div>
                         <div id="utility-results-content" class="utility-results-content">
                             <!-- Results will be displayed here -->
@@ -3072,7 +3070,7 @@
                     <div class="section-header">
                         <h2><i class="fas fa-server"></i> System Administration</h2>
                         <div class="section-actions">
-                            <button id="refresh-sysadmin-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh All Data</button>
+                            <button type="button" id="refresh-sysadmin-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh All Data</button>
                         </div>
                     </div>
                     <p class="section-description">Comprehensive monitoring and analytics for all connected services.</p>
@@ -3080,8 +3078,8 @@
 
                 <!-- System Status Overview -->
                 <div class="metrics-section">
-                    <div class="section-header" style="border-bottom-color: rgba(255,255,255,0.1);">
-                        <h2 style="color: white;"><i class="fas fa-heartbeat"></i> System Status</h2>
+                    <div class="section-header system-status-header">
+                        <h2 class="text-white"><i class="fas fa-heartbeat"></i> System Status</h2>
                     </div>
                     <div class="stats-container">
                         <div class="stat-card" id="cloudflare-status">
@@ -3455,13 +3453,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">RSVP Details</h3>
-                <button class="modal-close">&times;</button>
+                <button type="button" class="modal-close">&times;</button>
             </div>
             <div class="modal-body" id="modal-body">
                 <!-- Details will be dynamically added here -->
             </div>
             <div class="modal-footer">
-                <button class="btn secondary modal-close">Close</button>
+                <button type="button" class="btn secondary modal-close">Close</button>
             </div>
         </div>
     </div>
@@ -3471,13 +3469,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Guest Details</h3>
-                <button class="modal-close">&times;</button>
+                <button type="button" class="modal-close">&times;</button>
             </div>
             <div class="modal-body" id="guest-modal-body">
                 <!-- Guest details will be dynamically added here -->
             </div>
             <div class="modal-footer">
-                <button class="btn secondary modal-close">Close</button>
+                <button type="button" class="btn secondary modal-close">Close</button>
             </div>
         </div>
     </div>
@@ -3487,7 +3485,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Add New Guest</h3>
-                <button class="modal-close">&times;</button>
+                <button type="button" class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="add-guest-form">
@@ -3541,12 +3539,12 @@
                             <input type="tel" id="guest-phone">
                         </div>
                     </div>
-                    <div id="add-guest-error" class="error-message" style="display: none;"></div>
+                    <div id="add-guest-error" class="error-message hidden"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn secondary modal-close">Cancel</button>
-                <button id="add-guest-submit" class="btn primary">Add Guest</button>
+                <button type="button" class="btn secondary modal-close">Cancel</button>
+                <button type="button" id="add-guest-submit" class="btn primary">Add Guest</button>
             </div>
         </div>
     </div>
@@ -3556,7 +3554,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit Guest</h3>
-                <button class="modal-close">&times;</button>
+                <button type="button" class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="edit-guest-form">
@@ -3635,12 +3633,12 @@
                             <input type="number" id="edit-guest-count" min="0" value="0" disabled>
                         </div>
                     </div>
-                    <div id="edit-guest-error" class="error-message" style="display: none;"></div>
+                    <div id="edit-guest-error" class="error-message hidden"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn secondary modal-close">Cancel</button>
-                <button id="edit-guest-submit" class="btn primary">Update Guest</button>
+                <button type="button" class="btn secondary modal-close">Cancel</button>
+                <button type="button" id="edit-guest-submit" class="btn primary">Update Guest</button>
             </div>
         </div>
     </div>
@@ -3650,19 +3648,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Sync with Google Sheets</h3>
-                <button class="modal-close">&times;</button>
+                <button type="button" class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="sync-options">
                     <div class="sync-option">
                         <h4><i class="fas fa-cloud-upload-alt"></i> Export to Google Sheet</h4>
                         <p>Send current guest list and RSVP data to Google Sheets.</p>
-                        <button id="sync-to-sheet" class="btn primary">Export to Sheet</button>
+                        <button type="button" id="sync-to-sheet" class="btn primary">Export to Sheet</button>
                     </div>
                     <div class="sync-option">
                         <h4><i class="fas fa-cloud-download-alt"></i> Import from Google Sheet</h4>
                         <p>Import guest list and RSVP data from Google Sheets.</p>
-                        <button id="sync-from-sheet" class="btn primary">Import from Sheet</button>
+                        <button type="button" id="sync-from-sheet" class="btn primary">Import from Sheet</button>
                     </div>
                 </div>
                 <div class="sync-warning">
@@ -3671,6 +3669,7 @@
             </div>
         </div>
     </div>
+</div> <!-- Close dashboard-section -->
 
     <!-- RSVP System script is loaded in the head -->
     <!-- Dashboard Utilities Script -->
