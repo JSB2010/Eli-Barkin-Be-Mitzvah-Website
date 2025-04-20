@@ -46,7 +46,7 @@
     <style>
         /* Form container styles */
         .form-container {
-            background-color: white;
+            background-color: #f8f9fa;
             padding: 40px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
@@ -55,7 +55,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.4s ease;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: none;
         }
 
         /* Removed blue top border */
@@ -134,7 +134,7 @@
             transform: translateX(-50%);
             width: 80px;
             height: 3px;
-            background: #38a169;
+            background: linear-gradient(90deg, #4a89dc, #3a79cc);
             border-radius: 3px;
         }
 
@@ -154,8 +154,8 @@
         }
 
         .form-group input:focus {
-            border-color: #38a169;
-            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.15);
+            border-color: #4a89dc;
+            box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.15);
             outline: none;
         }
 
@@ -219,7 +219,7 @@
 
         .btn {
             padding: 14px 28px;
-            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            background: linear-gradient(135deg, #4a89dc 0%, #3a79cc 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -227,7 +227,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.25);
+            box-shadow: 0 4px 10px rgba(74, 137, 220, 0.25);
             position: relative;
             overflow: hidden;
             display: inline-flex;
@@ -248,9 +248,9 @@
         }
 
         .btn:hover {
-            background: linear-gradient(135deg, #2f855a 0%, #276749 100%);
+            background: linear-gradient(135deg, #3a79cc 0%, #2d6cbe 100%);
             transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(56, 161, 105, 0.35);
+            box-shadow: 0 6px 15px rgba(74, 137, 220, 0.35);
         }
 
         .btn:hover::before {
@@ -259,31 +259,31 @@
 
         .btn:active {
             transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(56, 161, 105, 0.3);
+            box-shadow: 0 3px 8px rgba(74, 137, 220, 0.3);
         }
 
         /* Update button styling */
         #submitButton.update-mode {
-            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
-            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.3);
+            background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
         }
 
         #submitButton.update-mode:hover {
-            background: linear-gradient(135deg, #2f855a 0%, #276749 100%);
-            box-shadow: 0 6px 15px rgba(56, 161, 105, 0.4);
+            background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+            box-shadow: 0 6px 15px rgba(49, 130, 206, 0.4);
         }
 
         #formConfirmation {
             text-align: center;
             padding: 30px;
-            background-color: #f0fff4;
+            background-color: #f0f7ff;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             transition: all 0.5s ease;
         }
 
         #formConfirmation h3 {
-            color: #38a169;
+            color: #4a89dc;
             font-size: 24px;
             margin-bottom: 15px;
         }
@@ -392,7 +392,7 @@
         .guest-section h4 {
             margin-top: 0;
             margin-bottom: 15px;
-            color: #38a169;
+            color: #4a89dc;
             font-size: 1.1rem;
         }
 
@@ -425,8 +425,8 @@
         }
 
         .guest-field input:focus {
-            border-color: #38a169;
-            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.15);
+            border-color: #4a89dc;
+            box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.15);
             outline: none;
         }
 
@@ -482,7 +482,7 @@
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            color: #38a169;
+            color: #4a89dc;
             margin-right: 15px;
         }
 
@@ -493,13 +493,13 @@
         .existing-submission h3 {
             margin-top: 0;
             margin-bottom: 12px;
-            color: #2f855a;
+            color: #3182ce;
             font-size: 1.3rem;
         }
 
         .existing-submission p {
             margin: 8px 0;
-            color: #276749;
+            color: #2c5282;
             line-height: 1.5;
         }
 
@@ -509,7 +509,7 @@
             margin-top: 12px !important;
             color: #4a5568 !important;
             padding-top: 10px;
-            border-top: 1px solid rgba(56, 161, 105, 0.1);
+            border-top: 1px solid rgba(74, 137, 220, 0.1);
         }
 
         /* Original update button styling - overridden above */
@@ -517,7 +517,7 @@
         /* Update notice styling */
         .update-notice {
             font-size: 0.95rem;
-            color: #38a169;
+            color: #4a89dc;
             margin-top: 12px;
             text-align: center;
             font-style: italic;
@@ -526,8 +526,8 @@
             padding: 8px 15px;
             border-radius: 20px;
             display: inline-block;
-            border: 1px solid rgba(56, 161, 105, 0.3);
-            box-shadow: 0 2px 5px rgba(56, 161, 105, 0.1);
+            border: 1px solid rgba(74, 137, 220, 0.3);
+            box-shadow: 0 2px 5px rgba(74, 137, 220, 0.1);
         }
 
         /* Animation moved to optimized-animations.css */
