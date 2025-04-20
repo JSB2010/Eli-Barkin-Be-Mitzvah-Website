@@ -88,10 +88,21 @@ const DashboardEnhancements = {
         this.initModals();
     },
 
-    // Initialize tooltips
+    // Initialize tooltips - completely rewritten to avoid any DOM measurement issues
     initTooltips: function() {
         try {
-            // Only initialize tooltips on pages that have them
+            // Check if we're on the RSVP dashboard
+            const isRsvpDashboard = window.location.pathname.includes('rsvp-dashboard') ||
+                                   document.title.includes('RSVP Dashboard');
+
+            // Use a different approach for RSVP dashboard
+            if (isRsvpDashboard) {
+                console.log('Using special tooltip handling for RSVP dashboard');
+                this.initTooltipsForRsvpDashboard();
+                return;
+            }
+
+            // Regular tooltip initialization for other pages
             const tooltipElements = document.querySelectorAll('[data-tooltip]');
             if (tooltipElements.length === 0) {
                 console.log('No tooltip elements found, skipping tooltip initialization');
@@ -154,6 +165,46 @@ const DashboardEnhancements = {
             });
         } catch (error) {
             console.error('Error initializing tooltips:', error);
+        }
+    },
+
+    // Special tooltip initialization for RSVP dashboard
+    initTooltipsForRsvpDashboard: function() {
+        try {
+            // Find all elements with data-tooltip attribute
+            const tooltipElements = document.querySelectorAll('[data-tooltip]');
+            if (tooltipElements.length === 0) return;
+
+            console.log(`Setting up ${tooltipElements.length} tooltips for RSVP dashboard`);
+
+            // Instead of using a shared tooltip element, we'll use title attributes
+            // This uses the browser's native tooltip functionality which is more reliable
+            tooltipElements.forEach(element => {
+                if (!element) return;
+
+                const tooltipText = element.getAttribute('data-tooltip');
+                if (!tooltipText) return;
+
+                // Set the title attribute which will show as a native browser tooltip
+                element.setAttribute('title', tooltipText);
+
+                // Add a special class to style these elements
+                element.classList.add('has-native-tooltip');
+            });
+
+            // Add a style for the tooltip elements if needed
+            const styleElement = document.createElement('style');
+            styleElement.textContent = `
+                .has-native-tooltip {
+                    cursor: help;
+                    border-bottom: 1px dotted #ccc;
+                }
+            `;
+            document.head.appendChild(styleElement);
+
+            console.log('RSVP dashboard tooltips initialized using native browser tooltips');
+        } catch (error) {
+            console.error('Error initializing RSVP dashboard tooltips:', error);
         }
     },
 
