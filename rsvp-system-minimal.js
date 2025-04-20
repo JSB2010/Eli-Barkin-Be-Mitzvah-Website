@@ -2651,25 +2651,25 @@ RSVPSystem.initDashboard = function() {
         window.directDebug(`RSVPSystem.state.db available: ${this.state.db !== null}`);
     }
 
-    // Fetch data with a small delay to ensure Firebase is ready
-    setTimeout(() => {
-        if (window.directDebug) {
-            window.directDebug('Fetching submissions and guest list...');
-        }
-        this.fetchSubmissions();
-        this.fetchGuestList();
+    // Fetch data immediately
+    console.log('Fetching submissions and guest list...');
+    this.fetchSubmissions();
+    this.fetchGuestList();
 
-        // Add a safety timeout to hide the loading indicator after 10 seconds
-        // in case something goes wrong with the data loading
-        setTimeout(() => {
-            if (document.getElementById('loading').style.display !== 'none') {
-                if (window.directDebug) {
-                    window.directDebug('Safety timeout reached, hiding loading indicator');
-                }
-                this.hideLoading();
+    // Add a safety timeout to hide the loading indicator after 30 seconds
+    // in case something goes wrong with the data loading
+    setTimeout(() => {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement && !loadingElement.classList.contains('hidden')) {
+            console.log('Safety timeout reached, hiding loading indicator');
+            this.hideLoading();
+
+            // Show error toast
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.warning('Loading took longer than expected. Some data might not be available.', 'Timeout');
             }
-        }, 10000);
-    }, 1000);
+        }
+    }, 30000);
 };
 
 // Expose functions globally for the login script

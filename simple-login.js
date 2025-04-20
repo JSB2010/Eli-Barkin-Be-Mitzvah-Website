@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Make window.db available globally
             if (!window.db) {
                 window.db = db;
+                console.log('Global window.db set');
+            }
+
+            // Initialize RSVPSystem if available
+            if (typeof RSVPSystem !== 'undefined' && RSVPSystem.state) {
+                RSVPSystem.state.db = db;
+                console.log('Set RSVPSystem.state.db');
             }
         }
     } catch (error) {
@@ -146,6 +153,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (loginSection && dashboardSection) {
                 loginSection.style.display = 'none';
                 dashboardSection.classList.remove('hidden');
+
+                // Initialize RSVPSystem if available
+                if (typeof RSVPSystem !== 'undefined' && typeof RSVPSystem.initDashboard === 'function') {
+                    console.log('Initializing dashboard from auth state change');
+                    setTimeout(() => {
+                        RSVPSystem.initDashboard();
+                    }, 500);
+                }
             }
 
             // Load dashboard data
