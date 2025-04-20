@@ -90,64 +90,71 @@ const DashboardEnhancements = {
 
     // Initialize tooltips
     initTooltips: function() {
-        // Find all elements with data-tooltip attribute
-        const tooltipElements = document.querySelectorAll('[data-tooltip]');
+        try {
+            // Only initialize tooltips on pages that have them
+            const tooltipElements = document.querySelectorAll('[data-tooltip]');
+            if (tooltipElements.length === 0) {
+                console.log('No tooltip elements found, skipping tooltip initialization');
+                return;
+            }
 
-        tooltipElements.forEach(element => {
-            // Create tooltip element
+            console.log(`Initializing ${tooltipElements.length} tooltips`);
+
+            // Create a single tooltip element that will be reused
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
-            tooltip.textContent = element.getAttribute('data-tooltip');
-
-            // Add tooltip to body
+            tooltip.style.position = 'absolute';
+            tooltip.style.zIndex = '9999';
+            tooltip.style.opacity = '0';
+            tooltip.style.visibility = 'hidden';
             document.body.appendChild(tooltip);
 
-            // Show tooltip on hover
-            element.addEventListener('mouseenter', function(e) {
-                try {
-                    const rect = element.getBoundingClientRect();
+            tooltipElements.forEach(element => {
+                if (!element) return;
 
-                    // Set fixed dimensions if we can't measure the tooltip
-                    // This prevents the offsetWidth/offsetHeight errors
-                    const defaultWidth = 200; // Default width if we can't measure
-                    const defaultHeight = 40; // Default height if we can't measure
+                const tooltipText = element.getAttribute('data-tooltip');
+                if (!tooltipText) return;
 
-                    // Try to get actual dimensions, fall back to defaults
-                    let tooltipWidth = defaultWidth;
-                    let tooltipHeight = defaultHeight;
-
+                // Show tooltip on hover
+                element.addEventListener('mouseenter', function() {
                     try {
-                        // Make tooltip temporarily visible but transparent to get its dimensions
-                        tooltip.style.visibility = 'hidden';
-                        tooltip.style.opacity = '0';
-                        tooltip.classList.add('visible');
+                        // Set tooltip content
+                        tooltip.textContent = tooltipText;
 
-                        // Get dimensions after it's in the DOM and visible
-                        if (tooltip.offsetWidth && tooltip.offsetHeight) {
-                            tooltipWidth = tooltip.offsetWidth;
-                            tooltipHeight = tooltip.offsetHeight;
-                        }
-                    } catch (measureError) {
-                        console.warn('Could not measure tooltip, using defaults:', measureError);
+                        // Position the tooltip - use fixed positioning to avoid layout issues
+                        const rect = element.getBoundingClientRect();
+
+                        // Fixed dimensions to avoid measuring
+                        const tooltipWidth = 200;
+                        const tooltipHeight = 40;
+
+                        // Position in the middle above the element
+                        tooltip.style.left = (rect.left + (rect.width / 2) - (tooltipWidth / 2)) + 'px';
+                        tooltip.style.top = (rect.top - tooltipHeight - 10) + 'px';
+                        tooltip.style.width = tooltipWidth + 'px';
+                        tooltip.style.height = 'auto';
+
+                        // Make it visible
+                        tooltip.style.opacity = '1';
+                        tooltip.style.visibility = 'visible';
+                    } catch (error) {
+                        console.error('Error showing tooltip:', error);
                     }
+                });
 
-                    // Position the tooltip
-                    tooltip.style.left = rect.left + (rect.width / 2) - (tooltipWidth / 2) + 'px';
-                    tooltip.style.top = rect.top - tooltipHeight - 10 + 'px';
-
-                    // Make it fully visible
-                    tooltip.style.visibility = '';
-                    tooltip.style.opacity = '';
-                } catch (error) {
-                    console.error('Error showing tooltip:', error);
-                }
+                // Hide tooltip on mouse leave
+                element.addEventListener('mouseleave', function() {
+                    try {
+                        tooltip.style.opacity = '0';
+                        tooltip.style.visibility = 'hidden';
+                    } catch (error) {
+                        console.error('Error hiding tooltip:', error);
+                    }
+                });
             });
-
-            // Hide tooltip on mouse leave
-            element.addEventListener('mouseleave', function() {
-                tooltip.classList.remove('visible');
-            });
-        });
+        } catch (error) {
+            console.error('Error initializing tooltips:', error);
+        }
     },
 
     // Initialize modals
