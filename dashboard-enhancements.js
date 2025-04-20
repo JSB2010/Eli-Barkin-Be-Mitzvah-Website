@@ -107,14 +107,29 @@ const DashboardEnhancements = {
                 try {
                     const rect = element.getBoundingClientRect();
 
-                    // Make tooltip temporarily visible but transparent to get its dimensions
-                    tooltip.style.visibility = 'hidden';
-                    tooltip.style.opacity = '0';
-                    tooltip.classList.add('visible');
+                    // Set fixed dimensions if we can't measure the tooltip
+                    // This prevents the offsetWidth/offsetHeight errors
+                    const defaultWidth = 200; // Default width if we can't measure
+                    const defaultHeight = 40; // Default height if we can't measure
 
-                    // Get dimensions after it's in the DOM and visible
-                    const tooltipWidth = tooltip.offsetWidth || 0;
-                    const tooltipHeight = tooltip.offsetHeight || 0;
+                    // Try to get actual dimensions, fall back to defaults
+                    let tooltipWidth = defaultWidth;
+                    let tooltipHeight = defaultHeight;
+
+                    try {
+                        // Make tooltip temporarily visible but transparent to get its dimensions
+                        tooltip.style.visibility = 'hidden';
+                        tooltip.style.opacity = '0';
+                        tooltip.classList.add('visible');
+
+                        // Get dimensions after it's in the DOM and visible
+                        if (tooltip.offsetWidth && tooltip.offsetHeight) {
+                            tooltipWidth = tooltip.offsetWidth;
+                            tooltipHeight = tooltip.offsetHeight;
+                        }
+                    } catch (measureError) {
+                        console.warn('Could not measure tooltip, using defaults:', measureError);
+                    }
 
                     // Position the tooltip
                     tooltip.style.left = rect.left + (rect.width / 2) - (tooltipWidth / 2) + 'px';
