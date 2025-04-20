@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show dashboard
                 if (loginSection && dashboardSection) {
                     loginSection.style.display = 'none';
-                    dashboardSection.style.display = 'block';
+                    dashboardSection.classList.remove('hidden');
                 }
 
                 // Reset form
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Show login form
                     if (dashboardSection && loginSection) {
-                        dashboardSection.style.display = 'none';
+                        dashboardSection.classList.add('hidden');
                         loginSection.style.display = 'block';
                     }
                 })
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // User is signed in
             if (loginSection && dashboardSection) {
                 loginSection.style.display = 'none';
-                dashboardSection.style.display = 'block';
+                dashboardSection.classList.remove('hidden');
             }
 
             // Load dashboard data
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Show login form
             if (dashboardSection && loginSection) {
-                dashboardSection.style.display = 'none';
+                dashboardSection.classList.add('hidden');
                 loginSection.style.display = 'block';
             }
         }
