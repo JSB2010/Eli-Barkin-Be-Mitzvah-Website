@@ -316,6 +316,68 @@ const RSVPSystem = {
             });
         }
 
+        // Set up search functionality for submissions table
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+            searchBox.addEventListener('input', (e) => {
+                this.state.searchTerm = e.target.value.trim();
+                this.state.currentPage = 1; // Reset to first page when searching
+                this.processSubmissions();
+            });
+        }
+
+        // Set up search functionality for guest list table
+        const guestSearchBox = document.getElementById('guest-search-box');
+        if (guestSearchBox) {
+            guestSearchBox.addEventListener('input', (e) => {
+                this.state.guestSearchTerm = e.target.value.trim();
+                this.state.guestListPage = 1; // Reset to first page when searching
+                this.processGuestList();
+            });
+        }
+
+        // Set up filter functionality for submissions table
+        const filterDropdown = document.getElementById('filter-dropdown');
+        if (filterDropdown) {
+            filterDropdown.addEventListener('change', (e) => {
+                this.state.submissionFilter = e.target.value;
+                this.state.currentPage = 1; // Reset to first page when filtering
+                this.processSubmissions();
+            });
+        }
+
+        // Set up filter functionality for guest list table
+        const responseFilter = document.getElementById('response-filter');
+        if (responseFilter) {
+            responseFilter.addEventListener('change', (e) => {
+                this.state.responseFilter = e.target.value;
+                this.state.guestListPage = 1; // Reset to first page when filtering
+                this.processGuestList();
+            });
+        }
+
+        // Set up sort functionality for guest list table
+        const guestListHeaders = document.querySelectorAll('#guest-list-container th.sortable');
+        if (guestListHeaders.length > 0) {
+            guestListHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-sort');
+                    if (column) {
+                        // Toggle sort direction if same column is clicked again
+                        if (this.state.guestSortColumn === column) {
+                            this.state.guestSortDirection = this.state.guestSortDirection === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            this.state.guestSortColumn = column;
+                            this.state.guestSortDirection = 'asc';
+                        }
+
+                        // Process guest list again with new sort
+                        this.processGuestList();
+                    }
+                });
+            });
+        }
+
         // Set up modal close functionality
         const modalCloseButtons = document.querySelectorAll('.modal-close');
         modalCloseButtons.forEach(button => {
@@ -784,22 +846,48 @@ const RSVPSystem = {
             console.error('Error logging to debug panel:', e);
         }
 
-        // Filter submissions based on search term
+        // Filter submissions based on search term and filter dropdown
         this.state.filteredSubmissions = this.state.submissions.filter(submission => {
-            // If there's a search term, filter by it
+            // Apply search filter if there's a search term
             if (this.state.searchTerm) {
                 const searchTerm = this.state.searchTerm.toLowerCase();
                 const name = (submission.name || '').toLowerCase();
                 const email = (submission.email || '').toLowerCase();
                 const phone = (submission.phone || '').toLowerCase();
+                const guestNames = (submission.additionalGuests || []).join(' ').toLowerCase();
 
                 // Check if any of the fields contain the search term
-                return name.includes(searchTerm) ||
+                const matchesSearch = name.includes(searchTerm) ||
                        email.includes(searchTerm) ||
-                       phone.includes(searchTerm);
+                       phone.includes(searchTerm) ||
+                       guestNames.includes(searchTerm);
+
+                if (!matchesSearch) return false;
             }
 
-            // If no search term, include all submissions
+            // Apply filter dropdown selection
+            if (this.state.submissionFilter) {
+                switch (this.state.submissionFilter) {
+                    case 'attending':
+                        return submission.attending === 'yes';
+                    case 'not-attending':
+                        return submission.attending === 'no';
+                    case 'recent': {
+                        // Last 7 days
+                        const oneWeekAgo = new Date();
+                        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                        return submission.submittedAt > oneWeekAgo;
+                    }
+                    case 'large-party':
+                        // 4 or more guests
+                        return (submission.guestCount || 0) >= 4;
+                    case 'all':
+                    default:
+                        return true;
+                }
+            }
+
+            // If no filters applied, include all submissions
             return true;
         });
 
@@ -1048,29 +1136,55 @@ const RSVPSystem = {
                 const name = (guest.name || '').toLowerCase();
                 const email = (guest.email || '').toLowerCase();
                 const phone = (guest.phone || '').toLowerCase();
+                const additionalGuests = (guest.additionalGuests || []).join(' ').toLowerCase();
+                const address = guest.address ?
+                    [guest.address.line1, guest.address.line2, guest.address.city, guest.address.state, guest.address.zip]
+                    .filter(Boolean).join(' ').toLowerCase() : '';
 
                 // Check if any of the fields contain the search term
                 const matchesSearch = name.includes(searchTerm) ||
-                                     email.includes(searchTerm) ||
-                                     phone.includes(searchTerm);
+                       email.includes(searchTerm) ||
+                       phone.includes(searchTerm) ||
+                       additionalGuests.includes(searchTerm) ||
+                       address.includes(searchTerm);
 
                 if (!matchesSearch) return false;
             }
 
-            // Apply response filter
-            switch (this.state.responseFilter) {
-                case 'responded':
-                    return guest.hasResponded === true;
-                case 'not-responded':
-                    return guest.hasResponded === false;
-                case 'attending':
-                    return guest.hasResponded === true && guest.response === 'yes';
-                case 'not-attending':
-                    return guest.hasResponded === true && guest.response === 'no';
-                case 'all':
-                default:
-                    return true;
+            // Apply response filter if selected
+            if (this.state.responseFilter && this.state.responseFilter !== 'all') {
+                switch (this.state.responseFilter) {
+                    case 'responded':
+                        return guest.hasResponded === true;
+                    case 'not-responded':
+                        return guest.hasResponded === false;
+                    case 'attending':
+                        return guest.hasResponded === true && guest.response === 'yes';
+                    case 'not-attending':
+                        return guest.hasResponded === true && guest.response === 'no';
+                    case 'out-of-town': {
+                        // Check if guest is from out of state (not CO)
+                        const isOutOfTown = guest.address?.state &&
+                                          guest.address.state.toUpperCase() !== 'CO' &&
+                                          guest.hasResponded &&
+                                          guest.response === 'yes';
+                        return isOutOfTown;
+                    }
+                    case 'in-town': {
+                        // Check if guest is from Colorado
+                        const isInTown = (!guest.address?.state ||
+                                        guest.address.state.toUpperCase() === 'CO') &&
+                                        guest.hasResponded &&
+                                        guest.response === 'yes';
+                        return isInTown;
+                    }
+                    default:
+                        return true;
+                }
             }
+
+            // If no filters applied, include all guests
+            return true;
         });
 
         // Sort the filtered guests
