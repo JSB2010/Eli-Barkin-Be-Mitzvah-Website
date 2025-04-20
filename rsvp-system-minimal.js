@@ -75,6 +75,8 @@ const RSVPSystem = {
         }
     },
 
+
+
     // Update the debug panel with a new log entry
     updateDebugPanel: function(logEntry) {
         const debugLogElement = document.getElementById('debug-log');
@@ -467,7 +469,6 @@ const RSVPSystem = {
                 ToastSystem.success('Data loaded successfully');
             }
         }
-    }
     },
 
     // Show error message
@@ -512,7 +513,6 @@ const RSVPSystem = {
                 dashboardActions.appendChild(retryBtn);
             }
         }
-    }
     },
 
     // Fetch submissions from Firestore
