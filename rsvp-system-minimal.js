@@ -1117,7 +1117,7 @@ const RSVPSystem = {
         });
 
         // Calculate total pages
-        const totalPages = Math.ceil(this.state.filteredGuests.length / this.state.itemsPerPage);
+        const totalPages = Math.ceil(this.state.filteredGuests.length / this.state.guestItemsPerPage);
 
         // Ensure current page is valid
         if (this.state.guestListPage > totalPages) {
@@ -1125,8 +1125,8 @@ const RSVPSystem = {
         }
 
         // Get the current page of guests
-        const startIndex = (this.state.guestListPage - 1) * this.state.itemsPerPage;
-        const endIndex = startIndex + this.state.itemsPerPage;
+        const startIndex = (this.state.guestListPage - 1) * this.state.guestItemsPerPage;
+        const endIndex = startIndex + this.state.guestItemsPerPage;
         const currentPageGuests = this.state.filteredGuests.slice(startIndex, endIndex);
 
         // Update the UI
