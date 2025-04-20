@@ -17,8 +17,9 @@
     <meta name="msapplication-TileColor" content="#2b5797">
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="modern-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="mobile-nav.js" defer></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -28,8 +29,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase Config -->
     <script src="firebase-config.js"></script>
-    <!-- RSVP System Script (New) -->
-    <script src="rsvp-system.js"></script>
+    <!-- RSVP System Script (Minimal) -->
+    <script src="rsvp-system-minimal.js"></script>
     <!-- Sysadmin Dashboard Script -->
     <script src="sysadmin-dashboard.js"></script>
     <!-- Simple Login Script -->
@@ -435,15 +436,73 @@
             max-width: 1300px;
             margin: 0 auto;
             padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
 
         .dashboard-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 0;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--medium-gray);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
+            margin: -2rem -2rem 0 -2rem;
+            padding: 2rem;
+            border-radius: 15px 15px 0 0;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-tabs {
+            display: flex;
+            background-color: var(--primary-blue-dark);
+            margin: 0 -2rem 2.5rem -2rem;
+            padding: 0 2rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-button.active {
+            color: white;
+            border-bottom-color: var(--primary-orange);
+        }
+
+        .tab-button i {
+            margin-right: 0.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
         }
 
         .dashboard-actions {
@@ -452,15 +511,17 @@
         }
 
         .dashboard-title {
-            color: var(--primary-blue);
+            color: white;
             font-size: 2rem;
             font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .dashboard-subtitle {
-            color: var(--dark-gray);
+            color: rgba(255, 255, 255, 0.9);
             font-size: 1rem;
             margin-top: 0.5rem;
+            font-weight: 500;
         }
 
         .stats-container {
@@ -479,6 +540,13 @@
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 180px;
         }
 
         .stat-card:hover {
@@ -542,6 +610,10 @@
             padding: 1.75rem;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .chart-content {
@@ -549,8 +621,16 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 200px;
+            height: 300px;
             padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            max-height: 300px;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .chart-card:hover {
@@ -572,6 +652,8 @@
             box-shadow: var(--card-shadow);
             overflow-x: auto;
             transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+            margin-bottom: 2rem;
         }
 
         .table-container:hover {
@@ -703,6 +785,16 @@
             font-size: 0.95rem;
         }
 
+        .action-column {
+            text-align: center;
+            width: 120px;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
         /* Pagination styles moved to a new location */
 
         .loading {
@@ -713,17 +805,66 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 1rem;
+            min-height: 300px;
+            width: 100%;
         }
 
         .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left: 4px solid var(--primary-blue);
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            border-top-color: var(--primary-blue);
+            animation: spin 1s ease-in-out infinite;
         }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            background-color: rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            border: 1px solid var(--danger);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .error-container p {
+            color: var(--danger-dark);
+            font-weight: 600;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-container .error-message {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 1.5rem;
+            border-radius: 8px;
+            width: 100%;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: var(--black);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-container button {
+            margin-top: 1rem;
+        }
+
+        /* Loading spinner is defined above */
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -762,6 +903,24 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
@@ -1047,6 +1206,136 @@
             background-color: var(--info-dark);
         }
 
+        /* Debug Panel Styles */
+        .debug-panel {
+            background-color: var(--dark-gray);
+            color: var(--white);
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: var(--black);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .debug-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .debug-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-outline-secondary {
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--white);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .debug-content {
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            background-color: #1e1e1e;
+        }
+
+        .debug-log {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .log-entry {
+            padding: 0.5rem;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .log-entry.info {
+            border-left: 3px solid var(--info);
+        }
+
+        .log-entry.warn {
+            border-left: 3px solid var(--warning);
+        }
+
+        .log-entry.error {
+            border-left: 3px solid var(--danger);
+        }
+
+        .log-entry.debug {
+            border-left: 3px solid var(--success);
+        }
+
+        .log-entry .timestamp {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+
+        .log-entry .message {
+            color: var(--white);
+        }
+
+        .log-entry .data {
+            margin-top: 0.25rem;
+            padding: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        /* Success message styles */
+        .success-message {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .success-message p {
+            margin: 0.5rem 0;
+            color: var(--success-dark);
+        }
+
+        .success-message i {
+            font-size: 1.5rem;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
         .btn.danger {
             background-color: var(--danger);
             color: white;
@@ -1057,6 +1346,67 @@
         }
 
         @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem;
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                margin: -1rem -1rem 0 -1rem;
+                padding: 1.5rem;
+            }
+
+            .dashboard-actions {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .dashboard-actions .btn {
+                flex: 1 1 calc(50% - 0.5rem);
+                min-width: 120px;
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .dashboard-tabs {
+                margin: 0 -1rem 1.5rem -1rem;
+                padding: 0 1rem;
+            }
+
+            .tab-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .table-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
             .utilities-container {
                 grid-template-columns: 1fr;
             }
@@ -1071,6 +1421,25 @@
             }
 
             .utility-actions .btn {
+                width: 100%;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-width: 95%;
+                margin: 20px auto;
+                padding: 1rem;
+            }
+
+            .modal-header h3 {
+                font-size: 1.2rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group {
                 width: 100%;
             }
         }
@@ -1463,6 +1832,202 @@
             font-weight: 600;
             background-color: var(--light-blue);
             color: var(--primary-blue);
+        }
+
+        /* Location badge styles */
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            gap: 0.35rem;
+        }
+
+        .location-badge.out-of-town {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .location-badge.local {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        /* Out-of-town events styles */
+        .out-of-town-events {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-blue);
+        }
+
+        .event-name {
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .event-response {
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .event-response.attending {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .event-response.not-attending {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        /* Out-of-town analytics styles */
+        .out-of-town-analytics {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .out-of-town-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .out-of-town-stat-item {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .out-of-town-stat-item .stat-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .out-of-town-stat-item .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .out-of-town-chart-container {
+            flex: 1;
+            min-height: 200px;
+            position: relative;
+        }
+
+        /* Debug panel styles */
+        .debug-panel {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #f0f0f0;
+            border: 1px solid #444;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #444;
+        }
+
+        .debug-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #f0f0f0;
+        }
+
+        .debug-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .debug-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .debug-log {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .debug-log .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #444;
+        }
+
+        .debug-log .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .debug-log .timestamp {
+            color: #888;
+            margin-right: 8px;
+        }
+
+        .debug-log .info {
+            color: #4caf50;
+        }
+
+        .debug-log .warn {
+            color: #ff9800;
+        }
+
+        .debug-log .error {
+            color: #f44336;
+        }
+
+        .debug-log .debug {
+            color: #2196f3;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-outline-secondary {
+            background-color: transparent;
+            border: 1px solid #888;
+            color: #f0f0f0;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #444;
         }
 
         /* Response rate by category chart */
@@ -2115,16 +2680,17 @@
                     <p class="dashboard-subtitle">Track and manage guest list and RSVPs for Eli's Be Mitzvah</p>
                 </div>
                 <div class="dashboard-actions">
-                    <button id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
-                    <button id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
-                    <button id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    <button type="button" id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
+                    <button type="button" id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
+                    <button type="button" id="show-debug-btn" class="btn info"><i class="fas fa-bug"></i> Debug Panel</button>
+                    <button type="button" id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </div>
 
             <!-- Dashboard Tabs -->
             <div class="dashboard-tabs">
-                <button class="tab-button active" data-tab="rsvp-tab"><i class="fas fa-envelope-open-text"></i> RSVP Management</button>
-                <button class="tab-button" data-tab="sysadmin-tab"><i class="fas fa-server"></i> System Admin</button>
+                <button type="button" class="tab-button active" data-tab="rsvp-tab"><i class="fas fa-envelope-open-text"></i> RSVP Management</button>
+                <button type="button" class="tab-button" data-tab="sysadmin-tab"><i class="fas fa-server"></i> System Admin</button>
             </div>
 
             <!-- Dashboard Overview -->
@@ -2134,13 +2700,16 @@
                 </div>
             </div>
 
-            <div id="loading" class="loading">
+            <div id="loading" class="loading hidden">
                 <div class="loading-spinner"></div>
                 <p>Loading data...</p>
             </div>
 
+
+
             <!-- Tab Content Containers -->
             <div id="rsvp-tab" class="tab-content active">
+
                 <!-- RSVP Dashboard Content -->
                 <!-- Key Metrics Section -->
                 <div class="metrics-section">
@@ -2218,6 +2787,29 @@
                             <h3>Attendance Prediction</h3>
                             <div id="attendance-prediction-analytics" class="chart-content"></div>
                         </div>
+
+                        <div class="chart-card">
+                            <h3>Out-of-Town Events</h3>
+                            <div class="out-of-town-analytics">
+                                <div class="out-of-town-stats">
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Out-of-Town Guests:</div>
+                                        <div id="out-of-town-count" class="stat-value">0</div>
+                                    </div>
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Friday Dinner at Linger:</div>
+                                        <div id="friday-dinner-count" class="stat-value">0</div>
+                                    </div>
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Sunday Brunch at Eli's:</div>
+                                        <div id="sunday-brunch-count" class="stat-value">0</div>
+                                    </div>
+                                </div>
+                                <div class="out-of-town-chart-container">
+                                    <canvas id="out-of-town-events-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2246,8 +2838,8 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
-                                <button id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
+                                <button type="button" id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
+                                <button type="button" id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
                             </div>
                         </div>
 
@@ -2259,6 +2851,7 @@
                                         <th class="sortable" data-sort="status">Status <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="response">Response <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="guestCount">Actual Guests <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="location">Location <span class="sort-icon">↕</span></th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -2296,7 +2889,7 @@
                                         <option value="large-party">Large Parties (4+)</option>
                                     </select>
                                 </div>
-                                <button id="export-rsvps-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
+                                <button type="button" id="export-rsvps-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
                             </div>
                         </div>
 
@@ -2417,6 +3010,7 @@
                                     <span class="test-user-badge">Jacob Barkin</span>
                                     <span class="test-user-badge">Hagen Zuzu Barkin</span>
                                     <span class="test-user-badge">Alton Barkin</span>
+                                    <span class="test-user-badge">Jesse Strassburger</span>
                                 </div>
                             </div>
                         </div>
@@ -2672,7 +3266,7 @@
                     <div class="section-header">
                         <h2><i class="fab fa-github"></i> GitHub Repository</h2>
                         <div class="section-actions">
-                            <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" class="btn"><i class="fas fa-external-link-alt"></i> View on GitHub</a>
+                            <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" rel="noopener noreferrer" class="btn"><i class="fas fa-external-link-alt"></i> View on GitHub</a>
                         </div>
                     </div>
 
@@ -2905,6 +3499,12 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="guest-category">Category</label>
+                            <input type="text" id="guest-category" placeholder="Family, Friend, etc.">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="guest-address-line1">Address Line 1</label>
                             <input type="text" id="guest-address-line1">
                         </div>
@@ -2930,10 +3530,6 @@
                             <label for="guest-zip">Zip Code</label>
                             <input type="text" id="guest-zip">
                         </div>
-                        <div class="form-group">
-                            <label for="guest-country">Country (non-US)</label>
-                            <input type="text" id="guest-country">
-                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -2955,16 +3551,143 @@
         </div>
     </div>
 
+    <!-- Edit Guest Modal -->
+    <div id="edit-guest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Guest</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-guest-form">
+                    <input type="hidden" id="edit-guest-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-name">Name (First and Last) *</label>
+                            <input type="text" id="edit-guest-name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-category">Category</label>
+                            <input type="text" id="edit-guest-category" placeholder="Family, Friend, etc.">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-address-line1">Address Line 1</label>
+                            <input type="text" id="edit-guest-address-line1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-address-line2">Address Line 2 (Apt, Suite)</label>
+                            <input type="text" id="edit-guest-address-line2">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-city">City</label>
+                            <input type="text" id="edit-guest-city">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-guest-state">State</label>
+                            <input type="text" id="edit-guest-state">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-zip">Zip Code</label>
+                            <input type="text" id="edit-guest-zip">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-guest-email">Email</label>
+                            <input type="email" id="edit-guest-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-guest-phone">Phone</label>
+                            <input type="tel" id="edit-guest-phone">
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h4>RSVP Status</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-guest-response-status">Response Status</label>
+                                <select id="edit-guest-response-status">
+                                    <option value="not-responded">Not Responded</option>
+                                    <option value="responded">Responded</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-guest-response">Response</label>
+                                <select id="edit-guest-response" disabled>
+                                    <option value="">Select...</option>
+                                    <option value="yes">Attending</option>
+                                    <option value="no">Not Attending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-guest-count">Guest Count</label>
+                            <input type="number" id="edit-guest-count" min="0" value="0" disabled>
+                        </div>
+                    </div>
+                    <div id="edit-guest-error" class="error-message" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary modal-close">Cancel</button>
+                <button id="edit-guest-submit" class="btn primary">Update Guest</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sheet Sync Modal -->
+    <div id="sync-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Sync with Google Sheets</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sync-options">
+                    <div class="sync-option">
+                        <h4><i class="fas fa-cloud-upload-alt"></i> Export to Google Sheet</h4>
+                        <p>Send current guest list and RSVP data to Google Sheets.</p>
+                        <button id="sync-to-sheet" class="btn primary">Export to Sheet</button>
+                    </div>
+                    <div class="sync-option">
+                        <h4><i class="fas fa-cloud-download-alt"></i> Import from Google Sheet</h4>
+                        <p>Import guest list and RSVP data from Google Sheets.</p>
+                        <button id="sync-from-sheet" class="btn primary">Import from Sheet</button>
+                    </div>
+                </div>
+                <div class="sync-warning">
+                    <p><i class="fas fa-exclamation-triangle"></i> Warning: Syncing will overwrite existing data. Make sure to back up your data before proceeding.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- RSVP System script is loaded in the head -->
     <!-- Dashboard Utilities Script -->
     <script src="dashboard-utilities.js"></script>
+    <!-- Toast Notifications -->
+    <script src="toast-notifications.js"></script>
+    <!-- Dashboard Enhancements -->
+    <script src="dashboard-enhancements.js"></script>
+
+
 
     <footer>
         <div class="container">
             <div class="footer-credits">
-                <a href="https://jacobbarkin.com" target="_blank">Designed by Jacob Barkin</a>
+                <a href="https://jacobbarkin.com" target="_blank" rel="noopener noreferrer">Designed by Jacob Barkin</a>
                 <span class="separator">|</span>
-                <a href="https://askthekidz.com" target="_blank">Ask The Kidz</a>
+                <a href="https://askthekidz.com" target="_blank" rel="noopener noreferrer">Ask The Kidz</a>
             </div>
             <div class="footer-links">
                 <a href="index.html">Home</a>
@@ -2976,5 +3699,7 @@
             </div>
         </div>
     </footer>
+
+
 </body>
 </html>

@@ -1,6 +1,19 @@
 // Simple login script for RSVP dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Simple login script loaded');
+    // Initialize Firebase
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            // Initialize Firestore
+            const db = firebase.firestore();
+
+            // Make window.db available globally
+            if (!window.db) {
+                window.db = db;
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing Firebase:', error);
+    }
 
     // Get DOM elements
     const loginForm = document.getElementById('login-form');
@@ -57,20 +70,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Use a small delay to ensure the RSVP system is fully initialized
                 setTimeout(function() {
-                    if (typeof fetchSubmissions === 'function') {
-                        console.log('Calling fetchSubmissions...');
+                    if (typeof RSVPSystem !== 'undefined' && typeof RSVPSystem.initDashboard === 'function') {
+                        console.log('Calling RSVPSystem.initDashboard...');
+                        RSVPSystem.initDashboard();
+                    } else if (typeof fetchSubmissions === 'function' && typeof fetchGuestList === 'function') {
+                        console.log('Calling individual fetch functions...');
                         fetchSubmissions();
-                    } else {
-                        console.error('fetchSubmissions function is not available');
-                    }
-
-                    if (typeof fetchGuestList === 'function') {
-                        console.log('Calling fetchGuestList...');
                         fetchGuestList();
                     } else {
-                        console.error('fetchGuestList function is not available');
+                        console.error('Dashboard initialization functions are not available');
                     }
-                }, 500);
+                }, 1000);
             })
             .catch((error) => {
                 console.error('Login error:', error.code, error.message);
@@ -141,24 +151,44 @@ document.addEventListener('DOMContentLoaded', function() {
             // Load dashboard data
             console.log('Auth state changed - Loading dashboard data');
 
-            // Use a small delay to ensure the RSVP system is fully initialized
-            setTimeout(function() {
-                if (typeof fetchSubmissions === 'function') {
-                    console.log('Auth state changed - Calling fetchSubmissions...');
-                    fetchSubmissions();
-                } else {
-                    console.error('Auth state changed - fetchSubmissions function is not available');
-                }
+            // Use a longer delay to ensure the RSVP system is fully initialized
+            // Also add retry logic in case the system isn't ready yet
+            let retryCount = 0;
+            const maxRetries = 5;
+            const retryDelay = 1000; // 1 second
 
-                if (typeof fetchGuestList === 'function') {
-                    console.log('Auth state changed - Calling fetchGuestList...');
+            function tryLoadData() {
+                if (typeof RSVPSystem !== 'undefined' && RSVPSystem.state && RSVPSystem.state.db) {
+                    // Use the new initDashboard function if available
+                    if (typeof RSVPSystem.initDashboard === 'function') {
+                        RSVPSystem.initDashboard();
+                    } else {
+                        // Fall back to individual fetch functions
+                        RSVPSystem.fetchSubmissions();
+                        RSVPSystem.fetchGuestList();
+                    }
+                } else if (typeof fetchSubmissions === 'function' && typeof fetchGuestList === 'function') {
+                    // Use global fetch functions
+                    fetchSubmissions();
                     fetchGuestList();
                 } else {
-                    console.error('Auth state changed - fetchGuestList function is not available');
+                    // Retry if we haven't reached the maximum number of retries
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        setTimeout(tryLoadData, retryDelay);
+                    } else {
+                        alert('Error: Could not initialize the dashboard. Please try refreshing the page.');
+                    }
                 }
-            }, 500);
+            }
+
+            // Start the retry process after a short delay
+            setTimeout(tryLoadData, 1000);
         } else {
             // User is signed out
+            console.log('Auth state changed - User is signed out');
+
+            // Show login form
             if (dashboardSection && loginSection) {
                 dashboardSection.style.display = 'none';
                 loginSection.style.display = 'block';
