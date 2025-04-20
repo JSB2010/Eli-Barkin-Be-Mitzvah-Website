@@ -19,21 +19,21 @@ const DashboardEnhancements = {
             dark: '#1f2937'
         }
     },
-    
+
     // Initialize the dashboard enhancements
     init: function() {
         console.log('Initializing dashboard enhancements...');
-        
+
         // Add event listeners
         this.setupEventListeners();
-        
+
         // Initialize components
         this.initializeComponents();
-        
+
         // Add keyboard shortcuts
         this.setupKeyboardShortcuts();
     },
-    
+
     // Set up event listeners
     setupEventListeners: function() {
         // Add refresh button functionality
@@ -43,18 +43,18 @@ const DashboardEnhancements = {
                 // Show loading indicator
                 if (typeof RSVPSystem !== 'undefined') {
                     RSVPSystem.showLoading();
-                    
+
                     // Show toast notification
                     if (typeof ToastSystem !== 'undefined') {
                         ToastSystem.info('Refreshing data...', 'Please wait');
                     }
-                    
+
                     // Refresh data
                     setTimeout(function() {
                         if (typeof RSVPSystem.fetchSubmissions === 'function') {
                             RSVPSystem.fetchSubmissions();
                         }
-                        
+
                         if (typeof RSVPSystem.fetchGuestList === 'function') {
                             RSVPSystem.fetchGuestList();
                         }
@@ -62,7 +62,7 @@ const DashboardEnhancements = {
                 }
             });
         }
-        
+
         // Add export buttons functionality
         const exportRsvpsBtn = document.getElementById('export-rsvps-btn');
         if (exportRsvpsBtn) {
@@ -70,7 +70,7 @@ const DashboardEnhancements = {
                 DashboardEnhancements.exportToCSV('rsvps');
             });
         }
-        
+
         const exportGuestListBtn = document.getElementById('export-guest-list-btn');
         if (exportGuestListBtn) {
             exportGuestListBtn.addEventListener('click', function() {
@@ -78,72 +78,90 @@ const DashboardEnhancements = {
             });
         }
     },
-    
+
     // Initialize components
     initializeComponents: function() {
         // Initialize tooltips
         this.initTooltips();
-        
+
         // Initialize modals
         this.initModals();
     },
-    
+
     // Initialize tooltips
     initTooltips: function() {
         // Find all elements with data-tooltip attribute
         const tooltipElements = document.querySelectorAll('[data-tooltip]');
-        
+
         tooltipElements.forEach(element => {
             // Create tooltip element
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
             tooltip.textContent = element.getAttribute('data-tooltip');
-            
+
             // Add tooltip to body
             document.body.appendChild(tooltip);
-            
+
             // Show tooltip on hover
             element.addEventListener('mouseenter', function(e) {
-                const rect = element.getBoundingClientRect();
-                tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
-                tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
-                tooltip.classList.add('visible');
+                try {
+                    const rect = element.getBoundingClientRect();
+
+                    // Make tooltip temporarily visible but transparent to get its dimensions
+                    tooltip.style.visibility = 'hidden';
+                    tooltip.style.opacity = '0';
+                    tooltip.classList.add('visible');
+
+                    // Get dimensions after it's in the DOM and visible
+                    const tooltipWidth = tooltip.offsetWidth || 0;
+                    const tooltipHeight = tooltip.offsetHeight || 0;
+
+                    // Position the tooltip
+                    tooltip.style.left = rect.left + (rect.width / 2) - (tooltipWidth / 2) + 'px';
+                    tooltip.style.top = rect.top - tooltipHeight - 10 + 'px';
+
+                    // Make it fully visible
+                    tooltip.style.visibility = '';
+                    tooltip.style.opacity = '';
+                } catch (error) {
+                    console.error('Error showing tooltip:', error);
+                }
             });
-            
+
             // Hide tooltip on mouse leave
             element.addEventListener('mouseleave', function() {
                 tooltip.classList.remove('visible');
             });
         });
     },
-    
+
     // Initialize modals
     initModals: function() {
         // Find all modal triggers
         const modalTriggers = document.querySelectorAll('[data-modal]');
-        
+
         modalTriggers.forEach(trigger => {
             const modalId = trigger.getAttribute('data-modal');
             const modal = document.getElementById(modalId);
-            
+
             if (modal) {
                 // Open modal on click
                 trigger.addEventListener('click', function() {
                     modal.style.display = 'block';
                     document.body.style.overflow = 'hidden';
-                    
+
                     // Add animation class
                     setTimeout(() => {
                         modal.classList.add('show');
                     }, 10);
                 });
-                
+
                 // Close modal on close button click
                 const closeButtons = modal.querySelectorAll('.modal-close');
                 closeButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         modal.classList.remove('show');
-                        
+
                         // Hide modal after animation
                         setTimeout(() => {
                             modal.style.display = 'none';
@@ -151,12 +169,12 @@ const DashboardEnhancements = {
                         }, DashboardEnhancements.config.animationDuration);
                     });
                 });
-                
+
                 // Close modal on outside click
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) {
                         modal.classList.remove('show');
-                        
+
                         // Hide modal after animation
                         setTimeout(() => {
                             modal.style.display = 'none';
@@ -167,7 +185,7 @@ const DashboardEnhancements = {
             }
         });
     },
-    
+
     // Set up keyboard shortcuts
     setupKeyboardShortcuts: function() {
         document.addEventListener('keydown', function(e) {
@@ -179,7 +197,7 @@ const DashboardEnhancements = {
                     refreshBtn.click();
                 }
             }
-            
+
             // Esc: Close modal
             if (e.key === 'Escape') {
                 const visibleModal = document.querySelector('.modal.show');
@@ -192,7 +210,7 @@ const DashboardEnhancements = {
             }
         });
     },
-    
+
     // Export data to CSV
     exportToCSV: function(type) {
         if (typeof RSVPSystem === 'undefined' || !RSVPSystem.state) {
@@ -201,11 +219,11 @@ const DashboardEnhancements = {
             }
             return;
         }
-        
+
         let data = [];
         let filename = '';
         let headers = [];
-        
+
         if (type === 'rsvps') {
             data = RSVPSystem.state.submissions || [];
             filename = 'rsvp-submissions-' + new Date().toISOString().split('T')[0] + '.csv';
@@ -215,20 +233,20 @@ const DashboardEnhancements = {
             filename = 'guest-list-' + new Date().toISOString().split('T')[0] + '.csv';
             headers = ['Name', 'Email', 'Phone', 'Status', 'Response', 'Guest Count', 'Additional Guests', 'Address', 'City', 'State', 'Zip', 'Category'];
         }
-        
+
         if (data.length === 0) {
             if (typeof ToastSystem !== 'undefined') {
                 ToastSystem.warning('No data to export', 'Export Failed');
             }
             return;
         }
-        
+
         // Process data
         let csvContent = headers.join(',') + '\\n';
-        
+
         data.forEach(item => {
             let row = [];
-            
+
             if (type === 'rsvps') {
                 row = [
                     this.escapeCsvValue(item.name || ''),
@@ -255,10 +273,10 @@ const DashboardEnhancements = {
                     this.escapeCsvValue(item.category || '')
                 ];
             }
-            
+
             csvContent += row.join(',') + '\\n';
         });
-        
+
         // Create download link
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -269,21 +287,21 @@ const DashboardEnhancements = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Show success notification
         if (typeof ToastSystem !== 'undefined') {
             ToastSystem.success(`${data.length} records exported successfully`, 'Export Complete');
         }
     },
-    
+
     // Escape CSV value
     escapeCsvValue: function(value) {
         if (value === null || value === undefined) {
             return '';
         }
-        
+
         value = String(value);
-        
+
         // If the value contains a comma, double quote, or newline, wrap it in double quotes
         if (value.includes(',') || value.includes('"') || value.includes('\\n') || value.includes('\\r')) {
             // Replace double quotes with two double quotes
@@ -291,20 +309,20 @@ const DashboardEnhancements = {
             // Wrap in double quotes
             value = `"${value}"`;
         }
-        
+
         return value;
     },
-    
+
     // Show a confirmation dialog
     confirm: function(message, callback) {
         // Create confirmation modal if it doesn't exist
         let confirmModal = document.getElementById('confirm-modal');
-        
+
         if (!confirmModal) {
             confirmModal = document.createElement('div');
             confirmModal.id = 'confirm-modal';
             confirmModal.className = 'modal';
-            
+
             confirmModal.innerHTML = `
                 <div class="modal-content" style="max-width: 400px;">
                     <div class="modal-header">
@@ -320,9 +338,9 @@ const DashboardEnhancements = {
                     </div>
                 </div>
             `;
-            
+
             document.body.appendChild(confirmModal);
-            
+
             // Close modal on close button click
             const closeButtons = confirmModal.querySelectorAll('.modal-close');
             closeButtons.forEach(button => {
@@ -330,7 +348,7 @@ const DashboardEnhancements = {
                     confirmModal.style.display = 'none';
                 });
             });
-            
+
             // Close modal on outside click
             confirmModal.addEventListener('click', function(e) {
                 if (e.target === confirmModal) {
@@ -338,20 +356,20 @@ const DashboardEnhancements = {
                 }
             });
         }
-        
+
         // Set message
         const messageElement = confirmModal.querySelector('#confirm-message');
         if (messageElement) {
             messageElement.textContent = message;
         }
-        
+
         // Set confirm button action
         const confirmButton = confirmModal.querySelector('#confirm-ok');
         if (confirmButton) {
             // Remove previous event listeners
             const newConfirmButton = confirmButton.cloneNode(true);
             confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
-            
+
             // Add new event listener
             newConfirmButton.addEventListener('click', function() {
                 confirmModal.style.display = 'none';
@@ -360,7 +378,7 @@ const DashboardEnhancements = {
                 }
             });
         }
-        
+
         // Show modal
         confirmModal.style.display = 'block';
     }

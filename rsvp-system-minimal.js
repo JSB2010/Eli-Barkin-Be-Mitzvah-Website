@@ -438,7 +438,8 @@ const RSVPSystem = {
 
             this.resizeTimeout = setTimeout(() => {
                 // Update charts on resize
-                if (document.getElementById('analytics-tab').classList.contains('active')) {
+                const analyticsTab = document.getElementById('analytics-tab');
+                if (analyticsTab && analyticsTab.classList.contains('active')) {
                     this.updateCharts({
                         attendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'yes').length,
                         notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'no').length,
@@ -503,7 +504,7 @@ const RSVPSystem = {
 
         // Close modal when clicking outside of it
         window.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal')) {
+            if (event.target && event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
         });
@@ -539,67 +540,117 @@ const RSVPSystem = {
 
     // Show loading state
     showLoading: function() {
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) {
-            loadingElement.innerHTML = '<div class="loading-spinner"></div><p>Loading data...</p>';
-            loadingElement.classList.remove('hidden');
+        try {
+            console.log('Showing loading indicator');
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.innerHTML = '<div class="loading-spinner"></div><p>Loading data...</p>';
+                loadingElement.classList.remove('hidden');
+            } else {
+                console.warn('Loading element not found in DOM, creating one');
+                // Create a loading element if it doesn't exist
+                const newLoadingElement = document.createElement('div');
+                newLoadingElement.id = 'loading';
+                newLoadingElement.innerHTML = '<div class="loading-spinner"></div><p>Loading data...</p>';
+                newLoadingElement.className = 'loading-overlay';
+                document.body.appendChild(newLoadingElement);
+            }
+        } catch (error) {
+            console.error('Error showing loading indicator:', error);
         }
     },
 
     // Hide loading state
     hideLoading: function() {
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) {
-            loadingElement.classList.add('hidden');
+        try {
+            console.log('Hiding loading indicator');
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.classList.add('hidden');
 
-            // Show toast notification
-            if (typeof ToastSystem !== 'undefined') {
-                ToastSystem.success('Data loaded successfully');
+                // Show toast notification
+                if (typeof ToastSystem !== 'undefined') {
+                    ToastSystem.success('Data loaded successfully');
+                }
+            } else {
+                console.warn('Loading element not found when trying to hide it');
             }
+        } catch (error) {
+            console.error('Error hiding loading indicator:', error);
         }
     },
 
     // Show error message
     showError: function(message) {
-        // Hide loading indicator
-        this.hideLoading();
+        try {
+            console.error('Showing error message:', message);
 
-        // Show toast notification
-        if (typeof ToastSystem !== 'undefined') {
-            ToastSystem.error(message, 'Error');
-        } else {
-            console.error('Error:', message);
-
-            // Fallback to alert if toast system is not available
-            alert('Error: ' + message);
-        }
-
-        // Add retry button
-        const dashboardActions = document.querySelector('.dashboard-actions');
-        if (dashboardActions) {
-            // Check if retry button already exists
-            if (!document.getElementById('retry-data-btn')) {
-                const retryBtn = document.createElement('button');
-                retryBtn.id = 'retry-data-btn';
-                retryBtn.className = 'btn warning';
-                retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Loading';
-                retryBtn.addEventListener('click', () => {
-                    this.showLoading();
-                    this.state.submissionsLoaded = false;
-                    this.state.guestListLoaded = false;
-                    this.state.loadingError = null;
-
-                    // Remove retry button
-                    retryBtn.remove();
-
-                    // Retry fetching data
-                    setTimeout(() => {
-                        this.fetchSubmissions();
-                        this.fetchGuestList();
-                    }, 500);
-                });
-                dashboardActions.appendChild(retryBtn);
+            // Hide loading indicator safely
+            try {
+                this.hideLoading();
+            } catch (loadingError) {
+                console.error('Error hiding loading indicator:', loadingError);
             }
+
+            // Show toast notification
+            if (typeof ToastSystem !== 'undefined') {
+                try {
+                    ToastSystem.error(message, 'Error');
+                } catch (toastError) {
+                    console.error('Error showing toast notification:', toastError);
+                    // Fallback to alert if toast system fails
+                    alert('Error: ' + message);
+                }
+            } else {
+                console.error('Error:', message);
+
+                // Fallback to alert if toast system is not available
+                alert('Error: ' + message);
+            }
+
+            // Add retry button
+            try {
+                const dashboardActions = document.querySelector('.dashboard-actions');
+                if (dashboardActions) {
+                    // Check if retry button already exists
+                    if (!document.getElementById('retry-data-btn')) {
+                        const retryBtn = document.createElement('button');
+                        retryBtn.id = 'retry-data-btn';
+                        retryBtn.className = 'btn warning';
+                        retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Loading';
+                        retryBtn.addEventListener('click', () => {
+                            try {
+                                this.showLoading();
+                                this.state.submissionsLoaded = false;
+                                this.state.guestListLoaded = false;
+                                this.state.loadingError = null;
+
+                                // Remove retry button
+                                retryBtn.remove();
+
+                                // Retry fetching data
+                                setTimeout(() => {
+                                    try {
+                                        this.fetchSubmissions();
+                                        this.fetchGuestList();
+                                    } catch (fetchError) {
+                                        console.error('Error retrying data fetch:', fetchError);
+                                    }
+                                }, 500);
+                            } catch (retryError) {
+                                console.error('Error in retry button handler:', retryError);
+                            }
+                        });
+                        dashboardActions.appendChild(retryBtn);
+                    }
+                }
+            } catch (buttonError) {
+                console.error('Error adding retry button:', buttonError);
+            }
+        } catch (error) {
+            console.error('Critical error in showError function:', error);
+            // Last resort fallback
+            alert('A critical error occurred. Please refresh the page and try again.');
         }
     },
 
@@ -1096,7 +1147,7 @@ const RSVPSystem = {
         // Add event listeners
         document.querySelectorAll(`#${containerId} .pagination-btn`).forEach(button => {
             button.addEventListener('click', () => {
-                if (button.classList.contains('disabled')) return;
+                if (button && button.classList.contains('disabled')) return;
 
                 const page = button.getAttribute('data-page');
                 let newPage = currentPage;
@@ -2931,48 +2982,100 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize the dashboard data
 RSVPSystem.initDashboard = function() {
-    console.log('Initializing dashboard data...');
+    try {
+        console.log('Initializing dashboard data...');
 
-    // Use direct debug if available
-    if (window.directDebug) {
-        window.directDebug('Initializing dashboard data...');
-    }
+        // Use direct debug if available
+        if (window.directDebug) {
+            window.directDebug('Initializing dashboard data...');
+        }
 
-    // Reset loading state
-    this.state.submissionsLoaded = false;
-    this.state.guestListLoaded = false;
-    this.state.loadingError = null;
+        // Reset loading state
+        this.state.submissionsLoaded = false;
+        this.state.guestListLoaded = false;
+        this.state.loadingError = null;
 
-    // Show loading indicator
-    this.showLoading();
+        // Show loading indicator
+        this.showLoading();
 
-    // Check if Firebase is available
-    if (window.directDebug) {
-        window.directDebug(`Firebase available: ${typeof firebase !== 'undefined'}`);
-        window.directDebug(`Firestore available: ${typeof firebase !== 'undefined' && typeof firebase.firestore === 'function'}`);
-        window.directDebug(`Global db available: ${typeof window.db !== 'undefined'}`);
-        window.directDebug(`RSVPSystem.state.db available: ${this.state.db !== null}`);
-    }
+        // Check if Firebase is available
+        const firebaseAvailable = typeof firebase !== 'undefined';
+        const firestoreAvailable = firebaseAvailable && typeof firebase.firestore === 'function';
+        const globalDbAvailable = typeof window.db !== 'undefined' && window.db !== null;
+        const systemDbAvailable = this.state.db !== null && this.state.db !== undefined;
 
-    // Fetch data immediately
-    console.log('Fetching submissions and guest list...');
-    this.fetchSubmissions();
-    this.fetchGuestList();
+        console.log(`Firebase available: ${firebaseAvailable}`);
+        console.log(`Firestore available: ${firestoreAvailable}`);
+        console.log(`Global db available: ${globalDbAvailable}`);
+        console.log(`RSVPSystem.state.db available: ${systemDbAvailable}`);
 
-    // Add a safety timeout to hide the loading indicator after 30 seconds
-    // in case something goes wrong with the data loading
-    setTimeout(() => {
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement && !loadingElement.classList.contains('hidden')) {
-            console.log('Safety timeout reached, hiding loading indicator');
-            this.hideLoading();
+        if (window.directDebug) {
+            window.directDebug(`Firebase available: ${firebaseAvailable}`);
+            window.directDebug(`Firestore available: ${firestoreAvailable}`);
+            window.directDebug(`Global db available: ${globalDbAvailable}`);
+            window.directDebug(`RSVPSystem.state.db available: ${systemDbAvailable}`);
+        }
 
-            // Show error toast
-            if (typeof ToastSystem !== 'undefined') {
-                ToastSystem.warning('Loading took longer than expected. Some data might not be available.', 'Timeout');
+        // Check if we have a database connection
+        if (!systemDbAvailable) {
+            console.error('No database connection available. Attempting to initialize Firebase again.');
+
+            // Try to initialize Firebase again
+            if (firebaseAvailable && firestoreAvailable) {
+                console.log('Attempting to initialize Firestore directly');
+                try {
+                    this.state.db = firebase.firestore();
+                    console.log('Successfully initialized Firestore directly');
+                } catch (error) {
+                    console.error('Failed to initialize Firestore directly:', error);
+                    this.showError('Could not connect to the database. Please try refreshing the page.');
+                    return false;
+                }
+            } else if (globalDbAvailable) {
+                console.log('Using global db instance');
+                this.state.db = window.db;
+            } else {
+                console.error('Firebase and Firestore are not available. Cannot initialize dashboard.');
+                this.showError('Could not initialize the dashboard. Please try refreshing the page.');
+                return false;
             }
         }
-    }, 30000);
+
+        // Fetch data immediately
+        console.log('Fetching submissions and guest list...');
+        this.fetchSubmissions();
+        this.fetchGuestList();
+
+        // Add a safety timeout to hide the loading indicator after 30 seconds
+        // in case something goes wrong with the data loading
+        setTimeout(() => {
+            try {
+                const loadingElement = document.getElementById('loading');
+                try {
+                    if (loadingElement && !loadingElement.classList.contains('hidden')) {
+                        console.log('Safety timeout reached, hiding loading indicator');
+                        this.hideLoading();
+
+                        // Show error toast
+                        if (typeof ToastSystem !== 'undefined') {
+                            ToastSystem.warning('Loading took longer than expected. Some data might not be available.', 'Timeout');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error in safety timeout handler:', error);
+                }
+            } catch (error) {
+                console.error('Error in safety timeout outer handler:', error);
+            }
+        }, 30000);
+
+        console.log('Dashboard initialization complete');
+        return true;
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        this.showError('Could not initialize the dashboard. Please try refreshing the page.');
+        return false;
+    }
 };
 
 // Expose functions globally for the login script
