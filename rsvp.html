@@ -55,6 +55,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.4s ease;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .form-container::before {
@@ -478,11 +479,12 @@
             display: flex;
             background-color: #ebf8ff;
             border-left: 4px solid #3182ce;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
             animation: fadeIn 0.5s ease;
+            border: 1px solid rgba(49, 130, 206, 0.2);
         }
 
         .existing-submission-icon {
@@ -500,36 +502,42 @@
 
         .existing-submission h3 {
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: #2b6cb0;
+            font-size: 1.3rem;
         }
 
         .existing-submission p {
-            margin: 5px 0;
+            margin: 8px 0;
             color: #2c5282;
+            line-height: 1.5;
         }
 
         .existing-submission-note {
             font-style: italic;
             font-size: 0.9rem;
-            margin-top: 10px !important;
+            margin-top: 12px !important;
             color: #4a5568 !important;
+            padding-top: 10px;
+            border-top: 1px solid rgba(49, 130, 206, 0.1);
         }
 
         /* Original update button styling - overridden above */
 
         /* Update notice styling */
         .update-notice {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: #3182ce;
+            margin-top: 12px;
+            text-align: center;
+            font-style: italic;
             font-weight: 600;
             background-color: #ebf8ff;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px dashed #4299e1;
-            animation: pulse 2s infinite;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid rgba(66, 153, 225, 0.3);
+            box-shadow: 0 2px 5px rgba(66, 153, 225, 0.1);
         }
 
         /* Animation moved to optimized-animations.css */
@@ -582,6 +590,8 @@
 
     <section class="rsvp-form">
         <div class="container">
+
+
             <div class="form-container">
                 <h2 id="rsvp-form-title">RSVP Form</h2>
                 <form id="rsvpForm" data-mode="new">
@@ -605,9 +615,9 @@
                         <div class="existing-submission-icon"><i class="fas fa-edit"></i></div>
                         <div class="existing-submission-content">
                             <h3>Update Your RSVP</h3>
-                            <p><strong>You've already submitted an RSVP!</strong></p>
-                            <p>We've filled in your previous responses. You can make changes below and submit again to update your RSVP.</p>
-                            <p class="existing-submission-note">Note: This will replace your previous submission.</p>
+                            <p><strong>We found your previous RSVP</strong></p>
+                            <p>Your previous responses have been loaded. You can review and make any necessary changes below.</p>
+                            <p class="existing-submission-note">Your updated response will replace your previous submission.</p>
                         </div>
                     </div>
 
@@ -668,7 +678,7 @@
 
                     <div class="form-actions" id="submitButtonContainer">
                         <button type="submit" id="submitButton" class="btn"><i class="fas fa-paper-plane"></i> Submit RSVP</button>
-                        <p id="updateNotice" class="update-notice">You are updating your existing RSVP</p>
+                        <p id="updateNotice" class="update-notice">Updating your RSVP</p>
                     </div>
                 </form>
                 <div id="formConfirmation" class="hidden">

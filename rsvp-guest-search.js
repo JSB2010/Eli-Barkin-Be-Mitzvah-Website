@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Production mode - no debug panel
+
     // Get DOM elements
     const nameInput = document.getElementById('name');
     const autocompleteResults = document.getElementById('autocompleteResults');
@@ -294,22 +296,51 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if guest has already submitted an RSVP - Returns submission data with ID or null
     async function checkExistingSubmission(guestName) {
         console.log('[checkExistingSubmission] Started for guest name:', guestName);
+
+
         if (!guestName) {
             console.warn('[checkExistingSubmission] No guest name provided.');
             return null;
         }
 
+
+
         try {
             const db = firebase.firestore();
             const guestNameLower = guestName.toLowerCase().trim(); // Normalize search name
 
+            // Check Firebase initialization
+            if (!db) {
+                console.error('Firebase Firestore not initialized properly');
+                return null;
+            }
+
             // First try to check if the guest has responded in the guestList collection
             // This is a workaround for permission issues with sheetRsvps collection
             console.log('[checkExistingSubmission] Checking guestList for response status...');
-            const guestListQuery = await db.collection('guestList')
-                .where('name', '==', guestName)
-                .limit(1)
-                .get();
+
+            try {
+                await db.collection('guestList')
+                    .where('name', '==', guestName)
+                    .limit(1)
+                    .get();
+                // First attempt is just to check connectivity
+            } catch (guestListError) {
+                console.error('[checkExistingSubmission] Error querying guestList:', guestListError);
+            }
+
+            // Retry the query with proper error handling
+            let guestListQuery;
+            try {
+                guestListQuery = await db.collection('guestList')
+                    .where('name', '==', guestName)
+                    .limit(1)
+                    .get();
+            } catch (error) {
+                console.error(`Failed to query guestList: ${error.message}`);
+                // Continue with the process even if this fails
+                guestListQuery = { empty: true, docs: [] };
+            }
 
             let guestDoc = null;
             let guestData = null;
@@ -317,27 +348,59 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!guestListQuery.empty) {
                 guestDoc = guestListQuery.docs[0];
                 guestData = guestDoc.data();
+                console.log(`[checkExistingSubmission] Found guest in guestList: ${guestData.name} (ID: ${guestDoc.id})`);
 
-                // If the guest has not responded, we can return null immediately
+                // IMPORTANT: We used to return null here if hasResponded was false,
+                // but that caused issues when the collections were out of sync.
+                // Now we ALWAYS check sheetRsvps regardless of the hasResponded flag.
+
                 if (!guestData.hasResponded) {
-                    console.log('[checkExistingSubmission] Guest found in guestList but has not responded yet.');
-                    return null;
-                }
+                    console.log('[checkExistingSubmission] Guest found in guestList but hasResponded=false. Checking sheetRsvps anyway...');
 
-                // If the guest has responded, we'll try to get their submission from sheetRsvps
-                console.log('[checkExistingSubmission] Guest has previously responded. Checking for submission details...');
+                } else {
+                    console.log('[checkExistingSubmission] Guest has previously responded according to guestList. Checking for submission details...');
+
+                }
+            } else {
+                console.log('[checkExistingSubmission] Guest not found in guestList collection');
             }
 
             // Try to query the sheetRsvps collection directly
             try {
                 console.log('[checkExistingSubmission] Querying sheetRsvps for potential matches...');
-                const querySnapshot = await db.collection('sheetRsvps').get();
+                let querySnapshot;
+                try {
+                    querySnapshot = await db.collection('sheetRsvps').get();
+                    console.log(`[checkExistingSubmission] Successfully queried sheetRsvps. Found ${querySnapshot.size} documents.`);
+                } catch (sheetError) {
+                    console.error(`[checkExistingSubmission] Error querying sheetRsvps: ${sheetError.message}`);
+                    throw sheetError; // Re-throw to be caught by the outer catch block
+                }
 
                 let latestMatch = findLatestSubmission(querySnapshot, guestNameLower);
 
                 if (latestMatch) {
                     console.log('[checkExistingSubmission] SUCCESS: Found latest matching submission (ID:', latestMatch.id, ')');
                     normalizeSubmissionData(latestMatch); // Ensure essential fields exist
+
+                    // Check for and repair inconsistency between collections
+                    if (guestDoc && guestData && !guestData.hasResponded) {
+                        console.log(`[checkExistingSubmission] Found inconsistency: Entry exists in sheetRsvps but guestList has hasResponded=false`);
+
+                        try {
+                            // Update the guestList entry to fix the inconsistency
+                            await guestDoc.ref.update({
+                                hasResponded: true,
+                                response: latestMatch.attending === 'yes' ? 'attending' : 'declined',
+                                lastResponseTimestamp: latestMatch.submittedAt || firebase.firestore.Timestamp.now()
+                            });
+                            console.log(`[checkExistingSubmission] Repaired guestList entry for ${guestName} - set hasResponded=true`);
+                        } catch (repairError) {
+                            console.error('[checkExistingSubmission] Failed to repair guestList entry:', repairError);
+                            // Continue anyway - we still found the submission
+                        }
+                    }
+
                     return latestMatch; // Return the full submission data including ID
                 } else {
                     console.log('[checkExistingSubmission] RESULT: No existing submission found for:', guestName);
@@ -348,9 +411,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (innerError.code === 'permission-denied') {
                     console.warn('[checkExistingSubmission] Permission denied for sheetRsvps. Using fallback method...');
 
-                    // If we found the guest in guestList and they have responded, create a basic submission object
-                    if (guestDoc && guestData && guestData.hasResponded) {
-                        console.log('[checkExistingSubmission] Creating submission from guestList data');
+                    // If we found the guest in guestList, create a basic submission object
+                    // We used to only do this if hasResponded was true, but now we do it regardless
+                    if (guestDoc && guestData) {
+                        console.log('[checkExistingSubmission] Creating fallback submission from guestList data');
+                        console.warn(`[checkExistingSubmission] Permission denied for sheetRsvps. Creating fallback submission for ${guestName}`);
+
+                        // If hasResponded is false, we'll create a basic submission anyway
+                        if (!guestData.hasResponded) {
+                            console.log(`[checkExistingSubmission] Creating fallback even though hasResponded=false`);
+                        }
 
                         // Create a basic submission object from guestList data
                         const fallbackSubmission = {
@@ -358,33 +428,66 @@ document.addEventListener('DOMContentLoaded', function() {
                             name: guestData.name,
                             email: guestData.email || '',
                             phone: guestData.phone || '',
-                            attending: guestData.response === 'attending' ? 'yes' : 'no',
+                            // If hasResponded is false, default to 'yes' for attending
+                            attending: guestData.hasResponded ? (guestData.response === 'attending' ? 'yes' : 'no') : 'yes',
                             adultGuests: guestData.adultGuests || [],
                             childGuests: guestData.childGuests || [],
-                            adultCount: guestData.adultCount || 0,
+                            adultCount: guestData.adultCount || (guestData.hasResponded ? 0 : 1), // Default to 1 adult if not responded
                             childCount: guestData.childCount || 0,
                             submittedAt: guestData.lastResponseTimestamp || firebase.firestore.Timestamp.now(),
-                            isFallback: true // Mark this as a fallback submission
+                            isFallback: true, // Mark this as a fallback submission
+                            isNewFallback: !guestData.hasResponded // Flag if this is a new fallback (hasResponded was false)
                         };
 
                         normalizeSubmissionData(fallbackSubmission);
+                        console.log(`[checkExistingSubmission] Created fallback submission for ${guestName} (ID: ${fallbackSubmission.id})`);
                         return fallbackSubmission;
                     }
 
                     // If we couldn't create a fallback, return null without showing an error
+                    console.warn('[checkExistingSubmission] Could not create fallback submission - no valid guest data found');
                     return null;
                 } else {
                     // For other errors, propagate to the outer catch block
+                    console.error(`[checkExistingSubmission] Error in sheetRsvps query: ${innerError.message} (${innerError.code})`);
                     throw innerError;
                 }
             }
 
         } catch (error) {
             console.error('[checkExistingSubmission] CRITICAL ERROR checking for submission:', error);
+
             // Don't show permission errors to the user, just handle them gracefully
             if (error.code !== 'permission-denied') {
                 showErrorMessage('Error Checking RSVP', `Failed to check for existing RSVP: ${error.message}. Please try again.`);
             }
+
+            // Try to create a fallback submission even if we had an error
+            if (guestDoc && guestData && guestData.hasResponded) {
+                console.warn('[checkExistingSubmission] Attempting emergency fallback submission creation after error');
+                try {
+                    const emergencyFallback = {
+                        id: `emergency-fallback-${guestDoc.id}`,
+                        name: guestData.name,
+                        email: guestData.email || '',
+                        phone: guestData.phone || '',
+                        attending: guestData.response === 'attending' ? 'yes' : 'no',
+                        adultGuests: guestData.adultGuests || [],
+                        childGuests: guestData.childGuests || [],
+                        adultCount: guestData.adultCount || 0,
+                        childCount: guestData.childCount || 0,
+                        submittedAt: guestData.lastResponseTimestamp || new Date(),
+                        isFallback: true,
+                        isEmergencyFallback: true
+                    };
+                    normalizeSubmissionData(emergencyFallback);
+                    logDebug('SUCCESS', `Created emergency fallback submission (ID: ${emergencyFallback.id})`);
+                    return emergencyFallback;
+                } catch (fallbackError) {
+                    logDebug('ERROR', `Failed to create emergency fallback: ${fallbackError.message}`);
+                }
+            }
+
             return null; // Return null on error
         }
     }
@@ -438,6 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to process an existing submission and update UI
     function processExistingSubmission(submission) {
         console.log('[processExistingSubmission] Processing submission:', submission);
+
         if (!submission?.id) {
             console.error('[processExistingSubmission] Invalid submission object received:', submission);
             resetSubmissionState();
@@ -466,11 +570,36 @@ document.addEventListener('DOMContentLoaded', function() {
         // If this is a fallback submission (created from guestList), show a special notice
         if (submission.isFallback) {
             console.log('[processExistingSubmission] Processing fallback submission');
+
             const existingSubmissionContent = document.querySelector('.existing-submission-content');
             if (existingSubmissionContent) {
+                // Remove any existing fallback notices first
+                const existingNotices = existingSubmissionContent.querySelectorAll('.fallback-notice');
+                existingNotices.forEach(notice => notice.remove());
+
+                // Add the appropriate fallback notice
                 const fallbackNotice = document.createElement('p');
                 fallbackNotice.className = 'fallback-notice';
-                fallbackNotice.innerHTML = '<i class="fas fa-info-circle"></i> Some of your previous details may not be available, but we\'ll update your RSVP with any changes you make.';
+
+                if (submission.isNewFallback) {
+                    // This is a new fallback (hasResponded was false)
+                    fallbackNotice.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong> We found a record for you in our guest list, but no previous RSVP submission. This form will create a new RSVP for you.';
+                    fallbackNotice.style.backgroundColor = '#fff3cd';
+                    fallbackNotice.style.color = '#856404';
+                    fallbackNotice.style.border = '1px solid #ffeeba';
+                    fallbackNotice.style.padding = '10px';
+
+                    // Also update the form title and button to reflect this is a new submission
+                    formTitle.textContent = 'Submit Your RSVP';
+                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit RSVP';
+
+                    // Update the notice text
+                    updateNotice.innerHTML = `<i class="fas fa-info-circle"></i> You are creating a <strong>new RSVP</strong> for ${submission.name}`;
+                } else {
+                    // This is a regular fallback (hasResponded was true)
+                    fallbackNotice.innerHTML = '<i class="fas fa-info-circle"></i> Some of your previous details may not be available, but we\'ll update your RSVP with any changes you make.';
+                }
+
                 existingSubmissionContent.appendChild(fallbackNotice);
             }
         }
@@ -497,9 +626,45 @@ document.addEventListener('DOMContentLoaded', function() {
         rsvpForm.setAttribute('data-mode', 'update');
         rsvpForm.setAttribute('data-submission-id', submission.id);
         console.log('[processExistingSubmission] Form marked as update mode with ID:', submission.id);
+        logDebug('SUCCESS', `Form switched to update mode with ID: ${submission.id}`);
+
+        // Show debug info about the form state
+        logDebug('INFO', `Form container has update-mode class: ${formContainer?.classList.contains('update-mode')}`);
+        logDebug('INFO', `Form mode attribute: ${rsvpForm.getAttribute('data-mode')}`);
+        logDebug('INFO', `Existing submission info display: ${existingSubmissionInfo.style.display}`);
+        logDebug('INFO', `Update notice display: ${updateNotice.style.display}`);
 
         // Pre-fill form fields with the existing data
         prefillFormWithExistingData(submission);
+
+        // Double-check that the form is properly set up for update mode
+        setTimeout(() => {
+            // Verify the form is in update mode
+            const currentMode = rsvpForm.getAttribute('data-mode');
+            const hasSubmissionId = rsvpForm.hasAttribute('data-submission-id');
+            const formContainerHasClass = document.querySelector('.form-container')?.classList.contains('update-mode');
+
+            logDebug('INFO', `Form state check - Mode: ${currentMode}, Has ID: ${hasSubmissionId}, Container has class: ${formContainerHasClass}`);
+
+            if (currentMode !== 'update' || !hasSubmissionId || !formContainerHasClass) {
+                logDebug('WARNING', 'Form not properly set up for update mode. Attempting to fix...');
+
+                // Force update mode
+                rsvpForm.setAttribute('data-mode', 'update');
+                rsvpForm.setAttribute('data-submission-id', submission.id);
+                document.querySelector('.form-container')?.classList.add('update-mode');
+
+                // Force UI elements
+                existingSubmissionInfo.style.display = 'flex';
+                guestFoundInfo.style.display = 'none';
+                submitButton.innerHTML = '<i class="fas fa-edit"></i> Update RSVP';
+                submitButton.classList.add('update-mode');
+                formTitle.textContent = 'Update Your RSVP';
+                updateNotice.style.display = 'block';
+
+                logDebug('SUCCESS', 'Fixed form update mode settings');
+            }
+        }, 500);
 
         return true; // Indicate success
     }
@@ -592,9 +757,28 @@ document.addEventListener('DOMContentLoaded', function() {
         emailInput.value = submission.email || '';
         phoneInput.value = submission.phone || '';
 
+        // Force a direct update of the DOM
+        try {
+            // Use direct property assignment and then dispatch an input event
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(emailInput, submission.email || '');
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(phoneInput, submission.phone || '');
+
+            // Dispatch events to ensure any listeners are triggered
+            emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+            phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+        } catch (e) {
+            console.warn(`[prefillForm] Failed to force DOM update: ${e.message}`);
+        }
+
         // Determine if attending based on submission data
         const isAttending = submission.attending === 'yes';
         console.log('[prefillForm] Is Attending:', isAttending);
+
+        // Ensure the attending value is normalized
+        if (submission.attending !== 'yes' && submission.attending !== 'no') {
+            console.warn(`[prefillForm] Invalid attending value: "${submission.attending}", defaulting to "yes"`);
+            submission.attending = 'yes'; // Default to yes if invalid
+        }
 
         // Set the appropriate radio button
         if (isAttending) {
@@ -607,6 +791,27 @@ document.addEventListener('DOMContentLoaded', function() {
             attendingYesRadio.checked = false;
             attendingSectionElement.style.display = 'none'; // Hide guest count section
             if (guestsContainer) guestsContainer.style.display = 'none';
+        }
+
+        // Force the radio button state using direct DOM manipulation
+        try {
+            if (isAttending) {
+                attendingYesRadio.setAttribute('checked', 'checked');
+                attendingNoRadio.removeAttribute('checked');
+            } else {
+                attendingNoRadio.setAttribute('checked', 'checked');
+                attendingYesRadio.removeAttribute('checked');
+            }
+
+            // Dispatch change event
+            const event = new Event('change', { bubbles: true });
+            if (isAttending) {
+                attendingYesRadio.dispatchEvent(event);
+            } else {
+                attendingNoRadio.dispatchEvent(event);
+            }
+        } catch (e) {
+            console.warn(`[prefillForm] Failed to force radio button update: ${e.message}`);
         }
 
         // Parse guest counts for attending guests
@@ -626,28 +831,62 @@ document.addEventListener('DOMContentLoaded', function() {
             adultCountInput.value = adultCount;
             childCountInput.value = childCount;
 
+            // Force direct DOM update for count inputs
+            try {
+                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(adultCountInput, adultCount);
+                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(childCountInput, childCount);
+
+                // Dispatch events
+                adultCountInput.dispatchEvent(new Event('input', { bubbles: true }));
+                childCountInput.dispatchEvent(new Event('input', { bubbles: true }));
+                adultCountInput.dispatchEvent(new Event('change', { bubbles: true }));
+                childCountInput.dispatchEvent(new Event('change', { bubbles: true }));
+            } catch (e) {
+                console.warn(`[prefillForm] Failed to force count input update: ${e.message}`);
+            }
+
             // Update guest fields to create the input elements *before* filling them
             updateGuestFields(); // This now respects the counts set above
 
             // Use setTimeout to allow DOM update before filling names
+            // Increase timeout to 500ms for more reliable DOM updates
             setTimeout(() => {
                 console.log('[prefillForm] DOM updated, attempting to fill guest names.');
+
                 // Pre-fill adult guest names
                 if (submission.adultGuests && Array.isArray(submission.adultGuests)) {
                     const adultInputs = adultGuestsContainer.querySelectorAll('input');
                     console.log(`[prefillForm] Found ${adultInputs.length} adult input fields.`);
+
                     submission.adultGuests.forEach((name, index) => {
                         if (adultInputs[index]) {
                             adultInputs[index].value = name || '';
                             console.log(`[prefillForm] Set Adult ${index + 1} to: ${name}`);
+
+                            // Force direct DOM update
+                            try {
+                                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(adultInputs[index], name || '');
+                                adultInputs[index].dispatchEvent(new Event('input', { bubbles: true }));
+                            } catch (e) {
+                                console.warn(`[prefillForm] Failed to force adult name update: ${e.message}`);
+                            }
                         } else {
                             console.warn(`[prefillForm] Could not find input field for Adult ${index + 1}`);
                         }
                     });
+
                     // Ensure the primary guest name field (index 0) is filled even if adultGuests array was empty but adultCount > 0
                     if (adultInputs[0] && !adultInputs[0].value && submission.name) {
                         adultInputs[0].value = submission.name;
                         console.log(`[prefillForm] Set primary adult name from submission.name: ${submission.name}`);
+
+                        // Force direct DOM update
+                        try {
+                            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(adultInputs[0], submission.name);
+                            adultInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                        } catch (e) {
+                            console.warn(`[prefillForm] Failed to force primary name update: ${e.message}`);
+                        }
                     }
                 } else if (adultCount > 0) {
                     // Handle case where adultCount > 0 but adultGuests array is missing/empty
@@ -655,6 +894,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (firstAdultInput && submission.name) {
                         firstAdultInput.value = submission.name;
                         console.log(`[prefillForm] Set primary adult name from submission.name (no array): ${submission.name}`);
+
+                        // Force direct DOM update
+                        try {
+                            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(firstAdultInput, submission.name);
+                            firstAdultInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        } catch (e) {
+                            console.warn(`[prefillForm] Failed to force primary name update (no array): ${e.message}`);
+                        }
                     }
                 }
 
@@ -662,17 +909,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (submission.childGuests && Array.isArray(submission.childGuests)) {
                     const childInputs = childGuestsContainer.querySelectorAll('input');
                     console.log(`[prefillForm] Found ${childInputs.length} child input fields.`);
+
                     submission.childGuests.forEach((name, index) => {
                         if (childInputs[index]) {
                             childInputs[index].value = name || '';
                             console.log(`[prefillForm] Set Child ${index + 1} to: ${name}`);
+
+                            // Force direct DOM update
+                            try {
+                                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(childInputs[index], name || '');
+                                childInputs[index].dispatchEvent(new Event('input', { bubbles: true }));
+                            } catch (e) {
+                                console.warn(`[prefillForm] Failed to force child name update: ${e.message}`);
+                            }
                         } else {
                             console.warn(`[prefillForm] Could not find input field for Child ${index + 1}`);
                         }
                     });
                 }
+
+                // Check if primary guest field is filled
+                const allAdultInputs = adultGuestsContainer.querySelectorAll('input');
+
+                allAdultInputs.forEach((input, i) => {
+                    if (!input.value && i === 0 && submission.name) {
+                        input.value = submission.name; // Ensure primary guest is filled
+                    }
+                });
+
                 console.log('[prefillForm] Finished filling guest names.');
-            }, 200); // Increased delay to 200ms for more reliable DOM updates
+            }, 500); // Increased delay to 500ms for more reliable DOM updates
 
         } else {
             // If not attending, clear/hide guest count fields and clear names
@@ -726,6 +992,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function updateAdultGuestFields(adultCount) {
+
         adultGuestsContainer.innerHTML = ''; // Clear existing fields first
         for (let i = 0; i < adultCount; i++) {
             const guestField = document.createElement('div');
@@ -745,10 +1012,20 @@ document.addEventListener('DOMContentLoaded', function() {
             input.placeholder = i === 0 ? 'Your full name' : `Full name of adult guest ${i + 1}`;
             input.required = true;
 
+            // Store the index as a data attribute for easier debugging
+            input.setAttribute('data-guest-index', i);
+
             // Pre-fill the first field with the selected guest's name ONLY if it's a NEW submission
             // For updates, prefillFormWithExistingData handles filling names
             if (i === 0 && window.selectedGuest && !window.existingSubmission) {
                  input.value = window.selectedGuest.name;
+
+            }
+
+            // Special case for update mode with fallback submission
+            if (i === 0 && window.existingSubmission?.name) {
+                // This ensures the primary guest name is always filled
+                input.value = window.existingSubmission.name;
             }
 
             guestField.appendChild(label);
@@ -819,15 +1096,31 @@ document.addEventListener('DOMContentLoaded', function() {
         attendingNoRadio.addEventListener('change', handleAttendingChange);
     }
 
-    // Helper function to show error messages (assuming it exists or you add it)
+    // Helper function to show error messages
     function showErrorMessage(title, details) {
         console.error(`Error: ${title} - ${details}`);
-        const errorElement = document.getElementById('errorMessage'); // Assuming you have an error element
+        const errorElement = document.getElementById('errorMessage');
         if (errorElement) {
-            errorElement.innerHTML = `<p><strong>${title}</strong></p><p>${details}</p>`;
-            errorElement.style.display = 'block';
+            errorElement.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <div class="error-content">
+                    <div class="error-title">${title}</div>
+                    <div class="error-details">${details}</div>
+                </div>
+            `;
+            errorElement.style.display = 'flex';
         }
-        // You might want a more sophisticated error display
+
+        // Log to debug panel
+        logDebug('ERROR', `${title}: ${details}`);
+    }
+
+    // Helper function for console logging (production version)
+    function logDebug(level, message) {
+        // In production, we only log errors to console
+        if (level === 'ERROR') {
+            console.error(`[${level}] ${message}`);
+        }
     }
 
     // Initial setup if needed

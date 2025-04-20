@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Allow access to the sheet-synced RSVP collection (primary collection)
     match /sheetRsvps/{document=**} {
-      allow read: if request.auth != null;
+      allow read: if true; // Allow anyone to read RSVPs for the form
       allow write: if true; // Allow anyone to submit an RSVP
     }
 
