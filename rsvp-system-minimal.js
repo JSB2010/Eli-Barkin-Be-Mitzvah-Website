@@ -143,72 +143,96 @@ const RSVPSystem = {
         }
 
         // Initialize Firestore - use the global db instance from firebase-config.js
-        try {
-            if (window.db) {
-                console.log('Using global Firestore instance');
-                this.state.db = window.db;
-                try {
-                    this.debug.info('Using global Firestore instance');
-                } catch (e) {
-                    console.error('Error logging to debug panel:', e);
-                }
-            } else {
-                // Try to initialize Firestore directly if global instance is not available
-                console.log('Global Firestore instance not found, initializing directly');
-                this.state.db = firebase.firestore();
-                console.log('Firestore initialized directly');
-                try {
-                    this.debug.info('Firestore initialized directly');
-                } catch (e) {
-                    console.error('Error logging to debug panel:', e);
-                }
-            }
-
-            // Test the Firestore connection
-            console.log('Testing Firestore connection in RSVP System...');
-            this.state.db.collection('guestList').limit(1).get()
-                .then(snapshot => {
-                    console.log('Firestore connection test successful in RSVP System');
-                    try {
-                        this.debug.info('Firestore connection test successful');
-                    } catch (e) {
-                        console.error('Error logging to debug panel:', e);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error testing Firestore connection in RSVP System:', error);
-                    try {
-                        this.debug.error('Error testing Firestore connection:', error);
-                    } catch (e) {
-                        console.error('Error logging to debug panel:', e);
-                    }
-                    if (error.code === 'permission-denied') {
-                        this.showError('Permission denied accessing Firestore. Please make sure you are logged in with the correct account.');
-                    } else {
-                        this.showError('Could not connect to database: ' + error.message);
-                    }
-                });
-        } catch (error) {
-            console.error('Error initializing Firestore in RSVP System:', error);
+        const initFirestore = () => {
             try {
-                this.debug.error('Error initializing Firestore:', error);
-            } catch (e) {
-                console.error('Error logging to debug panel:', e);
+                if (window.db) {
+                    console.log('Using global Firestore instance');
+                    this.state.db = window.db;
+                    try {
+                        this.debug.info('Using global Firestore instance');
+                    } catch (e) {
+                        console.error('Error logging to debug panel:', e);
+                    }
+
+                    // Set up event listeners and continue initialization
+                    this.setupEventListeners();
+                    this.initDebugControls();
+                    this.initDashboard();
+
+                    console.log('RSVP System initialized with global Firestore instance');
+                    try {
+                        this.debug.info('RSVP System initialized with global Firestore instance');
+                    } catch (e) {
+                        console.error('Error logging to debug panel:', e);
+                    }
+                } else {
+                    // Try to initialize Firestore directly if global instance is not available
+                    console.log('Global Firestore instance not found, initializing directly');
+                    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+                        this.state.db = firebase.firestore();
+                        console.log('Firestore initialized directly');
+                        try {
+                            this.debug.info('Firestore initialized directly');
+                        } catch (e) {
+                            console.error('Error logging to debug panel:', e);
+                        }
+
+                        // Set up event listeners and continue initialization
+                        this.setupEventListeners();
+                        this.initDebugControls();
+                        this.initDashboard();
+
+                        console.log('RSVP System initialized with direct Firestore instance');
+                        try {
+                            this.debug.info('RSVP System initialized with direct Firestore instance');
+                        } catch (e) {
+                            console.error('Error logging to debug panel:', e);
+                        }
+                    } else {
+                        console.error('Firebase or Firestore not available');
+                        this.showError('Firebase or Firestore not available. Please check your internet connection and try again.');
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing Firestore in RSVP System:', error);
+                try {
+                    this.debug.error('Error initializing Firestore:', error);
+                } catch (e) {
+                    console.error('Error logging to debug panel:', e);
+                }
+                this.showError('Could not connect to database: ' + error.message);
             }
-            this.showError('Could not connect to database: ' + error.message);
-        }
+        };
 
-        // Set up event listeners
-        this.setupEventListeners();
+        // Check if Firebase is already initialized
+        if (window.isFirebaseReady && window.isFirebaseReady()) {
+            console.log('Firebase is already ready, initializing RSVP System immediately');
+            initFirestore();
+        } else if (window.firestoreInitialized) {
+            // Wait for Firebase to be initialized
+            console.log('Waiting for Firebase to be initialized...');
+            window.firestoreInitialized.then(() => {
+                console.log('Firebase initialized, continuing RSVP System initialization');
+                initFirestore();
+            }).catch(error => {
+                console.error('Firebase initialization failed:', error);
+                this.showError('Failed to initialize Firebase: ' + error.message);
+            });
+        } else {
+            // Listen for the firebase-ready event
+            console.log('Setting up listener for firebase-ready event');
+            document.addEventListener('firebase-ready', () => {
+                console.log('Firebase ready event received, initializing RSVP System');
+                initFirestore();
+            });
 
-        // Initialize debug panel controls
-        this.initDebugControls();
-
-        console.log('RSVP System initialized');
-        try {
-            this.debug.info('RSVP System initialized');
-        } catch (e) {
-            console.error('Error logging to debug panel:', e);
+            // Set a timeout in case the event never fires
+            setTimeout(() => {
+                if (!this.state.db) {
+                    console.log('Firebase initialization timeout, attempting direct initialization');
+                    initFirestore();
+                }
+            }, 5000); // 5 second timeout
         }
     },
 

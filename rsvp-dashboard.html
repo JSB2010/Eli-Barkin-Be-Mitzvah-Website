@@ -27,8 +27,32 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase Config -->
+    <!-- Firebase Config - Load this first to initialize Firebase -->
     <script src="firebase-config.js"></script>
+    <!-- Add a script to detect browser and environment -->
+    <script>
+        // Create a global object to store environment information
+        window.envInfo = {
+            browser: navigator.userAgent,
+            isProduction: window.location.hostname === 'elibarkin.com' || window.location.hostname === 'www.elibarkin.com',
+            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            isFirefox: navigator.userAgent.indexOf('Firefox') > -1,
+            isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+            isChrome: /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor),
+            isEdge: /Edg/.test(navigator.userAgent),
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('Environment information:', window.envInfo);
+
+        // Add a global error handler
+        window.addEventListener('error', function(event) {
+            console.error('Global error caught:', event.error);
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.error('An error occurred: ' + event.error.message, 'Error');
+            }
+        });
+    </script>
     <!-- RSVP System Script (Minimal) -->
     <script src="rsvp-system-minimal.js"></script>
     <!-- Sysadmin Dashboard Script -->
@@ -146,6 +170,7 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
@@ -463,7 +488,7 @@
             padding: 0 2rem;
             overflow-x: auto;
             white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+            /* Modern browsers handle touch scrolling automatically */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -538,6 +563,7 @@
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
@@ -1519,6 +1545,7 @@
 
         .metrics-section .stat-card {
             background-color: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -2646,7 +2673,7 @@
             </div>
             <h2>RSVP Dashboard</h2>
             <p>Welcome to Eli's Be Mitzvah RSVP management system. Please enter your credentials to access the dashboard.</p>
-            <div id="error-message" class="error-message"></div>
+            <div id="login-error-message" class="error-message"></div>
             <form id="login-form" class="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>

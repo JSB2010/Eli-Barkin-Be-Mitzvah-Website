@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
     const loginSection = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
-    const errorMessage = document.getElementById('error-message');
+    const errorMessage = document.getElementById('login-error-message');
 
     if (!loginForm) {
         console.error('Login form not found');
