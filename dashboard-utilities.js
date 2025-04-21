@@ -694,7 +694,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (syncMasterSheetBtn) {
-        syncMasterSheetBtn.addEventListener('click', syncMasterSheet);
+        console.log('Adding event listener to sync master sheet button');
+        syncMasterSheetBtn.addEventListener('click', function() {
+            console.log('Sync master sheet button clicked');
+            syncMasterSheet();
+        });
+    } else {
+        console.error('Sync master sheet button not found');
     }
 
     if (resetTestUsersBtn) {

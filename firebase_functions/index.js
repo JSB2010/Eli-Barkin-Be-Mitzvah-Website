@@ -611,7 +611,9 @@ exports.sendRsvpUpdateConfirmation = functions.firestore
     let changesInfo = '<p><strong>You updated the following information:</strong></p><ul style="padding-left: 20px;">';
 
     if (hasAttendanceChanged) {
-      changesInfo += `<li>Attendance: Changed from "${beforeData.attending === 'yes' ? 'Attending' : 'Not Attending'}" to "${afterData.attending === 'yes' ? 'Attending' : 'Not Attending'}"</li>`;
+      const beforeAttendance = beforeData.attending === 'yes' ? 'Attending' : 'Not Attending';
+      const afterAttendance = afterData.attending === 'yes' ? 'Attending' : 'Not Attending';
+      changesInfo += `<li>Attendance: Changed from "${beforeAttendance}" to "${afterAttendance}"</li>`;
     }
 
     if (hasGuestCountChanged) {
@@ -961,20 +963,20 @@ exports.initializeApiKeys = functions.https.onCall(async (data, context) => {
       return { success: true, message: 'API keys already initialized' };
     }
 
-    // Initialize with placeholder values - real values should be set via Firebase CLI secrets
+    // Initialize with values from environment variables
     await apiKeysRef.set({
-      github: '[GITHUB_TOKEN_PLACEHOLDER]',
+      github: functions.config().github?.token || null,
       googleAnalytics: {
-        viewId: null,
-        clientId: '[GOOGLE_CLIENT_ID_PLACEHOLDER]',
-        clientSecret: '[GOOGLE_CLIENT_SECRET_PLACEHOLDER]'
+        viewId: functions.config().google?.viewid || null,
+        clientId: functions.config().google?.clientid || null,
+        clientSecret: functions.config().google?.clientsecret || null
       },
       cloudflare: {
-        email: null,
-        apiKey: '[CLOUDFLARE_API_KEY_PLACEHOLDER]',
-        zoneId: null
+        email: functions.config().cloudflare?.email || null,
+        apiKey: functions.config().cloudflare?.apikey || null,
+        zoneId: functions.config().cloudflare?.zoneid || null
       },
-      brevo: '[BREVO_API_KEY_PLACEHOLDER]',
+      brevo: functions.config().brevo?.apikey || null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: context.auth.uid
     });
@@ -1159,7 +1161,8 @@ exports.updateGuestListSheet = functions.firestore
       const rsvpUpdateData = [];
       for (let i = 0; i < updatedHeaderValues.length; i++) {
         if (i === rsvpStatusIndex) {
-          rsvpUpdateData.push(rsvpData.attending === 'yes' ? 'Attending' : 'Not Attending');
+          const attendanceStatus = rsvpData.attending === 'yes' ? 'Attending' : 'Not Attending';
+          rsvpUpdateData.push(attendanceStatus);
         } else if (i === emailIndex) {
           rsvpUpdateData.push(rsvpData.email || '');
         } else if (i === phoneIndex) {
