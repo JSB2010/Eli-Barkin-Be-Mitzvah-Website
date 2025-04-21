@@ -17,7 +17,8 @@ const SysadminDashboard = {
         apiKeys: {
             github: null,
             googleAnalytics: {
-                viewId: null,
+                propertyId: null,
+                measurementId: null,
                 clientId: null,
                 clientSecret: null
             },
@@ -82,7 +83,9 @@ const SysadminDashboard = {
                         this.state.apiKeys = {
                             github: apiKeys.github || null,
                             googleAnalytics: {
-                                viewId: apiKeys.googleAnalytics?.viewId || null,
+                                // Support both GA4 and legacy UA structure
+                                propertyId: apiKeys.googleAnalytics?.propertyId || apiKeys.googleAnalytics?.viewId || null,
+                                measurementId: apiKeys.googleAnalytics?.measurementId || null,
                                 clientId: apiKeys.googleAnalytics?.clientId || null,
                                 clientSecret: apiKeys.googleAnalytics?.clientSecret || null
                             },
@@ -146,7 +149,8 @@ const SysadminDashboard = {
         // Log API key status for debugging
         console.log('API Key Status:', {
             github: !!this.state.apiKeys.github,
-            googleAnalytics: !!(this.state.apiKeys.googleAnalytics.viewId &&
+            googleAnalytics: !!(this.state.apiKeys.googleAnalytics.propertyId &&
+                             this.state.apiKeys.googleAnalytics.measurementId &&
                              this.state.apiKeys.googleAnalytics.clientId &&
                              this.state.apiKeys.googleAnalytics.clientSecret),
             cloudflare: !!(this.state.apiKeys.cloudflare.email &&
@@ -451,10 +455,13 @@ const SysadminDashboard = {
         const statusElement = document.getElementById('analytics-status');
         if (!statusElement) return;
 
-        // Since we can't directly check GA status, we'll check if the GA script is loaded
+        // Check if we have GA4 or Universal Analytics loaded
         if (typeof gtag === 'function') {
             statusElement.querySelector('.stat-value').innerHTML =
-                '<span class="status-indicator online"><i class="fas fa-circle"></i> Connected</span>';
+                '<span class="status-indicator online"><i class="fas fa-circle"></i> GA4 Connected</span>';
+        } else if (typeof ga === 'function') {
+            statusElement.querySelector('.stat-value').innerHTML =
+                '<span class="status-indicator online"><i class="fas fa-circle"></i> UA Connected</span>';
         } else {
             statusElement.querySelector('.stat-value').innerHTML =
                 '<span class="status-indicator warning"><i class="fas fa-circle"></i> Not Detected</span>';

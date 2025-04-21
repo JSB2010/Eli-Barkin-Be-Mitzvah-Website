@@ -52,7 +52,7 @@ exports.getApiKeys = functions.https.onCall(async (data, context) => {
     if (!apiKeysDoc.exists) {
       return {
         github: null,
-        googleAnalytics: { viewId: null, clientId: null, clientSecret: null },
+        googleAnalytics: { propertyId: null, measurementId: null, clientId: null, clientSecret: null },
         cloudflare: { email: null, apiKey: null, zoneId: null },
         brevo: null
       };
@@ -62,7 +62,8 @@ exports.getApiKeys = functions.https.onCall(async (data, context) => {
     return {
       github: apiKeys.github,
       googleAnalytics: {
-        viewId: apiKeys.googleAnalytics?.viewId || null,
+        propertyId: apiKeys.googleAnalytics?.propertyId || apiKeys.googleAnalytics?.viewId || null,
+        measurementId: apiKeys.googleAnalytics?.measurementId || null,
         clientId: apiKeys.googleAnalytics?.clientId || null,
         clientSecret: apiKeys.googleAnalytics?.clientSecret || null
       },
