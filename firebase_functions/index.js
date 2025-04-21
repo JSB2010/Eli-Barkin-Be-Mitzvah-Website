@@ -30,57 +30,7 @@ exports.sendStyledAdminNotification = sendStyledAdminNotification;
 exports.sendStyledRsvpConfirmation = sendStyledRsvpConfirmation;
 exports.sendStyledRsvpUpdateConfirmation = sendStyledRsvpUpdateConfirmation;
 
-/**
- * Cloud Function to store and retrieve API keys securely
- */
-exports.initializeApiKeys = functions.https.onCall(async (data, context) => {
-  // Check if the user is authenticated
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'You must be logged in to initialize API keys.'
-    );
-  }
-
-  try {
-    // Get the API keys collection reference
-    const db = admin.firestore();
-    const apiKeysRef = db.collection('apiKeys').doc('config');
-
-    // Check if the document already exists
-    const doc = await apiKeysRef.get();
-    if (doc.exists) {
-      console.log('API keys already exist, not overwriting');
-      return { success: true, message: 'API keys already exist' };
-    }
-
-    // Initialize with values from environment variables
-    await apiKeysRef.set({
-      github: functions.config().github?.token || null,
-      googleAnalytics: {
-        viewId: functions.config().google?.viewid || null,
-        clientId: functions.config().google?.clientid || null,
-        clientSecret: functions.config().google?.clientsecret || null
-      },
-      cloudflare: {
-        email: functions.config().cloudflare?.email || null,
-        apiKey: functions.config().cloudflare?.apikey || null,
-        zoneId: functions.config().cloudflare?.zoneid || null
-      },
-      brevo: functions.config().brevo?.apikey || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedBy: context.auth.uid
-    });
-
-    return { success: true, message: 'API keys initialized successfully' };
-  } catch (error) {
-    console.error('Error initializing API keys:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error initializing API keys: ${error.message}`
-    );
-  }
-});
+// initializeApiKeys function removed to prevent overwriting manually set API keys
 
 /**
  * Cloud Function to get API keys
@@ -142,50 +92,7 @@ exports.getApiKeys = functions.https.onCall(async (data, context) => {
 
 // Removed sendRsvpUpdateConfirmation function - replaced by sendStyledRsvpUpdateConfirmation
 
-/**
- * Cloud Function to store and retrieve API keys securely
- */
-exports.storeApiKeys = functions.https.onCall(async (data, context) => {
-  // Check if the user is authenticated
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'You must be logged in to store API keys.'
-    );
-  }
-
-  try {
-    // Get the API keys collection reference
-    const db = admin.firestore();
-    const apiKeysRef = db.collection('apiKeys').doc('config');
-
-    // Store the API keys
-    await apiKeysRef.set({
-      github: data.github || null,
-      googleAnalytics: {
-        viewId: data.googleAnalytics?.viewId || null,
-        clientId: data.googleAnalytics?.clientId || null,
-        clientSecret: data.googleAnalytics?.clientSecret || null
-      },
-      cloudflare: {
-        email: data.cloudflare?.email || null,
-        apiKey: data.cloudflare?.apiKey || null,
-        zoneId: data.cloudflare?.zoneId || null
-      },
-      brevo: data.brevo || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedBy: context.auth.uid
-    });
-
-    return { success: true, message: 'API keys stored successfully' };
-  } catch (error) {
-    console.error('Error storing API keys:', error);
-    throw new functions.https.HttpsError(
-      'internal',
-      'Error storing API keys. Please try again.'
-    );
-  }
-});
+// storeApiKeys function removed to prevent overwriting manually set API keys
 
 // Removed duplicate initializeApiKeys and getApiKeys functions
 
