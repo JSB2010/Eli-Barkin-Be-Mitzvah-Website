@@ -13,15 +13,5 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
-  },
-  "hosting": {
-    "enabled": false,
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "firebase_functions/**"
-    ]
   }
 }
