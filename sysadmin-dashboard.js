@@ -13,7 +13,22 @@ const SysadminDashboard = {
         logFilter: 'all',
         logs: [],
         currentLogPage: 1,
-        logsPerPage: 20
+        logsPerPage: 20,
+        apiKeys: {
+            github: null,
+            googleAnalytics: {
+                viewId: null,
+                clientId: null,
+                clientSecret: null
+            },
+            cloudflare: {
+                email: null,
+                apiKey: null,
+                zoneId: null
+            },
+            brevo: null
+        },
+        charts: {}
     },
 
     // Initialize the dashboard
@@ -28,10 +43,129 @@ const SysadminDashboard = {
             console.error('Error initializing Firestore for Sysadmin Dashboard:', error);
         }
 
+        // Load saved API keys
+        this.loadApiKeys();
+
         // Set up event listeners
         this.setupEventListeners();
 
         console.log('Sysadmin Dashboard initialized');
+    },
+
+    // Load API keys from local storage
+    loadApiKeys: function() {
+        try {
+            const savedKeys = localStorage.getItem('sysadmin_api_keys');
+            if (savedKeys) {
+                this.state.apiKeys = JSON.parse(savedKeys);
+                console.log('API keys loaded from local storage');
+                this.updateApiKeyFields();
+                this.updateApiKeyStatus();
+            }
+        } catch (error) {
+            console.error('Error loading API keys:', error);
+        }
+    },
+
+    // Save API keys to local storage
+    saveApiKeys: function() {
+        try {
+            // Get values from form fields
+            this.state.apiKeys.github = document.getElementById('github-token').value.trim();
+
+            this.state.apiKeys.googleAnalytics.viewId = document.getElementById('ga-view-id').value.trim();
+            this.state.apiKeys.googleAnalytics.clientId = document.getElementById('ga-client-id').value.trim();
+            this.state.apiKeys.googleAnalytics.clientSecret = document.getElementById('ga-client-secret').value.trim();
+
+            this.state.apiKeys.cloudflare.email = document.getElementById('cloudflare-email').value.trim();
+            this.state.apiKeys.cloudflare.apiKey = document.getElementById('cloudflare-api-key').value.trim();
+            this.state.apiKeys.cloudflare.zoneId = document.getElementById('cloudflare-zone-id').value.trim();
+
+            this.state.apiKeys.brevo = document.getElementById('brevo-api-key').value.trim();
+
+            // Save to local storage
+            localStorage.setItem('sysadmin_api_keys', JSON.stringify(this.state.apiKeys));
+            console.log('API keys saved to local storage');
+
+            // Update status indicators
+            this.updateApiKeyStatus();
+
+            // Show success message
+            ToastSystem.success('API configuration saved successfully', 'Configuration Saved');
+
+            // Refresh data with new API keys
+            this.refreshAllData();
+        } catch (error) {
+            console.error('Error saving API keys:', error);
+            ToastSystem.error('Failed to save API configuration', 'Error');
+        }
+    },
+
+    // Update API key form fields with saved values
+    updateApiKeyFields: function() {
+        // GitHub
+        if (this.state.apiKeys.github) {
+            document.getElementById('github-token').value = this.state.apiKeys.github;
+        }
+
+        // Google Analytics
+        if (this.state.apiKeys.googleAnalytics.viewId) {
+            document.getElementById('ga-view-id').value = this.state.apiKeys.googleAnalytics.viewId;
+        }
+        if (this.state.apiKeys.googleAnalytics.clientId) {
+            document.getElementById('ga-client-id').value = this.state.apiKeys.googleAnalytics.clientId;
+        }
+        if (this.state.apiKeys.googleAnalytics.clientSecret) {
+            document.getElementById('ga-client-secret').value = this.state.apiKeys.googleAnalytics.clientSecret;
+        }
+
+        // Cloudflare
+        if (this.state.apiKeys.cloudflare.email) {
+            document.getElementById('cloudflare-email').value = this.state.apiKeys.cloudflare.email;
+        }
+        if (this.state.apiKeys.cloudflare.apiKey) {
+            document.getElementById('cloudflare-api-key').value = this.state.apiKeys.cloudflare.apiKey;
+        }
+        if (this.state.apiKeys.cloudflare.zoneId) {
+            document.getElementById('cloudflare-zone-id').value = this.state.apiKeys.cloudflare.zoneId;
+        }
+
+        // Brevo
+        if (this.state.apiKeys.brevo) {
+            document.getElementById('brevo-api-key').value = this.state.apiKeys.brevo;
+        }
+    },
+
+    // Update API key status indicators
+    updateApiKeyStatus: function() {
+        this.updateSingleApiStatus('github-api-status', !!this.state.apiKeys.github);
+
+        // Google Analytics - all three fields must be present
+        const gaConfigured = !!(this.state.apiKeys.googleAnalytics.viewId &&
+                             this.state.apiKeys.googleAnalytics.clientId &&
+                             this.state.apiKeys.googleAnalytics.clientSecret);
+        this.updateSingleApiStatus('ga-api-status', gaConfigured);
+
+        // Cloudflare - all three fields must be present
+        const cfConfigured = !!(this.state.apiKeys.cloudflare.email &&
+                             this.state.apiKeys.cloudflare.apiKey &&
+                             this.state.apiKeys.cloudflare.zoneId);
+        this.updateSingleApiStatus('cloudflare-api-status', cfConfigured);
+
+        // Brevo
+        this.updateSingleApiStatus('brevo-api-status', !!this.state.apiKeys.brevo);
+    },
+
+    // Helper function to update a single API status indicator
+    updateSingleApiStatus: function(elementId, isConfigured) {
+        const statusElement = document.getElementById(elementId);
+        if (!statusElement) return;
+
+        const statusHtml = isConfigured
+            ? '<span class="status-indicator online"><i class="fas fa-circle"></i> Configured</span>'
+            : '<span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>';
+
+        statusElement.innerHTML = statusHtml;
     },
 
     // Set up event listeners
@@ -70,6 +204,34 @@ const SysadminDashboard = {
                 this.filterLogs();
             });
         }
+
+        // Save API configuration button
+        const saveApiConfigBtn = document.getElementById('save-api-config-btn');
+        if (saveApiConfigBtn) {
+            saveApiConfigBtn.addEventListener('click', () => {
+                this.saveApiKeys();
+            });
+        }
+
+        // Toggle password visibility buttons
+        const togglePasswordButtons = document.querySelectorAll('.toggle-password');
+        togglePasswordButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.getAttribute('data-target');
+                const inputField = document.getElementById(targetId);
+
+                if (inputField) {
+                    // Toggle between password and text type
+                    if (inputField.type === 'password') {
+                        inputField.type = 'text';
+                        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    } else {
+                        inputField.type = 'password';
+                        button.innerHTML = '<i class="fas fa-eye"></i>';
+                    }
+                }
+            });
+        });
     },
 
     // Switch between tabs
@@ -233,7 +395,12 @@ const SysadminDashboard = {
         if (!statusElement) return;
 
         // Use GitHub API to check repository status
-        fetch('https://api.github.com/repos/JSB2010/Eli-Barkin-Be-Mitzvah-Website')
+        const headers = {};
+        if (this.state.apiKeys.github) {
+            headers.Authorization = `token ${this.state.apiKeys.github}`;
+        }
+
+        fetch('https://api.github.com/repos/JSB2010/Eli-Barkin-Be-Mitzvah-Website', { headers })
             .then(response => {
                 if (response.ok) {
                     statusElement.querySelector('.stat-value').innerHTML =
@@ -422,8 +589,12 @@ const SysadminDashboard = {
             data.push(Math.floor(Math.random() * 60) + 20);
         }
 
-        // Create the chart
-        new Chart(ctx, {
+        // Create the chart and store it in state
+        if (this.state.charts.visitorsChart) {
+            this.state.charts.visitorsChart.destroy();
+        }
+
+        this.state.charts.visitorsChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -608,7 +779,13 @@ const SysadminDashboard = {
     createFirebaseCharts: function() {
         const dbOpsCtx = document.getElementById('db-ops-chart');
         if (dbOpsCtx) {
-            new Chart(dbOpsCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.dbOpsChart) {
+                this.state.charts.dbOpsChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.dbOpsChart = new Chart(dbOpsCtx, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -653,7 +830,13 @@ const SysadminDashboard = {
 
         const functionExecCtx = document.getElementById('function-exec-chart');
         if (functionExecCtx) {
-            new Chart(functionExecCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.functionExecChart) {
+                this.state.charts.functionExecChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.functionExecChart = new Chart(functionExecCtx, {
                 type: 'bar',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -793,11 +976,22 @@ const SysadminDashboard = {
         const commitsTableBody = document.getElementById('commits-table-body');
         if (!commitsTableBody) return;
 
+        // Prepare headers for GitHub API
+        const headers = {};
+        if (this.state.apiKeys.github) {
+            headers.Authorization = `token ${this.state.apiKeys.github}`;
+        }
+
         // Fetch recent commits from GitHub API
-        fetch('https://api.github.com/repos/JSB2010/Eli-Barkin-Be-Mitzvah-Website/commits')
-            .then(response => response.json())
+        fetch('https://api.github.com/repos/JSB2010/Eli-Barkin-Be-Mitzvah-Website/commits', { headers })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API returned ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(commits => {
-                if (commits.length === 0) {
+                if (!commits || commits.length === 0) {
                     commitsTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No commits found</td></tr>';
                     return;
                 }
@@ -822,11 +1016,62 @@ const SysadminDashboard = {
 
                     commitsTableBody.appendChild(row);
                 }
+
+                // Update GitHub stats
+                this.updateGitHubStats(commits);
             })
             .catch(error => {
                 console.error('Error fetching commits:', error);
                 commitsTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading commits</td></tr>';
             });
+    },
+
+    // Update GitHub stats based on commit data
+    updateGitHubStats: function(commits) {
+        if (!commits || commits.length === 0) return;
+
+        // Update total commits count
+        const commitsCard = document.getElementById('commits-card');
+        if (commitsCard) {
+            // We don't know the total count from the API response, so we'll use the count we have
+            commitsCard.querySelector('.stat-value').innerHTML = commits.length + '+';
+        }
+
+        // Update last commit time
+        const lastCommitCard = document.getElementById('last-commit-card');
+        if (lastCommitCard && commits[0]) {
+            const lastCommitDate = new Date(commits[0].commit.author.date);
+            const now = new Date();
+            const diffTime = Math.abs(now - lastCommitDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            let timeAgo;
+            if (diffDays > 0) {
+                timeAgo = diffDays + (diffDays === 1 ? ' day' : ' days') + ' ago';
+            } else {
+                timeAgo = diffHours + (diffHours === 1 ? ' hour' : ' hours') + ' ago';
+            }
+
+            lastCommitCard.querySelector('.stat-value').innerHTML = timeAgo;
+        }
+
+        // Get unique contributors
+        const contributorsSet = new Set();
+        commits.forEach(commit => {
+            // Use optional chaining for cleaner code
+            if (commit?.author?.login) {
+                contributorsSet.add(commit.author.login);
+            } else if (commit?.commit?.author?.name) {
+                contributorsSet.add(commit.commit.author.name);
+            }
+        });
+
+        // Update contributors count
+        const contributorsCard = document.getElementById('contributors-card');
+        if (contributorsCard) {
+            contributorsCard.querySelector('.stat-value').innerHTML = contributorsSet.size;
+        }
     },
 
     // Load Cloudflare analytics
@@ -847,7 +1092,13 @@ const SysadminDashboard = {
     createCloudflareCharts: function() {
         const trafficCtx = document.getElementById('traffic-chart');
         if (trafficCtx) {
-            new Chart(trafficCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.trafficChart) {
+                this.state.charts.trafficChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.trafficChart = new Chart(trafficCtx, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -882,7 +1133,13 @@ const SysadminDashboard = {
 
         const statusCodesCtx = document.getElementById('status-codes-chart');
         if (statusCodesCtx) {
-            new Chart(statusCodesCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.statusCodesChart) {
+                this.state.charts.statusCodesChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.statusCodesChart = new Chart(statusCodesCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['200 OK', '304 Not Modified', '404 Not Found', 'Other'],
@@ -1020,10 +1277,18 @@ const SysadminDashboard = {
             const formattedDate = log.timestamp.toLocaleDateString() + ' ' + log.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
             const row = document.createElement('tr');
+            // Determine status indicator class based on log level
+            let statusClass = 'online';
+            if (log.level === 'error') {
+                statusClass = 'offline';
+            } else if (log.level === 'warning') {
+                statusClass = 'warning';
+            }
+
             row.innerHTML = `
                 <td>${formattedDate}</td>
                 <td>
-                    <span class="status-indicator ${log.level === 'error' ? 'offline' : (log.level === 'warning' ? 'warning' : 'online')}">
+                    <span class="status-indicator ${statusClass}">
                         <i class="fas fa-circle"></i> ${log.level}
                     </span>
                 </td>
