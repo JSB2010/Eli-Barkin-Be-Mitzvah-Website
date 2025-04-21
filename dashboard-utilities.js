@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get utility elements
     const syncSheetToFirebaseBtn = document.getElementById('sync-sheet-to-firebase-btn');
     const syncFirebaseToSheetBtn = document.getElementById('sync-firebase-to-sheet-btn');
+    const syncMasterSheetBtn = document.getElementById('sync-master-sheet-btn');
     const resetTestUsersBtn = document.getElementById('reset-test-users-btn');
     const refreshDataBtnUtil = document.getElementById('refresh-data-btn-util');
     const addGuestBtnUtil = document.getElementById('add-guest-btn-util');
@@ -527,6 +528,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to sync Master Sheet with RSVP data
+    async function syncMasterSheet() {
+        try {
+            showUtilityResults('Syncing Master Sheet with RSVP Data', `
+                <div class="loading-indicator">
+                    <div class="loading-spinner"></div>
+                    <p>Updating master sheet with RSVP data...</p>
+                </div>
+            `);
+
+            // Call the Cloud Function
+            const syncFunction = firebase.functions().httpsCallable('manualUpdateMasterSheet');
+            const result = await syncFunction();
+
+            // Display results
+            if (result.data && result.data.success) {
+                showUtilityResults('Sync Completed Successfully', `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="message-content">
+                            <p>${result.data.message}</p>
+                            <p>Updated ${result.data.updatedCount || 0} RSVPs in the master sheet.</p>
+                        </div>
+                    </div>
+                    ${result.data.errors && result.data.errors.length > 0 ? `
+                    <div class="export-details">
+                        <h4>Sync Issues (${result.data.errors.length}):</h4>
+                        <ul>
+                            ${result.data.errors.map(error => `<li>${error}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    <div class="results-footer">
+                        <button id="refresh-after-master-sync" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh Dashboard Data</button>
+                    </div>
+                `);
+
+                // Add event listener to refresh button
+                document.getElementById('refresh-after-master-sync').addEventListener('click', function() {
+                    if (typeof refreshData === 'function') {
+                        refreshData();
+                    } else if (typeof loadDashboardData === 'function') {
+                        loadDashboardData();
+                    }
+                    hideUtilityResults();
+                });
+            } else {
+                throw new Error(result.data?.message || 'Unknown error occurred');
+            }
+        } catch (error) {
+            console.error('Error syncing master sheet:', error);
+            showUtilityResults('Sync Error', `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div class="message-content">
+                        <p>Failed to sync master sheet with RSVP data.</p>
+                        <p class="error-details">${error.message}</p>
+                    </div>
+                </div>
+                <div class="results-footer">
+                    <button id="try-master-sync-again" class="btn primary"><i class="fas fa-redo"></i> Try Again</button>
+                </div>
+            `, true);
+
+            // Add event listener to try again button
+            document.getElementById('try-master-sync-again').addEventListener('click', function() {
+                syncMasterSheet();
+            });
+        }
+    }
+
     // Function to backup the entire database
     async function backupDatabase() {
         try {
@@ -619,6 +691,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (syncFirebaseToSheetBtn) {
         syncFirebaseToSheetBtn.addEventListener('click', syncFirebaseToSheet);
+    }
+
+    if (syncMasterSheetBtn) {
+        syncMasterSheetBtn.addEventListener('click', syncMasterSheet);
     }
 
     if (resetTestUsersBtn) {

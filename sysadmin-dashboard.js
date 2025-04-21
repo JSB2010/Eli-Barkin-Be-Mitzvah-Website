@@ -152,6 +152,75 @@ const SysadminDashboard = {
                 this.filterLogs();
             });
         }
+
+        // Sync Master Sheet button
+        const syncMasterSheetBtn = document.getElementById('sync-master-sheet-btn');
+        if (syncMasterSheetBtn) {
+            syncMasterSheetBtn.addEventListener('click', () => {
+                this.syncMasterSheet();
+            });
+        }
+    },
+
+    // Sync Master Sheet with RSVP data
+    syncMasterSheet: function() {
+        console.log('Syncing Master Sheet with RSVP data...');
+
+        // Show loading state on the button
+        const syncButton = document.getElementById('sync-master-sheet-btn');
+        if (syncButton) {
+            syncButton.disabled = true;
+            syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        }
+
+        // Call the Firebase function to update the master sheet
+        const manualUpdateMasterSheet = firebase.functions().httpsCallable('manualUpdateMasterSheet');
+
+        manualUpdateMasterSheet()
+            .then(result => {
+                console.log('Master Sheet sync result:', result.data);
+
+                // Show success message
+                if (result.data.success) {
+                    ToastSystem.success(
+                        `Successfully updated ${result.data.updatedCount} RSVPs in the Master Sheet`,
+                        'Sync Complete'
+                    );
+
+                    // If there were errors, log them
+                    if (result.data.errors && result.data.errors.length > 0) {
+                        console.warn('Some RSVPs could not be updated:', result.data.errors);
+
+                        // Show warning toast if there were errors
+                        ToastSystem.warning(
+                            `${result.data.errors.length} RSVPs could not be updated. Check console for details.`,
+                            'Partial Success'
+                        );
+                    }
+
+                    // Update the sync history
+                    this.loadSheetsData();
+                } else {
+                    ToastSystem.error(
+                        result.data.message || 'Failed to sync Master Sheet',
+                        'Sync Failed'
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('Error syncing Master Sheet:', error);
+                ToastSystem.error(
+                    `Error: ${error.message || 'Unknown error'}`,
+                    'Sync Failed'
+                );
+            })
+            .finally(() => {
+                // Reset button state
+                if (syncButton) {
+                    syncButton.disabled = false;
+                    syncButton.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Master Sheet';
+                }
+            });
     },
 
     // Switch between tabs

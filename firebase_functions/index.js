@@ -11,6 +11,8 @@ const { importGuestList } = require('./import-guest-list');
 const { syncGuestToSheet } = require('./sync-guest-list');
 const { syncSheetChanges, manualSyncSheetChanges } = require('./sync-sheet-changes');
 const { removeDuplicateGuests } = require('./remove-duplicates');
+const { updateMasterSheet, manualUpdateMasterSheet } = require('./update-master-sheet');
+const { sendOutOfTownEventNotification } = require('./out-of-town-notifications');
 
 // Export guest list functions
 exports.importGuestList = importGuestList;
@@ -18,6 +20,9 @@ exports.syncGuestToSheet = syncGuestToSheet;
 exports.syncSheetChanges = syncSheetChanges;
 exports.manualSyncSheetChanges = manualSyncSheetChanges;
 exports.removeDuplicateGuests = removeDuplicateGuests;
+exports.updateMasterSheet = updateMasterSheet;
+exports.manualUpdateMasterSheet = manualUpdateMasterSheet;
+exports.sendOutOfTownEventNotification = sendOutOfTownEventNotification;
 
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
