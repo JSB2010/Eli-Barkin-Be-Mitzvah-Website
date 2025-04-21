@@ -379,27 +379,26 @@
 
         .error-message {
             color: var(--danger);
-            margin-bottom: 1.5rem;
             font-size: 0.95rem;
             background-color: rgba(239, 68, 68, 0.1);
             padding: 1rem 1.2rem;
             border-radius: 12px;
             border-left: 4px solid var(--danger);
             text-align: left;
-            display: none;
+            display: none; /* Hidden by default */
             animation: fadeIn 0.4s ease-in-out;
             box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
             opacity: 0;
-            height: 0;
+            max-height: 0;
             overflow: hidden;
             transition: all 0.3s ease;
-            margin-top: 0;
+            margin: 0;
         }
 
         .error-message.visible {
             display: flex;
             opacity: 1;
-            height: auto;
+            max-height: 100px; /* Enough height for the content */
             margin-bottom: 1.5rem;
             align-items: center;
         }
@@ -2708,7 +2707,6 @@
             </div>
             <h2>RSVP Dashboard</h2>
             <p>Welcome to Eli's Be Mitzvah RSVP management system. Please enter your credentials to access the dashboard.</p>
-            <div id="login-error-message" class="error-message"></div>
             <form id="login-form" class="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>
@@ -2720,7 +2718,7 @@
                     <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
                     <i class="fas fa-lock"></i>
                 </div>
-                <div id="error-message" class="error-message"></div>
+                <div id="login-error-message" class="error-message"></div>
                 <button type="submit">
                     <span class="btn-text">Login to Dashboard</span>
                     <i class="fas fa-spinner spinner"></i>

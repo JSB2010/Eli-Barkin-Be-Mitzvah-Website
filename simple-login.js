@@ -215,10 +215,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(message) {
         if (errorMessage) {
             errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-            errorMessage.classList.add('visible');
-            errorMessage.style.display = 'flex';
-            errorMessage.style.opacity = '1';
-            errorMessage.style.height = 'auto';
+            // Use a small timeout to ensure the display change happens before other style changes
+            setTimeout(() => {
+                errorMessage.classList.add('visible');
+            }, 10);
         }
         console.error('Error:', message);
     }
@@ -226,10 +226,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideError() {
         if (errorMessage) {
             errorMessage.classList.remove('visible');
-            errorMessage.style.display = 'none';
-            errorMessage.style.opacity = '0';
-            errorMessage.style.height = '0';
-            errorMessage.innerHTML = '';
+            // Clear the content after the transition completes
+            setTimeout(() => {
+                if (!errorMessage.classList.contains('visible')) {
+                    errorMessage.innerHTML = '';
+                }
+            }, 300); // Match the transition duration in CSS
         }
     }
 });
