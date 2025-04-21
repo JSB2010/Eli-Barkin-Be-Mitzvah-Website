@@ -19,6 +19,8 @@ function initializeChartFixes() {
     // Set Chart.js defaults to avoid DOM measurement issues
     // Note: Chart.platform.disableCSSInjection was removed in Chart.js v4.x
     // Using the new configuration approach instead
+    Chart.defaults.plugins.tooltip.enabled = true;
+    Chart.defaults.plugins.legend.display = true;
 
     // Add a global chart configuration to avoid common issues
     Chart.defaults.font.family = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
