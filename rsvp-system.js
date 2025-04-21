@@ -1010,17 +1010,30 @@ const RSVPSystem = {
 
     // Update guest list statistics
     updateGuestListStats: function() {
+        console.log('Updating guest list statistics...');
+
+        // Get counts
         const totalGuests = this.state.guests.length;
         const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
         const notRespondedCount = totalGuests - respondedCount;
-        const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
-        const notAttendingCount = this.state.guests.filter(guest => guest.response === 'declined').length;
+        const attendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
+        const notAttendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
+
+        console.log(`Total guests: ${totalGuests}, Responded: ${respondedCount}, Not responded: ${notRespondedCount}`);
+        console.log(`Attending: ${attendingCount}, Not attending: ${notAttendingCount}`);
 
         // Calculate percentages
-        const respondedPercent = totalGuests > 0 ? ((respondedCount / totalGuests) * 100).toFixed(1) : 0;
-        const notRespondedPercent = totalGuests > 0 ? ((notRespondedCount / totalGuests) * 100).toFixed(1) : 0;
-        const attendingPercent = respondedCount > 0 ? ((attendingCount / respondedCount) * 100).toFixed(1) : 0;
-        const notAttendingPercent = respondedCount > 0 ? ((notAttendingCount / respondedCount) * 100).toFixed(1) : 0;
+        const respondedPercent = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+        const notRespondedPercent = totalGuests > 0 ? Math.round((notRespondedCount / totalGuests) * 100) : 0;
+        const attendingPercent = respondedCount > 0 ? Math.round((attendingCount / respondedCount) * 100) : 0;
+        const notAttendingPercent = respondedCount > 0 ? Math.round((notAttendingCount / respondedCount) * 100) : 0;
+
+        // Also update the response rate in the header stats
+        const responseRate = respondedPercent;
+        const responseRateElem = document.getElementById('response-rate');
+        if (responseRateElem) {
+            responseRateElem.textContent = `${responseRate}%`;
+        }
 
         // Update DOM elements with null checks
         const elements = {
@@ -1038,7 +1051,12 @@ const RSVPSystem = {
         // Update all elements with null checks
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
-            if (element) element.textContent = value;
+            if (element) {
+                element.textContent = value;
+                console.log(`Updated ${id} with value: ${value}`);
+            } else {
+                console.log(`Element with id ${id} not found`);
+            }
         });
     },
 
@@ -1332,7 +1350,7 @@ const RSVPSystem = {
 
         // Response rate chart
         const responseRateAnalyticsElem = document.getElementById('response-rate-analytics');
-        if (responseRateAnalyticsElem && this.state.guests.length > 0) {
+        if (responseRateAnalyticsElem) {
             console.log('Creating response rate analytics');
 
             // Calculate response rate
@@ -1340,10 +1358,12 @@ const RSVPSystem = {
             const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
             const notRespondedCount = totalGuests - respondedCount;
 
-            const respondedPercentage = Math.round((respondedCount / totalGuests) * 100);
+            const respondedPercentage = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
             const notRespondedPercentage = 100 - respondedPercentage;
 
-            // Create the HTML content
+            console.log(`Response rate: ${respondedPercentage}% (${respondedCount}/${totalGuests})`);
+
+            // Create the HTML content with more detailed styling
             responseRateAnalyticsElem.innerHTML = `
                 <div class="response-rate-container">
                     <div class="response-rate-bar">
@@ -1352,23 +1372,34 @@ const RSVPSystem = {
                     </div>
                     <div class="response-rate-text">
                         <span class="responded-text">${respondedPercentage}% Responded</span>
+                        <span class="not-responded-text">${notRespondedPercentage}% Not Responded</span>
+                    </div>
+                    <div class="response-rate-counts">
+                        <span class="responded-count">${respondedCount} guests responded</span> of <span class="total-count">${totalGuests} total</span>
                     </div>
                 </div>
             `;
+
+            // Also update the response rate in the activity section
+            const responseRateChartElem = document.getElementById('response-rate-chart');
+            if (responseRateChartElem) {
+                responseRateChartElem.textContent = `${respondedPercentage}%`;
+            }
         }
 
         // Attendance prediction chart
         const attendancePredictionAnalyticsElem = document.getElementById('attendance-prediction-analytics');
-        if (attendancePredictionAnalyticsElem && this.state.guests.length > 0) {
+        if (attendancePredictionAnalyticsElem) {
             console.log('Creating attendance prediction analytics');
 
             // Calculate current attendance numbers
             const totalGuests = this.state.guests.length;
             const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
-            const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
+            const attendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
 
             // Calculate attendance rate among those who responded
             const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
+            console.log(`Attendance rate: ${(attendanceRate * 100).toFixed(1)}% (${attendingCount}/${respondedCount} responded guests)`);
 
             // Predict final attendance based on current rate
             const predictedAttendance = Math.round(totalGuests * attendanceRate);
@@ -1377,27 +1408,42 @@ const RSVPSystem = {
             const lowerBound = Math.max(0, Math.round(predictedAttendance * 0.9));
             const upperBound = Math.round(predictedAttendance * 1.1);
 
-            // Create the HTML content
+            console.log(`Predicted attendance: ${predictedAttendance} (range: ${lowerBound}-${upperBound})`);
+
+            // Create the HTML content with more detailed information
             attendancePredictionAnalyticsElem.innerHTML = `
                 <div class="prediction-container">
                     <div class="prediction-value">${predictedAttendance} Guests</div>
                     <div class="prediction-range">Range: ${lowerBound} - ${upperBound}</div>
+                    <div class="prediction-details">
+                        <div class="prediction-detail">Based on ${(attendanceRate * 100).toFixed(1)}% attendance rate</div>
+                        <div class="prediction-detail">${attendingCount} attending of ${respondedCount} responded</div>
+                        <div class="prediction-detail">${totalGuests - respondedCount} guests have not yet responded</div>
+                    </div>
                 </div>
             `;
+
+            // Also update the attendance prediction in the activity section
+            const attendancePredictionElem = document.getElementById('attendance-prediction');
+            if (attendancePredictionElem) {
+                attendancePredictionElem.textContent = `${predictedAttendance} guests`;
+            }
         }
 
         // Out-of-town events chart
-        if (outOfTownEventsChartCanvas && this.state.submissions.length > 0) {
+        if (outOfTownEventsChartCanvas) {
             console.log('Creating out-of-town events chart');
 
-            // Calculate out-of-town event stats
+            // Calculate out-of-town event stats from both submissions and guest list
             const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+            const attendingGuests = this.state.guests.filter(g => g.hasResponded && g.response === 'attending');
 
             // Count out-of-town guests
             let outOfTownCount = 0;
             let fridayDinnerCount = 0;
             let sundayBrunchCount = 0;
 
+            // First check submissions
             attendingSubmissions.forEach(submission => {
                 // Check if guest is out-of-town based on state
                 const isOutOfTown = submission.isOutOfTown ||
@@ -1407,18 +1453,59 @@ const RSVPSystem = {
 
                 if (isOutOfTown) {
                     // Count total out-of-town guests
-                    outOfTownCount += submission.guestCount || 1;
+                    const guestCount = submission.guestCount || 1;
+                    outOfTownCount += guestCount;
 
                     // Count event attendance
                     if (submission.fridayDinner === 'yes') {
-                        fridayDinnerCount += submission.guestCount || 1;
+                        fridayDinnerCount += guestCount;
                     }
 
                     if (submission.sundayBrunch === 'yes') {
-                        sundayBrunchCount += submission.guestCount || 1;
+                        sundayBrunchCount += guestCount;
                     }
                 }
             });
+
+            // Then check guest list for any additional out-of-town guests
+            attendingGuests.forEach(guest => {
+                const isOutOfTown = guest.address &&
+                                   guest.address.state &&
+                                   guest.address.state.toUpperCase() !== 'CO' &&
+                                   guest.address.state.toUpperCase() !== 'COLORADO';
+
+                // Only count if not already counted in submissions
+                // This is a simplification - ideally we'd match by name/email
+                if (isOutOfTown) {
+                    const guestCount = guest.actualGuestCount || 1;
+
+                    // Check if this guest is already counted in submissions
+                    const alreadyCounted = attendingSubmissions.some(s =>
+                        s.name === guest.name || s.email === guest.email);
+
+                    if (!alreadyCounted) {
+                        outOfTownCount += guestCount;
+
+                        // For these guests, we don't know about Friday/Sunday events
+                        // so we make a best guess based on attendance rate of other out-of-town guests
+                        if (outOfTownCount > 0 && fridayDinnerCount > 0) {
+                            const fridayRate = fridayDinnerCount / outOfTownCount;
+                            if (Math.random() < fridayRate) {
+                                fridayDinnerCount += guestCount;
+                            }
+                        }
+
+                        if (outOfTownCount > 0 && sundayBrunchCount > 0) {
+                            const sundayRate = sundayBrunchCount / outOfTownCount;
+                            if (Math.random() < sundayRate) {
+                                sundayBrunchCount += guestCount;
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log(`Out-of-town stats: ${outOfTownCount} guests, ${fridayDinnerCount} for Friday dinner, ${sundayBrunchCount} for Sunday brunch`);
 
             // Update the out-of-town stats in the UI
             const outOfTownCountElem = document.getElementById('out-of-town-count');
@@ -1556,11 +1643,14 @@ const RSVPSystem = {
 
     // Update activity section
     updateActivitySection: function() {
-        // Refactored to reduce cognitive complexity
         console.log('Updating activity section...');
 
+        // Make sure all activity cards are updated
         this.updateLatestRSVP();
         this.updateResponseStats();
+        this.updateAgeDistribution();
+        this.updateResponseRate();
+        this.updateAttendancePrediction();
         this.updateAttendanceChart();
     },
 
@@ -1617,7 +1707,7 @@ const RSVPSystem = {
 
         // Update response trend
         const responseTrendElem = document.getElementById('response-trend');
-        if (responseTrendElem && this.state.submissions.length > 0) {
+        if (responseTrendElem) {
             // Calculate trend based on last 7 days
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -1628,102 +1718,157 @@ const RSVPSystem = {
                 'No new responses in last 7 days';
 
             responseTrendElem.textContent = trendText;
+            console.log('Updated response trend:', trendText);
         }
+    },
 
-        // Update age distribution
+    // Helper method to update age distribution
+    updateAgeDistribution: function() {
+        console.log('Updating age distribution...');
+
         const ageDistributionElem = document.getElementById('age-distribution');
-        console.log('Age distribution element:', ageDistributionElem);
-
-        if (ageDistributionElem && this.state.submissions.length > 0) {
-            // Calculate adult and child counts from attending submissions
-            const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
-            console.log('Attending submissions:', attendingSubmissions.length);
-
-            let totalAdults = 0;
-            let totalChildren = 0;
-
-            attendingSubmissions.forEach(submission => {
-                console.log('Submission adult/child counts:', submission.adultCount, submission.childCount);
-                totalAdults += submission.adultCount || 0;
-                totalChildren += submission.childCount || 0;
-            });
-
-            console.log('Total adults:', totalAdults, 'Total children:', totalChildren);
-
-            const totalGuests = totalAdults + totalChildren;
-            const adultPercentage = totalGuests > 0 ? Math.round((totalAdults / totalGuests) * 100) : 0;
-            const childPercentage = totalGuests > 0 ? Math.round((totalChildren / totalGuests) * 100) : 0;
-
-            console.log('Adult percentage:', adultPercentage, 'Child percentage:', childPercentage);
-
-            // Create the HTML content
-            const htmlContent = `
-                <div class="distribution-bar">
-                    <div class="adults-bar" style="width: ${adultPercentage}%" title="${totalAdults} Adults (${adultPercentage}%)"></div>
-                    <div class="children-bar" style="width: ${childPercentage}%" title="${totalChildren} Children (${childPercentage}%)"></div>
-                </div>
-                <div class="distribution-text">
-                    <span class="adults-text">${totalAdults} Adults</span> /
-                    <span class="children-text">${totalChildren} Children</span>
-                </div>
-            `;
-
-            console.log('Setting HTML content:', htmlContent);
-            ageDistributionElem.innerHTML = htmlContent;
+        if (!ageDistributionElem) {
+            console.log('Age distribution element not found');
+            return;
         }
 
-        // Update response rate chart
+        // Calculate adult and child counts from attending submissions
+        const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+        console.log('Attending submissions:', attendingSubmissions.length);
+
+        let totalAdults = 0;
+        let totalChildren = 0;
+
+        attendingSubmissions.forEach(submission => {
+            totalAdults += submission.adultCount || 0;
+            totalChildren += submission.childCount || 0;
+        });
+
+        console.log('Total adults:', totalAdults, 'Total children:', totalChildren);
+
+        const totalGuests = totalAdults + totalChildren;
+        const adultPercentage = totalGuests > 0 ? Math.round((totalAdults / totalGuests) * 100) : 50; // Default to 50% if no data
+        const childPercentage = totalGuests > 0 ? Math.round((totalChildren / totalGuests) * 100) : 50; // Default to 50% if no data
+
+        // Create the HTML content
+        const htmlContent = `
+            <div class="distribution-bar">
+                <div class="adults-bar" style="width: ${adultPercentage}%" title="${totalAdults} Adults (${adultPercentage}%)"></div>
+                <div class="children-bar" style="width: ${childPercentage}%" title="${totalChildren} Children (${childPercentage}%)"></div>
+            </div>
+            <div class="distribution-text">
+                <span class="adults-text">${totalAdults} Adults</span> /
+                <span class="children-text">${totalChildren} Children</span>
+            </div>
+        `;
+
+        ageDistributionElem.innerHTML = htmlContent;
+        console.log('Updated age distribution');
+    },
+
+    // Helper method to update response rate
+    updateResponseRate: function() {
+        console.log('Updating response rate...');
+
         const responseRateElem = document.getElementById('response-rate-chart');
-        if (responseRateElem && this.state.guests.length > 0) {
-            // Calculate response rate
-            const totalGuests = this.state.guests.length;
-            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
-            const notRespondedCount = totalGuests - respondedCount;
-
-            const respondedPercentage = Math.round((respondedCount / totalGuests) * 100);
-            const notRespondedPercentage = 100 - respondedPercentage;
-
-            // Create the HTML content
-            responseRateElem.innerHTML = `
-                <div class="response-rate-container">
-                    <div class="response-rate-bar">
-                        <div class="responded-bar" style="width: ${respondedPercentage}%" title="${respondedCount} Responded (${respondedPercentage}%)"></div>
-                        <div class="not-responded-bar" style="width: ${notRespondedPercentage}%" title="${notRespondedCount} Not Responded (${notRespondedPercentage}%)"></div>
-                    </div>
-                    <div class="response-rate-text">
-                        <span class="responded-text">${respondedPercentage}% Responded</span>
-                    </div>
-                </div>
-            `;
+        if (!responseRateElem) {
+            console.log('Response rate element not found');
+            return;
         }
 
-        // Update attendance prediction
+        // Calculate response rate
+        const totalGuests = this.state.guests.length;
+        const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+        const notRespondedCount = totalGuests - respondedCount;
+
+        const respondedPercentage = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+        const notRespondedPercentage = 100 - respondedPercentage;
+
+        console.log(`Response rate: ${respondedPercentage}% (${respondedCount}/${totalGuests})`);
+
+        // Create the HTML content
+        responseRateElem.innerHTML = `${respondedPercentage}%`;
+
+        // Also update the main response rate element
+        const mainResponseRateElem = document.getElementById('response-rate');
+        if (mainResponseRateElem) {
+            mainResponseRateElem.textContent = `${respondedPercentage}%`;
+        }
+
+        console.log('Updated response rate');
+    },
+
+    // Helper method to update attendance prediction
+    updateAttendancePrediction: function() {
+        console.log('Updating attendance prediction...');
+
         const attendancePredictionElem = document.getElementById('attendance-prediction');
-        if (attendancePredictionElem && this.state.guests.length > 0) {
-            // Calculate current attendance numbers
-            const totalGuests = this.state.guests.length;
-            const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
-            const attendingCount = this.state.guests.filter(guest => guest.response === 'attending').length;
-            // Removed unused variable
-
-            // Calculate attendance rate among those who responded
-            const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
-
-            // Predict final attendance based on current rate
-            const predictedAttendance = Math.round(totalGuests * attendanceRate);
-
-            // Calculate a range (±10%)
-            const lowerBound = Math.max(0, Math.round(predictedAttendance * 0.9));
-            const upperBound = Math.round(predictedAttendance * 1.1);
-
-            // Create the HTML content
-            attendancePredictionElem.innerHTML = `
-                <div class="prediction-container">
-                    <div class="prediction-value">${predictedAttendance} Guests</div>
-                    <div class="prediction-range">Range: ${lowerBound} - ${upperBound}</div>
-                </div>
-            `;
+        if (!attendancePredictionElem) {
+            console.log('Attendance prediction element not found');
+            return;
         }
+
+        // Calculate current attendance numbers
+        const totalGuests = this.state.guests.length;
+        const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+        const attendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
+
+        // Calculate attendance rate among those who responded
+        const attendanceRate = respondedCount > 0 ? attendingCount / respondedCount : 0;
+        console.log(`Attendance rate: ${(attendanceRate * 100).toFixed(1)}% (${attendingCount}/${respondedCount} responded guests)`);
+
+        // Predict final attendance based on current rate
+        const predictedAttendance = Math.round(totalGuests * attendanceRate);
+
+        // Calculate a range (±10%)
+        const lowerBound = Math.max(0, Math.round(predictedAttendance * 0.9));
+        const upperBound = Math.round(predictedAttendance * 1.1);
+
+        console.log(`Predicted attendance: ${predictedAttendance} (range: ${lowerBound}-${upperBound})`);
+
+        // Create the HTML content
+        attendancePredictionElem.innerHTML = `${predictedAttendance} guests`;
+
+        console.log('Updated attendance prediction');
+    },
+
+    // Helper method to update response stats
+    updateResponseStats: function() {
+        console.log('Updating response stats...');
+
+        // Calculate response stats
+        const totalGuests = this.state.guests.length;
+        const respondedCount = this.state.guests.filter(guest => guest.hasResponded).length;
+        const notRespondedCount = totalGuests - respondedCount;
+        const attendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
+        const notAttendingCount = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
+
+        // Calculate percentages
+        const respondedPercent = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+        const attendingPercent = respondedCount > 0 ? Math.round((attendingCount / respondedCount) * 100) : 0;
+
+        console.log(`Response stats: ${respondedCount}/${totalGuests} responded (${respondedPercent}%), ${attendingCount} attending (${attendingPercent}% of responded)`);
+
+        // Update DOM elements
+        const elements = {
+            'responded-count': respondedCount,
+            'not-responded-count': notRespondedCount,
+            'attending-count': attendingCount,
+            'not-attending-count': notAttendingCount,
+            'response-rate': `${respondedPercent}%`,
+            'attendance-rate': `${attendingPercent}%`
+        };
+
+        // Update all elements with null checks
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+                console.log(`Updated ${id} with value: ${value}`);
+            }
+        });
+
+        console.log('Updated response stats');
     },
 
     // Export guest list to CSV

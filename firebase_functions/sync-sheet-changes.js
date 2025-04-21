@@ -4,24 +4,24 @@ const { google } = require('googleapis');
 
 /**
  * Cloud Function that syncs changes from Google Sheet to Firestore
+ * Reduced frequency to hourly to optimize costs while maintaining data freshness
  */
 exports.syncSheetChanges = functions.pubsub
-  .schedule('every 15 minutes')
+  .schedule('every 60 minutes')
   .onRun(async (context) => {
     return await syncGuestListFromSheet();
   });
 
 /**
  * Helper function to sync guest list from Google Sheet to Firestore
+ * Optimized for reduced complexity and better performance
  */
 async function syncGuestListFromSheet() {
     try {
       console.log('Starting Google Sheet sync check');
-      console.log('Service account:', functions.config().sheets.credentials.client_email);
 
       // Use the specific Google Sheet ID
       const sheetId = '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
-      console.log('Using Google Sheet ID:', sheetId);
 
       // Get the service account credentials from environment
       const serviceAccountCredentials = functions.config().sheets.credentials;
@@ -35,24 +35,17 @@ async function syncGuestListFromSheet() {
       const client = await auth.getClient();
       const sheets = google.sheets({ version: 'v4', auth: client });
 
-      // First, get the sheet names to find the correct sheet
-      console.log('Getting sheet names...');
-      const sheetsResponse = await sheets.spreadsheets.get({
-        spreadsheetId: sheetId,
-      });
-
-      const sheetNames = sheetsResponse.data.sheets.map(sheet => sheet.properties.title);
-      console.log('Available sheets:', sheetNames);
+      // Get sheet info and data in parallel to reduce execution time
+      const [sheetsResponse, headerResponse] = await Promise.all([
+        sheets.spreadsheets.get({ spreadsheetId: sheetId }),
+        sheets.spreadsheets.values.get({
+          spreadsheetId: sheetId,
+          range: 'Sheet1!1:1', // Get header row from first sheet
+        })
+      ]);
 
       // Use the first sheet by default
-      const sheetName = sheetNames[0] || 'Sheet1';
-      console.log('Using sheet name:', sheetName);
-
-      // First get the header row to understand column structure
-      const headerResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId: sheetId,
-        range: `${sheetName}!1:1`, // Get header row
-      });
+      const sheetName = sheetsResponse.data.sheets[0]?.properties.title || 'Sheet1';
 
       if (!headerResponse.data.values || headerResponse.data.values.length === 0) {
         console.error('No header row found in sheet');
@@ -60,24 +53,12 @@ async function syncGuestListFromSheet() {
       }
 
       const headers = headerResponse.data.values[0];
-      console.log('Headers found:', headers);
 
       // Get all data including headers
-      console.log('Fetching data from Google Sheet...');
-      let response;
-      try {
-        response = await sheets.spreadsheets.values.get({
-          spreadsheetId: sheetId,
-          range: sheetName, // Get all data
-        });
-        console.log(`Successfully fetched data from Google Sheet. Found ${response.data.values ? response.data.values.length : 0} rows.`);
-      } catch (error) {
-        console.error('Error fetching data from Google Sheet:', error.message);
-        if (error.message.includes('permission')) {
-          console.error('This might be a permissions issue. Make sure the service account has access to the Google Sheet.');
-        }
-        throw error;
-      }
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: sheetName, // Get all data
+      });
 
       if (!response.data.values || response.data.values.length <= 1) {
         console.log('No data found in sheet or only header row exists');
@@ -88,83 +69,8 @@ async function syncGuestListFromSheet() {
       const rows = response.data.values.slice(1);
       console.log(`Found ${rows.length} data rows in sheet`);
 
-      // Log the headers to see what columns are available
-      console.log('Sheet headers:', headers);
-
-      // Find column indices
-      // First, try to find the name column with the exact column name from the sheet
-      let nameIndex = headers.indexOf('Name Line 1 (First and Last Name)');
-      if (nameIndex === -1) nameIndex = headers.indexOf('Name Line 1');
-      if (nameIndex === -1) nameIndex = headers.indexOf('Name');
-      if (nameIndex === -1) nameIndex = headers.indexOf('Full Name');
-      if (nameIndex === -1) nameIndex = 0; // Default to first column if no match
-
-      console.log('Using name column index:', nameIndex, 'with value:', headers[nameIndex]);
-
-      if (nameIndex === -1 || !headers[nameIndex]) {
-        console.error('Name column not found in sheet');
-        return null;
-      }
-
-      // Find all column indices with fallbacks for different possible column names
-      let additionalNamesIndex = headers.indexOf('Name Line 2 (Additional Names)');
-      if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Name Line 2');
-      if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Additional Names');
-
-      let addressLine1Index = headers.indexOf('Address Line 1');
-      if (addressLine1Index === -1) addressLine1Index = headers.indexOf('Address');
-
-      let addressLine2Index = headers.indexOf('Address Line 2 (Apt, Suite)');
-      if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address Line 2');
-      if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address 2');
-
-      const cityIndex = headers.indexOf('City');
-      const stateIndex = headers.indexOf('State');
-      const zipIndex = headers.indexOf('Zip');
-
-      let countryIndex = headers.indexOf('Country (non-US)');
-      if (countryIndex === -1) countryIndex = headers.indexOf('Country');
-
-      const emailIndex = headers.indexOf('Email');
-      const phoneIndex = headers.indexOf('Phone');
-
-      let categoryIndex = headers.indexOf('Category');
-      if (categoryIndex === -1) categoryIndex = headers.indexOf('Group');
-
-      let maxGuestsIndex = headers.indexOf('Max Guests');
-      if (maxGuestsIndex === -1) maxGuestsIndex = headers.indexOf('Maximum Guests');
-
-      let respondedIndex = headers.indexOf('Responded');
-      if (respondedIndex === -1) respondedIndex = headers.indexOf('Has Responded');
-
-      let rsvpStatusIndex = headers.indexOf('RSVP Status');
-      if (rsvpStatusIndex === -1) rsvpStatusIndex = headers.indexOf('Response');
-
-      let guestCountIndex = headers.indexOf('Guest Count');
-      if (guestCountIndex === -1) guestCountIndex = headers.indexOf('Number of Guests');
-
-      let additionalGuestsIndex = headers.indexOf('Additional Guests');
-      if (additionalGuestsIndex === -1) additionalGuestsIndex = headers.indexOf('Guest Names');
-
-      // Log the column indices to help with debugging
-      console.log('Column indices:', {
-        nameIndex,
-        additionalNamesIndex,
-        addressLine1Index,
-        addressLine2Index,
-        cityIndex,
-        stateIndex,
-        zipIndex,
-        countryIndex,
-        emailIndex,
-        phoneIndex,
-        categoryIndex,
-        maxGuestsIndex,
-        respondedIndex,
-        rsvpStatusIndex,
-        guestCountIndex,
-        additionalGuestsIndex
-      });
+      // Find column indices using a helper function to reduce complexity
+      const columnIndices = findColumnIndices(headers);
 
       // Get Firestore database
       const db = admin.firestore();
@@ -178,57 +84,8 @@ async function syncGuestListFromSheet() {
         existingGuestMap.set(data.name, { id: doc.id, ...data });
       });
 
-      console.log(`Found ${existingGuestMap.size} existing guests in Firestore`);
-
       // Process each row from the sheet
-      let updatedCount = 0;
-      let addedCount = 0;
-      const batch = db.batch();
-
-      for (const row of rows) {
-        // Skip empty rows
-        if (!row[nameIndex]) continue;
-
-        const name = row[nameIndex];
-
-        // Create guest object with available data
-        const guest = {
-          name,
-          additionalNames: additionalNamesIndex >= 0 && row[additionalNamesIndex] ? row[additionalNamesIndex] : '',
-          address: {
-            line1: addressLine1Index >= 0 && row[addressLine1Index] ? row[addressLine1Index] : '',
-            line2: addressLine2Index >= 0 && row[addressLine2Index] ? row[addressLine2Index] : '',
-            city: cityIndex >= 0 && row[cityIndex] ? row[cityIndex] : '',
-            state: stateIndex >= 0 && row[stateIndex] ? row[stateIndex] : '',
-            zip: zipIndex >= 0 && row[zipIndex] ? row[zipIndex] : '',
-            country: countryIndex >= 0 && row[countryIndex] ? row[countryIndex] : ''
-          },
-          email: emailIndex >= 0 && row[emailIndex] ? row[emailIndex] : '',
-          phone: phoneIndex >= 0 && row[phoneIndex] ? row[phoneIndex] : '',
-          category: categoryIndex >= 0 && row[categoryIndex] ? row[categoryIndex] : '',
-          // maxAllowedGuests removed
-          hasResponded: respondedIndex >= 0 && row[respondedIndex] ? row[respondedIndex].toLowerCase() === 'yes' : false,
-          response: rsvpStatusIndex >= 0 && row[rsvpStatusIndex] ? row[rsvpStatusIndex].toLowerCase() : '',
-          actualGuestCount: guestCountIndex >= 0 && row[guestCountIndex] ? parseInt(row[guestCountIndex]) || 0 : 0,
-          additionalGuests: additionalGuestsIndex >= 0 && row[additionalGuestsIndex] ?
-            row[additionalGuestsIndex].split(',').map(g => g.trim()).filter(g => g) : [],
-          lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-        };
-
-        // Check if guest already exists
-        if (existingGuestMap.has(name)) {
-          // Update existing guest
-          const existingGuest = existingGuestMap.get(name);
-          const docRef = guestListRef.doc(existingGuest.id);
-          batch.update(docRef, guest);
-          updatedCount++;
-        } else {
-          // Add new guest
-          const docRef = guestListRef.doc();
-          batch.set(docRef, guest);
-          addedCount++;
-        }
-      }
+      const { batch, updatedCount, addedCount } = processSheetRows(rows, columnIndices, existingGuestMap, guestListRef);
 
       // Commit the batch
       await batch.commit();
@@ -239,6 +96,159 @@ async function syncGuestListFromSheet() {
       console.error('Error syncing guest list from sheet:', error);
       return null;
     }
+}
+
+/**
+ * Helper function to find column indices in the sheet headers
+ */
+function findColumnIndices(headers) {
+  // Find name column index with fallbacks
+  let nameIndex = headers.indexOf('Name Line 1 (First and Last Name)');
+  if (nameIndex === -1) nameIndex = headers.indexOf('Name Line 1');
+  if (nameIndex === -1) nameIndex = headers.indexOf('Name');
+  if (nameIndex === -1) nameIndex = headers.indexOf('Full Name');
+  if (nameIndex === -1) nameIndex = 0; // Default to first column if no match
+
+  // Find all other column indices with fallbacks
+  let additionalNamesIndex = headers.indexOf('Name Line 2 (Additional Names)');
+  if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Name Line 2');
+  if (additionalNamesIndex === -1) additionalNamesIndex = headers.indexOf('Additional Names');
+
+  let addressLine1Index = headers.indexOf('Address Line 1');
+  if (addressLine1Index === -1) addressLine1Index = headers.indexOf('Address');
+
+  let addressLine2Index = headers.indexOf('Address Line 2 (Apt, Suite)');
+  if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address Line 2');
+  if (addressLine2Index === -1) addressLine2Index = headers.indexOf('Address 2');
+
+  const cityIndex = headers.indexOf('City');
+  const stateIndex = headers.indexOf('State');
+  const zipIndex = headers.indexOf('Zip');
+
+  let countryIndex = headers.indexOf('Country (non-US)');
+  if (countryIndex === -1) countryIndex = headers.indexOf('Country');
+
+  const emailIndex = headers.indexOf('Email');
+  const phoneIndex = headers.indexOf('Phone');
+
+  let categoryIndex = headers.indexOf('Category');
+  if (categoryIndex === -1) categoryIndex = headers.indexOf('Group');
+
+  let respondedIndex = headers.indexOf('Responded');
+  if (respondedIndex === -1) respondedIndex = headers.indexOf('Has Responded');
+
+  let rsvpStatusIndex = headers.indexOf('RSVP Status');
+  if (rsvpStatusIndex === -1) rsvpStatusIndex = headers.indexOf('Response');
+
+  let guestCountIndex = headers.indexOf('Guest Count');
+  if (guestCountIndex === -1) guestCountIndex = headers.indexOf('Number of Guests');
+
+  let additionalGuestsIndex = headers.indexOf('Additional Guests');
+  if (additionalGuestsIndex === -1) additionalGuestsIndex = headers.indexOf('Guest Names');
+
+  return {
+    nameIndex,
+    additionalNamesIndex,
+    addressLine1Index,
+    addressLine2Index,
+    cityIndex,
+    stateIndex,
+    zipIndex,
+    countryIndex,
+    emailIndex,
+    phoneIndex,
+    categoryIndex,
+    respondedIndex,
+    rsvpStatusIndex,
+    guestCountIndex,
+    additionalGuestsIndex
+  };
+}
+
+/**
+ * Helper function to process sheet rows and update Firestore
+ */
+function processSheetRows(rows, columnIndices, existingGuestMap, guestListRef) {
+  const db = admin.firestore();
+  const batch = db.batch();
+  let updatedCount = 0;
+  let addedCount = 0;
+
+  // Process each row
+  for (const row of rows) {
+    // Skip empty rows
+    if (!row[columnIndices.nameIndex]) continue;
+
+    const name = row[columnIndices.nameIndex];
+
+    // Create guest object
+    const guest = createGuestObject(row, columnIndices);
+
+    // Update or add the guest
+    if (existingGuestMap.has(name)) {
+      // Update existing guest
+      const existingGuest = existingGuestMap.get(name);
+      const docRef = guestListRef.doc(existingGuest.id);
+      batch.update(docRef, guest);
+      updatedCount++;
+    } else {
+      // Add new guest
+      const docRef = guestListRef.doc();
+      batch.set(docRef, guest);
+      addedCount++;
+    }
+  }
+
+  return { batch, updatedCount, addedCount };
+}
+
+/**
+ * Helper function to create a guest object from a row
+ */
+function createGuestObject(row, columnIndices) {
+  const {
+    nameIndex,
+    additionalNamesIndex,
+    addressLine1Index,
+    addressLine2Index,
+    cityIndex,
+    stateIndex,
+    zipIndex,
+    countryIndex,
+    emailIndex,
+    phoneIndex,
+    categoryIndex,
+    respondedIndex,
+    rsvpStatusIndex,
+    guestCountIndex,
+    additionalGuestsIndex
+  } = columnIndices;
+
+  // Get field values with null checks
+  const getValue = (index) => index >= 0 && row[index] ? row[index] : '';
+
+  // Create the guest object
+  return {
+    name: getValue(nameIndex),
+    additionalNames: getValue(additionalNamesIndex),
+    address: {
+      line1: getValue(addressLine1Index),
+      line2: getValue(addressLine2Index),
+      city: getValue(cityIndex),
+      state: getValue(stateIndex),
+      zip: getValue(zipIndex),
+      country: getValue(countryIndex)
+    },
+    email: getValue(emailIndex),
+    phone: getValue(phoneIndex),
+    category: getValue(categoryIndex),
+    hasResponded: respondedIndex >= 0 && row[respondedIndex] ? row[respondedIndex].toLowerCase() === 'yes' : false,
+    response: rsvpStatusIndex >= 0 && row[rsvpStatusIndex] ? row[rsvpStatusIndex].toLowerCase() : '',
+    actualGuestCount: guestCountIndex >= 0 && row[guestCountIndex] ? parseInt(row[guestCountIndex]) || 0 : 0,
+    additionalGuests: additionalGuestsIndex >= 0 && row[additionalGuestsIndex] ?
+      row[additionalGuestsIndex].split(',').map(g => g.trim()).filter(g => g) : [],
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+  };
 }
 
 /**
