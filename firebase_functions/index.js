@@ -13,6 +13,9 @@ const { syncSheetChanges, manualSyncSheetChanges } = require('./sync-sheet-chang
 const { removeDuplicateGuests } = require('./remove-duplicates');
 const { updateMasterSheet, manualUpdateMasterSheet } = require('./update-master-sheet');
 const { sendOutOfTownEventNotification } = require('./out-of-town-notifications');
+const { sendOutOfTownGuestEmail } = require('./out-of-town-emails');
+const { sendStyledAdminNotification } = require('./styled-admin-emails');
+const { sendStyledRsvpConfirmation, sendStyledRsvpUpdateConfirmation } = require('./enhanced-email-functions');
 
 // Export guest list functions
 exports.importGuestList = importGuestList;
@@ -23,6 +26,10 @@ exports.removeDuplicateGuests = removeDuplicateGuests;
 exports.updateMasterSheet = updateMasterSheet;
 exports.manualUpdateMasterSheet = manualUpdateMasterSheet;
 exports.sendOutOfTownEventNotification = sendOutOfTownEventNotification;
+exports.sendOutOfTownGuestEmail = sendOutOfTownGuestEmail;
+exports.sendStyledAdminNotification = sendStyledAdminNotification;
+exports.sendStyledRsvpConfirmation = sendStyledRsvpConfirmation;
+exports.sendStyledRsvpUpdateConfirmation = sendStyledRsvpUpdateConfirmation;
 
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
@@ -225,8 +232,15 @@ exports.sendRsvpConfirmation = functions.firestore
 
     // Determine guest information
     const isAttending = rsvpData.attending === 'yes';
+
+    // Extract nested ternary into separate statement
+    let guestText = 'guest';
+    if (rsvpData.guestCount > 1) {
+      guestText = 'guests';
+    }
+
     const guestInfo = isAttending
-      ? `<p>We have you down for ${rsvpData.guestCount || 1} ${rsvpData.guestCount > 1 ? 'guests' : 'guest'}.</p>`
+      ? `<p>We have you down for ${rsvpData.guestCount || 1} ${guestText}.</p>`
       : '';
 
     // Get additional guests if any
@@ -400,13 +414,22 @@ exports.sendRsvpConfirmation = functions.firestore
                 <p style="margin: 0 0 10px;"><strong style="color: #0d47a1;">Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
                 ${guestInfo}
                 ${additionalGuests}
-                ${isAttending && rsvpData.isOutOfTown ? `
-                <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
-                <ul style="margin: 5px 0 0; padding-left: 20px;">
-                  <li>Friday Night Dinner at Linger: ${rsvpData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'}</li>
-                  <li>Sunday Brunch at Eli's home: ${rsvpData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'}</li>
-                </ul>
-                ` : ''}
+                ${(() => {
+                  if (isAttending && rsvpData.isOutOfTown) {
+                    // Extract nested ternary operations
+                    const fridayDinnerStatus = rsvpData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending';
+                    const sundayBrunchStatus = rsvpData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending';
+
+                    return `
+                    <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
+                    <ul style="margin: 5px 0 0; padding-left: 20px;">
+                      <li>Friday Night Dinner at Linger: ${fridayDinnerStatus}</li>
+                      <li>Sunday Brunch at Eli's home: ${sundayBrunchStatus}</li>
+                    </ul>
+                    `;
+                  }
+                  return '';
+                })()}
               </td>
             </tr>
           </table>
@@ -773,13 +796,22 @@ exports.sendRsvpUpdateConfirmation = functions.firestore
                 <p style="margin: 0 0 10px;"><strong style="color: #0d47a1;">Your updated response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
                 ${guestInfo}
                 ${additionalGuests}
-                ${isAttending && afterData.isOutOfTown ? `
-                <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
-                <ul style="margin: 5px 0 0; padding-left: 20px;">
-                  <li>Friday Night Dinner at Linger: ${afterData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'}</li>
-                  <li>Sunday Brunch at Eli's home: ${afterData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'}</li>
-                </ul>
-                ` : ''}
+                ${(() => {
+                  if (isAttending && afterData.isOutOfTown) {
+                    // Extract nested ternary operations
+                    const fridayDinnerStatus = afterData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending';
+                    const sundayBrunchStatus = afterData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending';
+
+                    return `
+                    <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
+                    <ul style="margin: 5px 0 0; padding-left: 20px;">
+                      <li>Friday Night Dinner at Linger: ${fridayDinnerStatus}</li>
+                      <li>Sunday Brunch at Eli's home: ${sundayBrunchStatus}</li>
+                    </ul>
+                    `;
+                  }
+                  return '';
+                })()}
               </td>
             </tr>
           </table>
@@ -929,20 +961,20 @@ exports.initializeApiKeys = functions.https.onCall(async (data, context) => {
       return { success: true, message: 'API keys already initialized' };
     }
 
-    // Initialize with the provided values
+    // Initialize with placeholder values - real values should be set via Firebase CLI secrets
     await apiKeysRef.set({
-      github: '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',
+      github: '[GITHUB_TOKEN_PLACEHOLDER]',
       googleAnalytics: {
         viewId: null,
-        clientId: '1058445082947-sbqanv791uvdvsnr13kaku4mid3k43ue.apps.googleusercontent.com',
-        clientSecret: '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'
+        clientId: '[GOOGLE_CLIENT_ID_PLACEHOLDER]',
+        clientSecret: '[GOOGLE_CLIENT_SECRET_PLACEHOLDER]'
       },
       cloudflare: {
         email: null,
-        apiKey: 'xnZM6q4uIOHAvSrXM5o7SVUrvzdss5ZObJmo40G5',
+        apiKey: '[CLOUDFLARE_API_KEY_PLACEHOLDER]',
         zoneId: null
       },
-      brevo: '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',
+      brevo: '[BREVO_API_KEY_PLACEHOLDER]',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: context.auth.uid
     });

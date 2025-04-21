@@ -152,10 +152,32 @@ exports.updateMasterSheet = functions.firestore
 
       // Prepare the update data for RSVP columns
       const updateData = {};
+      const dataUpdateRequests = [];
 
       // Set checkbox for Submitted column (column I)
       if (submittedIndex >= 0) {
+        // First update the cell value
         updateData[`${sheetName}!${String.fromCharCode(65 + submittedIndex)}${rowIndex}`] = [['TRUE']];
+
+        // Then create a checkbox
+        dataUpdateRequests.push({
+          createDeveloperMetadata: {
+            developerMetadata: {
+              metadataId: Math.floor(Math.random() * 1000000),
+              metadataKey: 'checkbox',
+              metadataValue: 'TRUE',
+              location: {
+                dimensionRange: {
+                  sheetId: 0,
+                  dimension: 'COLUMNS',
+                  startIndex: submittedIndex,
+                  endIndex: submittedIndex + 1
+                }
+              },
+              visibility: 'DOCUMENT'
+            }
+          }
+        });
       }
 
       // Set Submission ID (column J)
@@ -180,8 +202,29 @@ exports.updateMasterSheet = functions.firestore
 
       // Set Attending checkbox (column N)
       if (attendingIndex >= 0) {
+        // First update the cell value
         updateData[`${sheetName}!${String.fromCharCode(65 + attendingIndex)}${rowIndex}`] =
           [[rsvpData.attending === 'yes' ? 'TRUE' : 'FALSE']];
+
+        // Then create a checkbox
+        dataUpdateRequests.push({
+          createDeveloperMetadata: {
+            developerMetadata: {
+              metadataId: Math.floor(Math.random() * 1000000),
+              metadataKey: 'checkbox',
+              metadataValue: rsvpData.attending === 'yes' ? 'TRUE' : 'FALSE',
+              location: {
+                dimensionRange: {
+                  sheetId: 0,
+                  dimension: 'COLUMNS',
+                  startIndex: attendingIndex,
+                  endIndex: attendingIndex + 1
+                }
+              },
+              visibility: 'DOCUMENT'
+            }
+          }
+        });
       }
 
       // Set Guest Count (column O)
@@ -211,19 +254,62 @@ exports.updateMasterSheet = functions.firestore
       if (isOutOfTown) {
         // Set Dinner at Linger checkbox (column S)
         if (dinnerAtLingerIndex >= 0) {
+          // First update the cell value
           updateData[`${sheetName}!${String.fromCharCode(65 + dinnerAtLingerIndex)}${rowIndex}`] =
             [[rsvpData.fridayDinner === 'yes' ? 'TRUE' : 'FALSE']];
+
+          // Then create a checkbox
+          dataUpdateRequests.push({
+            createDeveloperMetadata: {
+              developerMetadata: {
+                metadataId: Math.floor(Math.random() * 1000000),
+                metadataKey: 'checkbox',
+                metadataValue: rsvpData.fridayDinner === 'yes' ? 'TRUE' : 'FALSE',
+                location: {
+                  dimensionRange: {
+                    sheetId: 0,
+                    dimension: 'COLUMNS',
+                    startIndex: dinnerAtLingerIndex,
+                    endIndex: dinnerAtLingerIndex + 1
+                  }
+                },
+                visibility: 'DOCUMENT'
+              }
+            }
+          });
         }
 
         // Set Sunday Brunch checkbox (column T)
         if (sundayBrunchIndex >= 0) {
+          // First update the cell value
           updateData[`${sheetName}!${String.fromCharCode(65 + sundayBrunchIndex)}${rowIndex}`] =
             [[rsvpData.sundayBrunch === 'yes' ? 'TRUE' : 'FALSE']];
+
+          // Then create a checkbox
+          dataUpdateRequests.push({
+            createDeveloperMetadata: {
+              developerMetadata: {
+                metadataId: Math.floor(Math.random() * 1000000),
+                metadataKey: 'checkbox',
+                metadataValue: rsvpData.sundayBrunch === 'yes' ? 'TRUE' : 'FALSE',
+                location: {
+                  dimensionRange: {
+                    sheetId: 0,
+                    dimension: 'COLUMNS',
+                    startIndex: sundayBrunchIndex,
+                    endIndex: sundayBrunchIndex + 1
+                  }
+                },
+                visibility: 'DOCUMENT'
+              }
+            }
+          });
         }
       }
 
       // Batch update all cells
       if (Object.keys(updateData).length > 0) {
+        // First update the cell values
         const batchUpdateRequest = {
           spreadsheetId: masterSheetId,
           resource: {
@@ -236,6 +322,63 @@ exports.updateMasterSheet = functions.firestore
         };
 
         await sheets.spreadsheets.values.batchUpdate(batchUpdateRequest);
+
+        // Then apply the checkbox formatting if we have any
+        if (dataUpdateRequests.length > 0) {
+          try {
+            // Get the sheet ID first
+            const sheetsResponse = await sheets.spreadsheets.get({
+              spreadsheetId: masterSheetId,
+            });
+
+            const sheetId = sheetsResponse.data.sheets.find(s => s.properties.title === sheetName)?.properties.sheetId || 0;
+
+            // Update the sheet ID in all requests
+            dataUpdateRequests.forEach(request => {
+              if (request.createDeveloperMetadata?.developerMetadata?.location?.dimensionRange) {
+                request.createDeveloperMetadata.developerMetadata.location.dimensionRange.sheetId = sheetId;
+              }
+            });
+
+            // Apply the checkbox formatting
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: masterSheetId,
+              resource: {
+                requests: [
+                  // First create data validation for checkboxes
+                  ...dataUpdateRequests.map(request => {
+                    const range = request.createDeveloperMetadata.developerMetadata.location.dimensionRange;
+                    return {
+                      setDataValidation: {
+                        range: {
+                          sheetId: range.sheetId,
+                          startRowIndex: rowIndex - 1, // 0-indexed
+                          endRowIndex: rowIndex,
+                          startColumnIndex: range.startIndex,
+                          endColumnIndex: range.endIndex
+                        },
+                        rule: {
+                          condition: {
+                            type: 'BOOLEAN',
+                          },
+                          inputMessage: 'Please select a value',
+                          strict: true,
+                          showCustomUi: true
+                        }
+                      }
+                    };
+                  })
+                ]
+              }
+            });
+
+            console.log(`Applied checkbox formatting for guest: ${rsvpData.name} at row ${rowIndex}`);
+          } catch (error) {
+            console.error('Error applying checkbox formatting:', error);
+            // Continue even if checkbox formatting fails
+          }
+        }
+
         console.log(`Updated master sheet for guest: ${rsvpData.name} at row ${rowIndex}`);
 
         // Log the update event
@@ -415,10 +558,32 @@ exports.manualUpdateMasterSheet = functions.https.onCall(async (data, context) =
 
         // Prepare the update data for RSVP columns
         const updateData = {};
+        const dataUpdateRequests = [];
 
         // Set checkbox for Submitted column (column I)
         if (submittedIndex >= 0) {
+          // First update the cell value
           updateData[`${sheetName}!${String.fromCharCode(65 + submittedIndex)}${rowIndex}`] = [['TRUE']];
+
+          // Then create a checkbox
+          dataUpdateRequests.push({
+            createDeveloperMetadata: {
+              developerMetadata: {
+                metadataId: Math.floor(Math.random() * 1000000),
+                metadataKey: 'checkbox',
+                metadataValue: 'TRUE',
+                location: {
+                  dimensionRange: {
+                    sheetId: 0,
+                    dimension: 'COLUMNS',
+                    startIndex: submittedIndex,
+                    endIndex: submittedIndex + 1
+                  }
+                },
+                visibility: 'DOCUMENT'
+              }
+            }
+          });
         }
 
         // Set Submission ID (column J)
@@ -443,8 +608,29 @@ exports.manualUpdateMasterSheet = functions.https.onCall(async (data, context) =
 
         // Set Attending checkbox (column N)
         if (attendingIndex >= 0) {
+          // First update the cell value
           updateData[`${sheetName}!${String.fromCharCode(65 + attendingIndex)}${rowIndex}`] =
             [[submission.attending === 'yes' ? 'TRUE' : 'FALSE']];
+
+          // Then create a checkbox
+          dataUpdateRequests.push({
+            createDeveloperMetadata: {
+              developerMetadata: {
+                metadataId: Math.floor(Math.random() * 1000000),
+                metadataKey: 'checkbox',
+                metadataValue: submission.attending === 'yes' ? 'TRUE' : 'FALSE',
+                location: {
+                  dimensionRange: {
+                    sheetId: 0,
+                    dimension: 'COLUMNS',
+                    startIndex: attendingIndex,
+                    endIndex: attendingIndex + 1
+                  }
+                },
+                visibility: 'DOCUMENT'
+              }
+            }
+          });
         }
 
         // Set Guest Count (column O)
@@ -474,19 +660,62 @@ exports.manualUpdateMasterSheet = functions.https.onCall(async (data, context) =
         if (isOutOfTown) {
           // Set Dinner at Linger checkbox (column S)
           if (dinnerAtLingerIndex >= 0) {
+            // First update the cell value
             updateData[`${sheetName}!${String.fromCharCode(65 + dinnerAtLingerIndex)}${rowIndex}`] =
               [[submission.fridayDinner === 'yes' ? 'TRUE' : 'FALSE']];
+
+            // Then create a checkbox
+            dataUpdateRequests.push({
+              createDeveloperMetadata: {
+                developerMetadata: {
+                  metadataId: Math.floor(Math.random() * 1000000),
+                  metadataKey: 'checkbox',
+                  metadataValue: submission.fridayDinner === 'yes' ? 'TRUE' : 'FALSE',
+                  location: {
+                    dimensionRange: {
+                      sheetId: 0,
+                      dimension: 'COLUMNS',
+                      startIndex: dinnerAtLingerIndex,
+                      endIndex: dinnerAtLingerIndex + 1
+                    }
+                  },
+                  visibility: 'DOCUMENT'
+                }
+              }
+            });
           }
 
           // Set Sunday Brunch checkbox (column T)
           if (sundayBrunchIndex >= 0) {
+            // First update the cell value
             updateData[`${sheetName}!${String.fromCharCode(65 + sundayBrunchIndex)}${rowIndex}`] =
               [[submission.sundayBrunch === 'yes' ? 'TRUE' : 'FALSE']];
+
+            // Then create a checkbox
+            dataUpdateRequests.push({
+              createDeveloperMetadata: {
+                developerMetadata: {
+                  metadataId: Math.floor(Math.random() * 1000000),
+                  metadataKey: 'checkbox',
+                  metadataValue: submission.sundayBrunch === 'yes' ? 'TRUE' : 'FALSE',
+                  location: {
+                    dimensionRange: {
+                      sheetId: 0,
+                      dimension: 'COLUMNS',
+                      startIndex: sundayBrunchIndex,
+                      endIndex: sundayBrunchIndex + 1
+                    }
+                  },
+                  visibility: 'DOCUMENT'
+                }
+              }
+            });
           }
         }
 
         // Batch update all cells
         if (Object.keys(updateData).length > 0) {
+          // First update the cell values
           const batchUpdateRequest = {
             spreadsheetId: masterSheetId,
             resource: {
@@ -499,6 +728,63 @@ exports.manualUpdateMasterSheet = functions.https.onCall(async (data, context) =
           };
 
           await sheets.spreadsheets.values.batchUpdate(batchUpdateRequest);
+
+          // Then apply the checkbox formatting if we have any
+          if (dataUpdateRequests.length > 0) {
+            try {
+              // Get the sheet ID first
+              const sheetsResponse = await sheets.spreadsheets.get({
+                spreadsheetId: masterSheetId,
+              });
+
+              const sheetId = sheetsResponse.data.sheets.find(s => s.properties.title === sheetName)?.properties.sheetId || 0;
+
+              // Update the sheet ID in all requests
+              dataUpdateRequests.forEach(request => {
+                if (request.createDeveloperMetadata?.developerMetadata?.location?.dimensionRange) {
+                  request.createDeveloperMetadata.developerMetadata.location.dimensionRange.sheetId = sheetId;
+                }
+              });
+
+              // Apply the checkbox formatting
+              await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: masterSheetId,
+                resource: {
+                  requests: [
+                    // First create data validation for checkboxes
+                    ...dataUpdateRequests.map(request => {
+                      const range = request.createDeveloperMetadata.developerMetadata.location.dimensionRange;
+                      return {
+                        setDataValidation: {
+                          range: {
+                            sheetId: range.sheetId,
+                            startRowIndex: rowIndex - 1, // 0-indexed
+                            endRowIndex: rowIndex,
+                            startColumnIndex: range.startIndex,
+                            endColumnIndex: range.endIndex
+                          },
+                          rule: {
+                            condition: {
+                              type: 'BOOLEAN',
+                            },
+                            inputMessage: 'Please select a value',
+                            strict: true,
+                            showCustomUi: true
+                          }
+                        }
+                      };
+                    })
+                  ]
+                }
+              });
+
+              console.log(`Applied checkbox formatting for guest: ${submission.name} at row ${rowIndex}`);
+            } catch (error) {
+              console.error('Error applying checkbox formatting:', error);
+              // Continue even if checkbox formatting fails
+            }
+          }
+
           console.log(`Updated master sheet for guest: ${submission.name} at row ${rowIndex}`);
 
           // Log the update event
