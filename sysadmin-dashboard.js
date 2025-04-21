@@ -43,88 +43,16 @@ const SysadminDashboard = {
             console.error('Error initializing Firestore for Sysadmin Dashboard:', error);
         }
 
-        // Check authentication status
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                console.log('User is authenticated, loading API keys');
-                // Load saved API keys
-                this.loadApiKeys();
-            } else {
-                console.log('User is not authenticated, using default API keys');
-                // Use the API keys that were pre-filled
-                this.updateApiKeyStatus();
-            }
-        });
+        // Load API keys from Firebase (user is already authenticated)
+        this.loadApiKeys();
 
         // Set up event listeners
         this.setupEventListeners();
 
-        // Initialize authentication
-        this.initAuth();
-
         console.log('Sysadmin Dashboard initialized');
     },
 
-    // Initialize authentication
-    initAuth: function() {
-        // Set up authentication UI
-        const authSection = document.getElementById('auth-section');
-        if (authSection) {
-            // Check if user is already logged in
-            const user = firebase.auth().currentUser;
-            if (user) {
-                authSection.innerHTML = `
-                    <div class="auth-status">
-                        <span class="status-indicator online"><i class="fas fa-circle"></i> Logged in as ${user.email}</span>
-                        <button id="logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
-                    </div>
-                `;
-
-                // Add logout event listener
-                document.getElementById('logout-btn').addEventListener('click', () => {
-                    firebase.auth().signOut().then(() => {
-                        console.log('User signed out');
-                        this.updateAuthUI();
-                    }).catch(error => {
-                        console.error('Error signing out:', error);
-                    });
-                });
-
-                // Initialize API keys in Firebase if needed
-                this.initializeApiKeysInFirebase();
-            } else {
-                authSection.innerHTML = `
-                    <div class="auth-status">
-                        <span class="status-indicator warning"><i class="fas fa-circle"></i> Not logged in</span>
-                        <button id="login-btn" class="btn btn-primary btn-sm">Login</button>
-                    </div>
-                `;
-
-                // Add login event listener
-                document.getElementById('login-btn').addEventListener('click', () => {
-                    // Use email/password authentication
-                    const email = prompt('Enter your email:');
-                    const password = prompt('Enter your password:');
-
-                    if (email && password) {
-                        firebase.auth().signInWithEmailAndPassword(email, password)
-                            .then(userCredential => {
-                                console.log('User logged in:', userCredential.user);
-                                this.updateAuthUI();
-                                this.loadApiKeys(); // Load API keys after login
-                                this.initializeApiKeysInFirebase(); // Initialize API keys if needed
-                            })
-                            .catch(error => {
-                                console.error('Error logging in:', error);
-                                ToastSystem.error('Login failed: ' + error.message, 'Authentication Error');
-                            });
-                    }
-                });
-            }
-        }
-    },
-
-    // Initialize API keys in Firebase
+    // Initialize API keys in Firebase if needed
     initializeApiKeysInFirebase: function() {
         try {
             // Call the Firebase function to initialize API keys
@@ -141,196 +69,51 @@ const SysadminDashboard = {
         }
     },
 
-    // Update authentication UI based on current auth state
-    updateAuthUI: function() {
-        const authSection = document.getElementById('auth-section');
-        if (!authSection) return;
-
-        const user = firebase.auth().currentUser;
-        if (user) {
-            authSection.innerHTML = `
-                <div class="auth-status">
-                    <span class="status-indicator online"><i class="fas fa-circle"></i> Logged in as ${user.email}</span>
-                    <button id="logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
-                </div>
-            `;
-
-            // Add logout event listener
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                firebase.auth().signOut().then(() => {
-                    console.log('User signed out');
-                    this.updateAuthUI();
-                }).catch(error => {
-                    console.error('Error signing out:', error);
-                });
-            });
-        } else {
-            authSection.innerHTML = `
-                <div class="auth-status">
-                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not logged in</span>
-                    <button id="login-btn" class="btn btn-primary btn-sm">Login</button>
-                </div>
-            `;
-
-            // Add login event listener
-            document.getElementById('login-btn').addEventListener('click', () => {
-                // Use email/password authentication
-                const email = prompt('Enter your email:');
-                const password = prompt('Enter your password:');
-
-                if (email && password) {
-                    firebase.auth().signInWithEmailAndPassword(email, password)
-                        .then(userCredential => {
-                            console.log('User logged in:', userCredential.user);
-                            this.updateAuthUI();
-                            this.loadApiKeys(); // Load API keys after login
-                        })
-                        .catch(error => {
-                            console.error('Error logging in:', error);
-                            ToastSystem.error('Login failed: ' + error.message, 'Authentication Error');
-                        });
-                }
-            });
-        }
-    },
-
     // Load API keys from Firebase
     loadApiKeys: function() {
         try {
-            // Check if user is authenticated
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                console.log('User not authenticated, cannot load API keys');
-                return;
-            }
-
             // Call the Firebase function to get API keys
             const getApiKeys = firebase.functions().httpsCallable('getApiKeys');
             getApiKeys().then(result => {
                 this.state.apiKeys = result.data;
                 console.log('API keys loaded from Firebase');
-                this.updateApiKeyFields();
                 this.updateApiKeyStatus();
+
+                // Initialize API keys if they don't exist
+                if (!this.state.apiKeys.github && !this.state.apiKeys.brevo) {
+                    console.log('API keys not found, initializing...');
+                    this.initializeApiKeysInFirebase();
+                } else {
+                    // Load data with the retrieved API keys
+                    this.refreshAllData();
+                }
             }).catch(error => {
                 console.error('Error loading API keys from Firebase:', error);
                 ToastSystem.error('Failed to load API configuration', 'Error');
+
+                // Try to initialize API keys if there was an error
+                this.initializeApiKeysInFirebase();
             });
         } catch (error) {
             console.error('Error in loadApiKeys:', error);
         }
     },
 
-    // Save API keys to Firebase
-    saveApiKeys: function() {
-        try {
-            // Check if user is authenticated
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                ToastSystem.error('You must be logged in to save API keys', 'Authentication Required');
-                return;
-            }
 
-            // Get values from form fields
-            this.state.apiKeys.github = document.getElementById('github-token').value.trim();
 
-            this.state.apiKeys.googleAnalytics.viewId = document.getElementById('ga-view-id').value.trim();
-            this.state.apiKeys.googleAnalytics.clientId = document.getElementById('ga-client-id').value.trim();
-            this.state.apiKeys.googleAnalytics.clientSecret = document.getElementById('ga-client-secret').value.trim();
-
-            this.state.apiKeys.cloudflare.email = document.getElementById('cloudflare-email').value.trim();
-            this.state.apiKeys.cloudflare.apiKey = document.getElementById('cloudflare-api-key').value.trim();
-            this.state.apiKeys.cloudflare.zoneId = document.getElementById('cloudflare-zone-id').value.trim();
-
-            this.state.apiKeys.brevo = document.getElementById('brevo-api-key').value.trim();
-
-            // Call the Firebase function to store API keys
-            const storeApiKeys = firebase.functions().httpsCallable('storeApiKeys');
-            storeApiKeys(this.state.apiKeys).then(result => {
-                console.log('API keys saved to Firebase:', result);
-
-                // Update status indicators
-                this.updateApiKeyStatus();
-
-                // Show success message
-                ToastSystem.success('API configuration saved successfully', 'Configuration Saved');
-
-                // Refresh data with new API keys
-                this.refreshAllData();
-            }).catch(error => {
-                console.error('Error saving API keys to Firebase:', error);
-                ToastSystem.error('Failed to save API configuration', 'Error');
-            });
-        } catch (error) {
-            console.error('Error in saveApiKeys:', error);
-            ToastSystem.error('Failed to save API configuration', 'Error');
-        }
-    },
-
-    // Update API key form fields with saved values
-    updateApiKeyFields: function() {
-        // GitHub
-        if (this.state.apiKeys.github) {
-            document.getElementById('github-token').value = this.state.apiKeys.github;
-        }
-
-        // Google Analytics
-        if (this.state.apiKeys.googleAnalytics.viewId) {
-            document.getElementById('ga-view-id').value = this.state.apiKeys.googleAnalytics.viewId;
-        }
-        if (this.state.apiKeys.googleAnalytics.clientId) {
-            document.getElementById('ga-client-id').value = this.state.apiKeys.googleAnalytics.clientId;
-        }
-        if (this.state.apiKeys.googleAnalytics.clientSecret) {
-            document.getElementById('ga-client-secret').value = this.state.apiKeys.googleAnalytics.clientSecret;
-        }
-
-        // Cloudflare
-        if (this.state.apiKeys.cloudflare.email) {
-            document.getElementById('cloudflare-email').value = this.state.apiKeys.cloudflare.email;
-        }
-        if (this.state.apiKeys.cloudflare.apiKey) {
-            document.getElementById('cloudflare-api-key').value = this.state.apiKeys.cloudflare.apiKey;
-        }
-        if (this.state.apiKeys.cloudflare.zoneId) {
-            document.getElementById('cloudflare-zone-id').value = this.state.apiKeys.cloudflare.zoneId;
-        }
-
-        // Brevo
-        if (this.state.apiKeys.brevo) {
-            document.getElementById('brevo-api-key').value = this.state.apiKeys.brevo;
-        }
-    },
-
-    // Update API key status indicators
+    // Update API key status indicators (now just logs the status)
     updateApiKeyStatus: function() {
-        this.updateSingleApiStatus('github-api-status', !!this.state.apiKeys.github);
-
-        // Google Analytics - all three fields must be present
-        const gaConfigured = !!(this.state.apiKeys.googleAnalytics.viewId &&
+        // Log API key status for debugging
+        console.log('API Key Status:', {
+            github: !!this.state.apiKeys.github,
+            googleAnalytics: !!(this.state.apiKeys.googleAnalytics.viewId &&
                              this.state.apiKeys.googleAnalytics.clientId &&
-                             this.state.apiKeys.googleAnalytics.clientSecret);
-        this.updateSingleApiStatus('ga-api-status', gaConfigured);
-
-        // Cloudflare - all three fields must be present
-        const cfConfigured = !!(this.state.apiKeys.cloudflare.email &&
-                             this.state.apiKeys.cloudflare.apiKey &&
-                             this.state.apiKeys.cloudflare.zoneId);
-        this.updateSingleApiStatus('cloudflare-api-status', cfConfigured);
-
-        // Brevo
-        this.updateSingleApiStatus('brevo-api-status', !!this.state.apiKeys.brevo);
-    },
-
-    // Helper function to update a single API status indicator
-    updateSingleApiStatus: function(elementId, isConfigured) {
-        const statusElement = document.getElementById(elementId);
-        if (!statusElement) return;
-
-        const statusHtml = isConfigured
-            ? '<span class="status-indicator online"><i class="fas fa-circle"></i> Configured</span>'
-            : '<span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>';
-
-        statusElement.innerHTML = statusHtml;
+                             this.state.apiKeys.googleAnalytics.clientSecret),
+            cloudflare: !!(this.state.apiKeys.cloudflare.email &&
+                        this.state.apiKeys.cloudflare.apiKey &&
+                        this.state.apiKeys.cloudflare.zoneId),
+            brevo: !!this.state.apiKeys.brevo
+        });
     },
 
     // Set up event listeners
@@ -369,34 +152,6 @@ const SysadminDashboard = {
                 this.filterLogs();
             });
         }
-
-        // Save API configuration button
-        const saveApiConfigBtn = document.getElementById('save-api-config-btn');
-        if (saveApiConfigBtn) {
-            saveApiConfigBtn.addEventListener('click', () => {
-                this.saveApiKeys();
-            });
-        }
-
-        // Toggle password visibility buttons
-        const togglePasswordButtons = document.querySelectorAll('.toggle-password');
-        togglePasswordButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-target');
-                const inputField = document.getElementById(targetId);
-
-                if (inputField) {
-                    // Toggle between password and text type
-                    if (inputField.type === 'password') {
-                        inputField.type = 'text';
-                        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                    } else {
-                        inputField.type = 'password';
-                        button.innerHTML = '<i class="fas fa-eye"></i>';
-                    }
-                }
-            });
-        });
     },
 
     // Switch between tabs

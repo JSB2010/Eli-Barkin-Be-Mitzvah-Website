@@ -561,15 +561,15 @@
 
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 3rem;
         }
 
         .stat-card {
             background-color: var(--white);
             border-radius: 12px;
-            padding: 1.75rem;
+            padding: 2rem;
             box-shadow: var(--card-shadow);
             text-align: center;
             transition: var(--transition);
@@ -577,12 +577,12 @@
             overflow: hidden;
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 180px;
+            min-height: 190px;
         }
 
         .stat-card:hover {
@@ -636,17 +636,17 @@
         .charts-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2.5rem;
+            gap: 2.5rem;
+            margin-bottom: 3rem;
         }
 
         .chart-card {
             background-color: var(--white);
             border-radius: 12px;
-            padding: 1.75rem;
+            padding: 2rem;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
-            border: 1px solid var(--medium-gray);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -1620,11 +1620,12 @@
         .dashboard-section {
             background-color: var(--white);
             border-radius: var(--border-radius);
-            padding: 1.75rem;
+            padding: 2rem;
             box-shadow: var(--card-shadow);
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             transition: var(--transition);
             overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .dashboard-section:hover {
@@ -1635,9 +1636,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--medium-gray);
+            margin-bottom: 1.75rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--light-gray);
         }
 
         .section-header h2 {
@@ -3133,9 +3134,6 @@
                     <div class="section-header">
                         <h2><i class="fas fa-server"></i> System Administration</h2>
                         <div class="section-actions">
-                            <div id="auth-section" class="auth-section">
-                                <!-- Authentication UI will be inserted here -->
-                            </div>
                             <button type="button" id="refresh-sysadmin-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh All Data</button>
                         </div>
                     </div>
@@ -3473,124 +3471,7 @@
                     </div>
                 </div>
 
-                <!-- API Configuration -->
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2><i class="fas fa-key"></i> API Configuration</h2>
-                        <div class="section-actions">
-                            <button type="button" id="save-api-config-btn" class="btn primary"><i class="fas fa-save"></i> Save Configuration</button>
-                        </div>
-                    </div>
-                    <p class="section-description">Configure API keys for external services. These keys are stored securely in your browser and are not shared.</p>
 
-                    <div class="api-config-container">
-                        <div class="api-config-card">
-                            <div class="api-config-header">
-                                <h3><i class="fab fa-github"></i> GitHub API</h3>
-                                <div class="api-status" id="github-api-status">
-                                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>
-                                </div>
-                            </div>
-                            <div class="api-config-content">
-                                <p>GitHub API is used to fetch repository statistics and commit history.</p>
-                                <div class="form-group">
-                                    <label for="github-token">Personal Access Token</label>
-                                    <div class="input-with-icon">
-                                        <input type="password" id="github-token" placeholder="Enter GitHub personal access token">
-                                        <button type="button" class="toggle-password" data-target="github-token">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small>Create a token with <code>repo</code> scope at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">GitHub Settings</a></small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="api-config-card">
-                            <div class="api-config-header">
-                                <h3><i class="fas fa-chart-line"></i> Google Analytics API</h3>
-                                <div class="api-status" id="ga-api-status">
-                                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>
-                                </div>
-                            </div>
-                            <div class="api-config-content">
-                                <p>Google Analytics API is used to fetch website traffic and user behavior data.</p>
-                                <div class="form-group">
-                                    <label for="ga-view-id">View ID</label>
-                                    <input type="text" id="ga-view-id" placeholder="Enter Google Analytics View ID">
-                                    <small>Find your View ID in Google Analytics Admin > View Settings</small>
-                                </div>
-                                <div class="form-group">
-                                    <label for="ga-client-id">Client ID</label>
-                                    <input type="text" id="ga-client-id" placeholder="Enter Google API Client ID">
-                                </div>
-                                <div class="form-group">
-                                    <label for="ga-client-secret">Client Secret</label>
-                                    <div class="input-with-icon">
-                                        <input type="password" id="ga-client-secret" placeholder="Enter Google API Client Secret">
-                                        <button type="button" class="toggle-password" data-target="ga-client-secret">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small>Create credentials at <a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer">Google API Console</a></small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="api-config-card">
-                            <div class="api-config-header">
-                                <h3><i class="fas fa-cloud"></i> Cloudflare API</h3>
-                                <div class="api-status" id="cloudflare-api-status">
-                                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>
-                                </div>
-                            </div>
-                            <div class="api-config-content">
-                                <p>Cloudflare API is used to fetch website performance and security metrics.</p>
-                                <div class="form-group">
-                                    <label for="cloudflare-email">Email</label>
-                                    <input type="email" id="cloudflare-email" placeholder="Enter Cloudflare account email">
-                                </div>
-                                <div class="form-group">
-                                    <label for="cloudflare-api-key">API Key</label>
-                                    <div class="input-with-icon">
-                                        <input type="password" id="cloudflare-api-key" placeholder="Enter Cloudflare API key">
-                                        <button type="button" class="toggle-password" data-target="cloudflare-api-key">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small>Find your API key in Cloudflare dashboard > My Profile > API Tokens</small>
-                                </div>
-                                <div class="form-group">
-                                    <label for="cloudflare-zone-id">Zone ID</label>
-                                    <input type="text" id="cloudflare-zone-id" placeholder="Enter Cloudflare Zone ID">
-                                    <small>Find your Zone ID in Cloudflare dashboard > Website > Overview</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="api-config-card">
-                            <div class="api-config-header">
-                                <h3><i class="fas fa-envelope"></i> Brevo API</h3>
-                                <div class="api-status" id="brevo-api-status">
-                                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not Configured</span>
-                                </div>
-                            </div>
-                            <div class="api-config-content">
-                                <p>Brevo API is used to fetch email delivery statistics and manage email campaigns.</p>
-                                <div class="form-group">
-                                    <label for="brevo-api-key">API Key</label>
-                                    <div class="input-with-icon">
-                                        <input type="password" id="brevo-api-key" placeholder="Enter Brevo API key">
-                                        <button type="button" class="toggle-password" data-target="brevo-api-key">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small>Find your API key in Brevo dashboard > SMTP & API > API Keys</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- System Logs -->
                 <div class="dashboard-section">
