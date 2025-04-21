@@ -251,220 +251,223 @@ exports.sendRsvpConfirmation = functions.firestore
       },
       to: [{ email: rsvpData.email }],
       subject: 'Thank You for Your RSVP to Eli\'s Be Mitzvah',
-      htmlContent: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+      htmlContent: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eli's Be Mitzvah RSVP Confirmation</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    /* CLIENT-SPECIFIC STYLES */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; }
 
-            :root {
-              --primary-blue: #1e88e5;
-              --primary-orange: #ff9800;
-              --dark-blue: #0d47a1;
-              --light-blue: #bbdefb;
-              --dark-orange: #e65100;
-              --light-orange: #ffe0b2;
-              --white: #ffffff;
-              --light-gray: #f5f5f5;
-              --dark-gray: #333333;
-            }
+    /* RESET STYLES */
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
 
-            body {
-              font-family: 'Montserrat', sans-serif;
-              line-height: 1.6;
-              color: var(--dark-gray);
-              max-width: 600px;
-              margin: 0 auto;
-              background-color: #f9f9f9;
-            }
+    /* iOS BLUE LINKS */
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .email-container {
-              background-color: var(--white);
-              border-radius: 10px;
-              overflow: hidden;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-              margin: 20px auto;
-            }
+    /* GMAIL BLUE LINKS */
+    u + #body a {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .header {
-              background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-              color: var(--white);
-              padding: 30px 20px;
-              text-align: center;
-              position: relative;
-            }
+    /* SAMSUNG MAIL BLUE LINKS */
+    #MessageViewBody a {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .header::after {
-              content: '';
-              position: absolute;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              height: 5px;
-              background: linear-gradient(90deg, var(--primary-orange), var(--dark-orange));
-            }
+    /* Universal styles */
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background-color: #f8f9fa;
+    }
 
-            .header h1 {
-              margin: 0;
-              font-size: 28px;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            }
+    /* Media Queries */
+    @media screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+      }
+      .fluid {
+        max-width: 100% !important;
+        height: auto !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      .stack-column,
+      .stack-column-center {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        direction: ltr !important;
+      }
+      .stack-column-center {
+        text-align: center !important;
+      }
+      .center-on-narrow {
+        text-align: center !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        float: none !important;
+      }
+      table.center-on-narrow {
+        display: inline-block !important;
+      }
+      .email-container p {
+        font-size: 16px !important;
+        line-height: 24px !important;
+      }
+    }
+  </style>
+</head>
+<body width="100%" style="margin: 0; padding: 0 !important; background-color: #f8f9fa;" bgcolor="#f8f9fa">
+  <center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f8f9fa;">
+    <!--[if mso | IE]>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa;">
+    <tr>
+    <td>
+    <![endif]-->
 
-            .content {
-              padding: 30px;
-              background-color: var(--white);
-            }
+    <!-- Email Body -->
+    <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" class="email-container">
+      <!-- Header -->
+      <tr>
+        <td style="background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%); padding: 30px 0; text-align: center;">
+          <img src="https://elibarkin.com/logo.PNG" width="120" height="120" alt="Eli's Be Mitzvah" style="border-radius: 60px; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+          <h1 style="margin: 20px 0 0; color: #ffffff; font-family: 'Montserrat', Arial, sans-serif; font-size: 28px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            Thank You for Your RSVP!
+          </h1>
+        </td>
+      </tr>
 
-            .content p {
-              margin-bottom: 15px;
-              font-size: 16px;
-            }
+      <!-- Accent bar -->
+      <tr>
+        <td style="background: linear-gradient(90deg, #ff9800, #e65100); height: 5px; line-height: 5px;">&nbsp;</td>
+      </tr>
 
-            .details {
-              background-color: var(--light-gray);
-              padding: 20px;
-              border-radius: 8px;
-              margin: 20px 0;
-              border-left: 4px solid var(--primary-blue);
-            }
+      <!-- Content -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 40px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                <p style="margin: 0 0 20px;">Dear ${rsvpData.name},</p>
+                <p style="margin: 0 0 20px;">We've received your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-            .details p {
-              margin: 10px 0;
-            }
-
-            .details strong {
-              color: var(--dark-blue);
-              font-weight: 600;
-            }
-
-            .details ul {
-              margin: 10px 0;
-              padding-left: 25px;
-            }
-
-            .details li {
-              margin-bottom: 5px;
-            }
-
-            .button-container {
-              text-align: center;
-              margin: 25px 0;
-            }
-
-            .button {
-              display: inline-block;
-              background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
-              color: var(--white);
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 50px;
-              font-weight: 600;
-              text-transform: uppercase;
-              font-size: 14px;
-              letter-spacing: 0.5px;
-              box-shadow: 0 4px 10px rgba(246, 142, 31, 0.3);
-              transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-
-            .button:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 15px rgba(246, 142, 31, 0.4);
-            }
-
-            .footer {
-              text-align: center;
-              padding: 20px;
-              background-color: var(--light-gray);
-              color: var(--dark-gray);
-              font-size: 14px;
-              border-top: 1px solid #eee;
-            }
-
-            .footer a {
-              color: var(--primary-blue);
-              text-decoration: none;
-              font-weight: 500;
-              position: relative;
-              transition: color 0.3s ease;
-            }
-
-            .footer a:hover {
-              color: var(--primary-orange);
-            }
-
-            .footer a::after {
-              content: '';
-              position: absolute;
-              bottom: -2px;
-              left: 0;
-              width: 100%;
-              height: 1px;
-              background-color: var(--primary-orange);
-              transform: scaleX(0);
-              transition: transform 0.3s ease;
-            }
-
-            .footer a:hover::after {
-              transform: scaleX(1);
-            }
-
-            .logo {
-              margin-bottom: 15px;
-            }
-
-            .logo img {
-              max-height: 60px;
-              border-radius: 5px;
-            }
-
-            .signature {
-              margin-top: 30px;
-              padding-top: 15px;
-              border-top: 1px solid #eee;
-              font-style: italic;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="header">
-              <h1>Thank You for Your RSVP!</h1>
-            </div>
-            <div class="content">
-              <p>Dear ${rsvpData.name},</p>
-
-              <p>We've received your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025.</p>
-
-              <div class="details">
-                <p><strong>Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
+      <!-- RSVP Details Box -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; border-radius: 8px; border-left: 4px solid #1e88e5;">
+            <tr>
+              <td style="padding: 20px; font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                <p style="margin: 0 0 10px;"><strong style="color: #0d47a1;">Your response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
                 ${guestInfo}
                 ${additionalGuests}
-              </div>
+                ${isAttending && rsvpData.isOutOfTown ? `
+                <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
+                <ul style="margin: 5px 0 0; padding-left: 20px;">
+                  <li>Friday Night Dinner at Linger: ${rsvpData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'}</li>
+                  <li>Sunday Brunch at Eli's home: ${rsvpData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'}</li>
+                </ul>
+                ` : ''}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+      <!-- Message -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                ${isAttending ?
+                '<p style="margin: 0 0 20px;">We look forward to celebrating with you!</p>' :
+                '<p style="margin: 0 0 20px;">We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.</p>'}
+                <p style="margin: 0 0 20px;">If you need to make any changes to your RSVP, you can do so at any time:</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <p>If you need to make any changes to your RSVP, you can do so at any time:</p>
+      <!-- Button -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 40px;">
+          <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
+            <tr>
+              <td class="button-td" style="border-radius: 50px; background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); box-shadow: 0 4px 10px rgba(246,142,31,0.3);">
+                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(rsvpData.name)}" class="button-a" style="background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); border: 15px solid transparent; color: #ffffff; display: block; font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.1; text-align: center; text-decoration: none; text-transform: uppercase; border-radius: 50px; letter-spacing: 0.5px; -webkit-text-size-adjust: none; mso-hide: all;">
+                  Update Your RSVP
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <div class="button-container">
-                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(rsvpData.name)}" class="button">Update Your RSVP</a>
-              </div>
+      <!-- Signature -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 40px; border-top: 1px solid #eeeeee;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333; font-style: italic; padding-top: 20px;">
+                <p style="margin: 0;">Warm regards,<br>The Barkin Family</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <div class="signature">
-                <p>Warm regards,<br>The Barkin Family</p>
-              </div>
-            </div>
-            <div class="footer">
-              <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
-              <p><a href="https://elibarkin.com">elibarkin.com</a></p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
+      <!-- Footer -->
+      <tr>
+        <td style="background-color: #f5f5f5; padding: 20px; text-align: center; font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666666; border-top: 1px solid #eeeeee;">
+          <p style="margin: 0 0 10px;">This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
+          <p style="margin: 0;"><a href="https://elibarkin.com" style="color: #1e88e5; text-decoration: none; font-weight: 500;">elibarkin.com</a></p>
+        </td>
+      </tr>
+    </table>
+    <!--[if mso | IE]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+  </center>
+</body>
+</html>`
     };
 
     try {
@@ -608,232 +611,236 @@ exports.sendRsvpUpdateConfirmation = functions.firestore
       },
       to: [{ email: afterData.email }],
       subject: 'Your RSVP to Eli\'s Be Mitzvah Has Been Updated',
-      htmlContent: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+      htmlContent: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eli's Be Mitzvah RSVP Update Confirmation</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    /* CLIENT-SPECIFIC STYLES */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; }
 
-            :root {
-              --primary-blue: #1e88e5;
-              --primary-orange: #ff9800;
-              --dark-blue: #0d47a1;
-              --light-blue: #bbdefb;
-              --dark-orange: #e65100;
-              --light-orange: #ffe0b2;
-              --white: #ffffff;
-              --light-gray: #f5f5f5;
-              --dark-gray: #333333;
-            }
+    /* RESET STYLES */
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
 
-            body {
-              font-family: 'Montserrat', sans-serif;
-              line-height: 1.6;
-              color: var(--dark-gray);
-              max-width: 600px;
-              margin: 0 auto;
-              background-color: #f9f9f9;
-            }
+    /* iOS BLUE LINKS */
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .email-container {
-              background-color: var(--white);
-              border-radius: 10px;
-              overflow: hidden;
-              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-              margin: 20px auto;
-            }
+    /* GMAIL BLUE LINKS */
+    u + #body a {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .header {
-              background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-              color: var(--white);
-              padding: 30px 20px;
-              text-align: center;
-              position: relative;
-            }
+    /* SAMSUNG MAIL BLUE LINKS */
+    #MessageViewBody a {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-            .header::after {
-              content: '';
-              position: absolute;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              height: 5px;
-              background: linear-gradient(90deg, var(--primary-orange), var(--dark-orange));
-            }
+    /* Universal styles */
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background-color: #f8f9fa;
+    }
 
-            .header h1 {
-              margin: 0;
-              font-size: 28px;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            }
+    /* Media Queries */
+    @media screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+      }
+      .fluid {
+        max-width: 100% !important;
+        height: auto !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      .stack-column,
+      .stack-column-center {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        direction: ltr !important;
+      }
+      .stack-column-center {
+        text-align: center !important;
+      }
+      .center-on-narrow {
+        text-align: center !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        float: none !important;
+      }
+      table.center-on-narrow {
+        display: inline-block !important;
+      }
+      .email-container p {
+        font-size: 16px !important;
+        line-height: 24px !important;
+      }
+    }
+  </style>
+</head>
+<body width="100%" style="margin: 0; padding: 0 !important; background-color: #f8f9fa;" bgcolor="#f8f9fa">
+  <center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f8f9fa;">
+    <!--[if mso | IE]>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa;">
+    <tr>
+    <td>
+    <![endif]-->
 
-            .content {
-              padding: 30px;
-              background-color: var(--white);
-            }
+    <!-- Email Body -->
+    <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" class="email-container">
+      <!-- Header -->
+      <tr>
+        <td style="background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%); padding: 30px 0; text-align: center;">
+          <img src="https://elibarkin.com/logo.PNG" width="120" height="120" alt="Eli's Be Mitzvah" style="border-radius: 60px; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+          <h1 style="margin: 20px 0 0; color: #ffffff; font-family: 'Montserrat', Arial, sans-serif; font-size: 28px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            RSVP Updated
+          </h1>
+        </td>
+      </tr>
 
-            .content p {
-              margin-bottom: 15px;
-              font-size: 16px;
-            }
+      <!-- Accent bar -->
+      <tr>
+        <td style="background: linear-gradient(90deg, #ff9800, #e65100); height: 5px; line-height: 5px;">&nbsp;</td>
+      </tr>
 
-            .details {
-              background-color: var(--light-gray);
-              padding: 20px;
-              border-radius: 8px;
-              margin: 20px 0;
-              border-left: 4px solid var(--primary-blue);
-            }
+      <!-- Content -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 40px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                <p style="margin: 0 0 20px;">Dear ${afterData.name},</p>
+                <p style="margin: 0 0 20px;">Your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025 has been successfully updated.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-            .changes {
-              background-color: var(--light-orange);
-              padding: 20px;
-              border-radius: 8px;
-              margin: 20px 0;
-              border-left: 4px solid var(--dark-orange);
-            }
-
-            .details p, .changes p {
-              margin: 10px 0;
-            }
-
-            .details strong, .changes strong {
-              color: var(--dark-blue);
-              font-weight: 600;
-            }
-
-            .details ul, .changes ul {
-              margin: 10px 0;
-              padding-left: 25px;
-            }
-
-            .details li, .changes li {
-              margin-bottom: 5px;
-            }
-
-            .button-container {
-              text-align: center;
-              margin: 25px 0;
-            }
-
-            .button {
-              display: inline-block;
-              background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
-              color: var(--white);
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 50px;
-              font-weight: 600;
-              text-transform: uppercase;
-              font-size: 14px;
-              letter-spacing: 0.5px;
-              box-shadow: 0 4px 10px rgba(246, 142, 31, 0.3);
-              transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-
-            .button:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 15px rgba(246, 142, 31, 0.4);
-            }
-
-            .footer {
-              text-align: center;
-              padding: 20px;
-              background-color: var(--light-gray);
-              color: var(--dark-gray);
-              font-size: 14px;
-              border-top: 1px solid #eee;
-            }
-
-            .footer a {
-              color: var(--primary-blue);
-              text-decoration: none;
-              font-weight: 500;
-              position: relative;
-              transition: color 0.3s ease;
-            }
-
-            .footer a:hover {
-              color: var(--primary-orange);
-            }
-
-            .footer a::after {
-              content: '';
-              position: absolute;
-              bottom: -2px;
-              left: 0;
-              width: 100%;
-              height: 1px;
-              background-color: var(--primary-orange);
-              transform: scaleX(0);
-              transition: transform 0.3s ease;
-            }
-
-            .footer a:hover::after {
-              transform: scaleX(1);
-            }
-
-            .logo {
-              margin-bottom: 15px;
-            }
-
-            .logo img {
-              max-height: 60px;
-              border-radius: 5px;
-            }
-
-            .signature {
-              margin-top: 30px;
-              padding-top: 15px;
-              border-top: 1px solid #eee;
-              font-style: italic;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="header">
-              <h1>RSVP Updated</h1>
-            </div>
-            <div class="content">
-              <p>Dear ${afterData.name},</p>
-
-              <p>Your RSVP for Eli's Be Mitzvah celebration at Coors Field on August 23, 2025 has been successfully updated.</p>
-
-              <div class="changes">
+      <!-- Changes Box -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 20px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fff9e6; border-radius: 8px; border-left: 4px solid #ff9800;">
+            <tr>
+              <td style="padding: 20px; font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
                 ${changesInfo}
-              </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <div class="details">
-                <p><strong>Your updated response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
+      <!-- RSVP Details Box -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; border-radius: 8px; border-left: 4px solid #1e88e5;">
+            <tr>
+              <td style="padding: 20px; font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                <p style="margin: 0 0 10px;"><strong style="color: #0d47a1;">Your updated response:</strong> ${isAttending ? 'Attending' : 'Not Attending'}</p>
                 ${guestInfo}
                 ${additionalGuests}
-              </div>
+                ${isAttending && afterData.isOutOfTown ? `
+                <p style="margin: 10px 0 0;"><strong style="color: #0d47a1;">Additional Events:</strong></p>
+                <ul style="margin: 5px 0 0; padding-left: 20px;">
+                  <li>Friday Night Dinner at Linger: ${afterData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'}</li>
+                  <li>Sunday Brunch at Eli's home: ${afterData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'}</li>
+                </ul>
+                ` : ''}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <p>${isAttending ? 'We look forward to celebrating with you!' : 'We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.'}</p>
+      <!-- Message -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 30px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333;">
+                ${isAttending ?
+                '<p style="margin: 0 0 20px;">We look forward to celebrating with you!</p>' :
+                '<p style="margin: 0 0 20px;">We\'re sorry you won\'t be able to join us, but we appreciate you letting us know.</p>'}
+                <p style="margin: 0 0 20px;">If you need to make any further changes to your RSVP, you can do so at any time:</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <p>If you need to make any further changes to your RSVP, you can do so at any time:</p>
+      <!-- Button -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 40px;">
+          <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
+            <tr>
+              <td class="button-td" style="border-radius: 50px; background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); box-shadow: 0 4px 10px rgba(246,142,31,0.3);">
+                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(afterData.name)}" class="button-a" style="background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); border: 15px solid transparent; color: #ffffff; display: block; font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.1; text-align: center; text-decoration: none; text-transform: uppercase; border-radius: 50px; letter-spacing: 0.5px; -webkit-text-size-adjust: none; mso-hide: all;">
+                  Update Your RSVP
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <div class="button-container">
-                <a href="https://elibarkin.com/rsvp.html?name=${encodeURIComponent(afterData.name)}" class="button">Update Your RSVP</a>
-              </div>
+      <!-- Signature -->
+      <tr>
+        <td style="background-color: #ffffff; padding: 0 30px 40px; border-top: 1px solid #eeeeee;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 24px; color: #333333; font-style: italic; padding-top: 20px;">
+                <p style="margin: 0;">Warm regards,<br>The Barkin Family</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-              <div class="signature">
-                <p>Warm regards,<br>The Barkin Family</p>
-              </div>
-            </div>
-            <div class="footer">
-              <p>This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
-              <p><a href="https://elibarkin.com">elibarkin.com</a></p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
+      <!-- Footer -->
+      <tr>
+        <td style="background-color: #f5f5f5; padding: 20px; text-align: center; font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; line-height: 20px; color: #666666; border-top: 1px solid #eeeeee;">
+          <p style="margin: 0 0 10px;">This email was sent regarding Eli's Be Mitzvah celebration on August 23, 2025.</p>
+          <p style="margin: 0;"><a href="https://elibarkin.com" style="color: #1e88e5; text-decoration: none; font-weight: 500;">elibarkin.com</a></p>
+        </td>
+      </tr>
+    </table>
+    <!--[if mso | IE]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+  </center>
+</body>
+</html>`
     };
 
     try {
