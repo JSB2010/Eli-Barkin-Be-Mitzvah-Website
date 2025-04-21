@@ -155,19 +155,19 @@
         }
 
         @keyframes pulse {
-            0% { transform: translate(0, 0); }
-            50% { transform: translate(-5%, 5%); }
-            100% { transform: translate(0, 0); }
+            0% { transform: translate(0, 0); will-change: transform; }
+            50% { transform: translate(-5%, 5%); will-change: transform; }
+            100% { transform: translate(0, 0); will-change: transform; }
         }
 
         @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% { opacity: 0; transform: translateY(10px); will-change: opacity, transform; }
+            100% { opacity: 1; transform: translateY(0); will-change: opacity, transform; }
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); will-change: transform; }
+            100% { transform: rotate(360deg); will-change: transform; }
         }
 
         .login-container {
@@ -857,7 +857,7 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to { transform: rotate(360deg); will-change: transform; }
         }
 
         .error-container {
@@ -903,8 +903,8 @@
         /* Loading spinner is defined above */
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); will-change: transform; }
+            100% { transform: rotate(360deg); will-change: transform; }
         }
 
         .error-details {
@@ -1017,8 +1017,8 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(-10px); will-change: opacity, transform; }
+            to { opacity: 1; transform: translateY(0); will-change: opacity, transform; }
         }
 
         /* Utilities Section Styles */
@@ -2368,18 +2368,22 @@
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
+                will-change: transform;
             }
             to {
                 transform: translateX(0);
+                will-change: transform;
             }
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
+                will-change: opacity;
             }
             to {
                 opacity: 1;
+                will-change: opacity;
             }
         }
 
@@ -2590,9 +2594,11 @@
         @keyframes slideDown {
             from {
                 transform: translateY(-50px);
+                will-change: transform;
             }
             to {
                 transform: translateY(0);
+                will-change: transform;
             }
         }
 
