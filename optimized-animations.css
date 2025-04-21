@@ -1,10 +1,12 @@
-/* Optimized animations to improve performance */
+/**
+ * Optimized animations for Eli's Be Mitzvah Website
+ * This file contains optimized animations that use transform and opacity
+ * in a way that minimizes repaints and composite operations
+ */
 
 /* Use hardware acceleration for animations */
-.fade-in, .pulse {
+.animated {
     /* Hardware acceleration techniques */
-
-    /* Use transform: translateZ(0) to trigger hardware acceleration */
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
@@ -23,11 +25,48 @@
     transform: translateY(0);
 }
 
-.pulse {
-    /* Use CSS transitions for pulse effect */
-    transition: opacity 0.5s ease-in-out;
-    animation: none; /* Disable keyframe animation */
-    opacity: 0.8;
+/* Spinner animation using CSS transitions */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    transition: transform 0.1s linear;
 }
 
-/* Note: For optimal performance, consider implementing pulse effect with JavaScript */
+/* Slide in animation using transitions */
+.slide-in {
+    transition: transform 0.3s ease-out;
+    transform: translateX(100%);
+}
+
+.slide-in.visible {
+    transform: translateX(0);
+}
+
+/* Slide down animation using transitions */
+.slide-down {
+    transition: transform 0.3s ease-out;
+    transform: translateY(-50px);
+}
+
+.slide-down.visible {
+    transform: translateY(0);
+}
+
+/* Pulse effect using transitions */
+.pulse {
+    transition: transform 0.5s ease-in-out;
+    transform: translate(0, 0);
+}
+
+.pulse:hover {
+    transform: translate(-2px, 2px);
+}
+
+/* Apply will-change only when element is animating */
+.will-animate {
+    will-change: transform, opacity;
+}

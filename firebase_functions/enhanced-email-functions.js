@@ -13,23 +13,23 @@ exports.sendStyledRsvpConfirmation = functions.firestore
       // Get the RSVP data
       const rsvpData = snapshot.data();
       const rsvpId = context.params.rsvpId;
-      
+
       // Skip if no email provided
       if (!rsvpData.email) {
         console.log('No email provided for RSVP, skipping confirmation email');
         return null;
       }
-      
+
       // Configure Brevo API client
       const defaultClient = SibApiV3Sdk.ApiClient.instance;
       const apiKey = defaultClient.authentications['api-key'];
       apiKey.apiKey = functions.config().brevo.apikey;
-      
+
       const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-      
+
       // Get the HTML content from our template
       const htmlContent = emailTemplates.getRsvpConfirmationTemplate(rsvpData);
-      
+
       // Create the email
       const sendSmtpEmail = {
         sender: {
@@ -40,11 +40,11 @@ exports.sendStyledRsvpConfirmation = functions.firestore
         subject: 'Thank You for Your RSVP to Eli\'s Bar Mitzvah',
         htmlContent: htmlContent
       };
-      
+
       // Send the email
       const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
       console.log('Styled confirmation email sent to:', rsvpData.email);
-      
+
       // Log the email
       await admin.firestore().collection('emailLogs').add({
         type: 'rsvp-confirmation',
@@ -57,7 +57,7 @@ exports.sendStyledRsvpConfirmation = functions.firestore
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         messageId: result.messageId
       });
-      
+
       return null;
     } catch (error) {
       console.error('Error sending styled confirmation email:', error);
@@ -76,13 +76,13 @@ exports.sendStyledRsvpUpdateConfirmation = functions.firestore
       const beforeData = change.before.data();
       const afterData = change.after.data();
       const rsvpId = context.params.rsvpId;
-      
+
       // Skip if no email provided
       if (!afterData.email) {
         console.log('No email provided for RSVP update, skipping confirmation email');
         return null;
       }
-      
+
       // Check if there are meaningful changes to notify about
       const hasAttendanceChanged = beforeData.attending !== afterData.attending;
       const hasGuestCountChanged = beforeData.guestCount !== afterData.guestCount;
@@ -92,29 +92,29 @@ exports.sendStyledRsvpUpdateConfirmation = functions.firestore
                                    JSON.stringify(afterData.adultGuests || []);
       const hasChildGuestsChanged = JSON.stringify(beforeData.childGuests || []) !==
                                    JSON.stringify(afterData.childGuests || []);
-      
+
       // Check for out-of-town event changes
       const hasFridayDinnerChanged = beforeData.fridayDinner !== afterData.fridayDinner;
       const hasSundayBrunchChanged = beforeData.sundayBrunch !== afterData.sundayBrunch;
-      
+
       // If nothing significant changed, don't send an email
       if (!hasAttendanceChanged && !hasGuestCountChanged && !hasAdditionalGuestsChanged &&
-          !hasAdultGuestsChanged && !hasChildGuestsChanged && !hasFridayDinnerChanged && 
+          !hasAdultGuestsChanged && !hasChildGuestsChanged && !hasFridayDinnerChanged &&
           !hasSundayBrunchChanged) {
         console.log('No significant changes detected in RSVP update, skipping email');
         return null;
       }
-      
+
       // Configure Brevo API client
       const defaultClient = SibApiV3Sdk.ApiClient.instance;
       const apiKey = defaultClient.authentications['api-key'];
       apiKey.apiKey = functions.config().brevo.apikey;
-      
+
       const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-      
+
       // Get the HTML content from our template
       const htmlContent = emailTemplates.getRsvpUpdateTemplate(beforeData, afterData);
-      
+
       // Create the email
       const sendSmtpEmail = {
         sender: {
@@ -125,11 +125,11 @@ exports.sendStyledRsvpUpdateConfirmation = functions.firestore
         subject: 'Your RSVP to Eli\'s Bar Mitzvah Has Been Updated',
         htmlContent: htmlContent
       };
-      
+
       // Send the email
       const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
       console.log('Styled update confirmation email sent to:', afterData.email);
-      
+
       // Log the email
       await admin.firestore().collection('emailLogs').add({
         type: 'rsvp-update-confirmation',
@@ -149,7 +149,7 @@ exports.sendStyledRsvpUpdateConfirmation = functions.firestore
           sundayBrunch: hasSundayBrunchChanged
         }
       });
-      
+
       return null;
     } catch (error) {
       console.error('Error sending styled update confirmation email:', error);

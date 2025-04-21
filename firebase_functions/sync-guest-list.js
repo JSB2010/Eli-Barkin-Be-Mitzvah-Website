@@ -11,7 +11,6 @@ exports.syncGuestToSheet = functions.firestore
     try {
       // Get the guest data
       const guestData = change.after.exists ? change.after.data() : null;
-      const guestId = context.params.guestId;
 
       // If the document was deleted, we don't need to update the sheet
       if (!guestData) {

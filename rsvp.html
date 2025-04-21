@@ -21,9 +21,10 @@
     <link rel="stylesheet" href="animations.css?v=1.0">
     <link rel="stylesheet" href="optimized-animations.css?v=1.0">
     <link rel="stylesheet" href="update-mode.css?v=1.0">
+    <link rel="stylesheet" href="header-footer.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="mobile-nav.js?v=1.2" defer></script>
+    <script src="header-footer.js?v=1.0" defer></script>
     <script src="animations.js?v=1.0" defer></script>
     <script src="animation-handler.js?v=1.0" defer></script>
 
@@ -36,9 +37,9 @@
         gtag('config', 'G-55YBSPLJCW');
     </script>
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
     <!-- Firebase Config -->
     <script src="firebase-config.js"></script>
     <!-- Guest List Management -->
@@ -591,28 +592,7 @@
 
 </head>
 <body>
-    <div class="menu-overlay"></div>
-    <header>
-        <div class="logo">
-            <a href="index.html">
-                <img src="logo.PNG" alt="EZB Sports Logo">
-            </a>
-        </div>
-        <div class="menu-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="journey.html">Eli's Journey</a></li>
-                <li><a href="the-big-day.html">Game Day Details</a></li>
-                <li><a href="rsvp.html" class="active">RSVP</a></li>
-                <li><a href="family-details.html">Family & Out-of-Town Guests</a></li>
-            </ul>
-        </nav>
-    </header>
+    <!-- Header will be injected by header-footer.js -->
 
     <div class="rsvp-hero">
         <div class="hero-content">
@@ -777,23 +757,7 @@
         </div>
     </section>
 
-    <footer>
-        <div class="container">
-            <div class="footer-credits">
-                <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
-                <span class="separator">|</span>
-                <a href="https://askthekidz.com" target="_blank" rel="noopener">Ask The Kidz</a>
-            </div>
-            <div class="footer-links">
-                <a href="index.html">Home</a>
-                <a href="journey.html">Eli's Journey</a>
-                <a href="the-big-day.html">Game Day Details</a>
-                <a href="rsvp.html">RSVP</a>
-                <a href="family-details.html">Family & Out-of-Town Guests</a>
-                <a href="rsvp-dashboard.html">RSVP Dashboard</a>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer will be injected by header-footer.js -->
 
     <script src="firebase-rsvp.js"></script>
     <script src="rsvp-guest-search.js"></script>

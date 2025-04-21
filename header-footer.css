@@ -1,0 +1,345 @@
+/**
+ * Standardized Header and Footer Styles for Eli's Be Mitzvah Website
+ */
+
+/* Header Styles */
+header {
+    background-color: var(--white);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    height: 80px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+header.scrolled {
+    padding: 0.5rem 2rem;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 60px;
+    transition: all 0.3s ease;
+}
+
+header.scrolled .logo img {
+    height: 50px;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    margin-left: 1.5rem;
+}
+
+nav ul li a {
+    color: var(--dark-gray);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 0.5rem 0.8rem;
+    border-radius: 4px;
+}
+
+nav ul li a:hover {
+    color: var(--primary-blue);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+nav ul li a.active {
+    color: var(--primary-blue);
+    background-color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+nav ul li a.active::after {
+    display: none; /* Remove the underline for active items */
+}
+
+/* Mobile Menu Toggle */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+    cursor: pointer;
+    z-index: 1001;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.menu-toggle span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background-color: var(--primary-blue);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
+}
+
+.menu-toggle span:last-child {
+    margin-bottom: 0;
+}
+
+.menu-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+    background-color: var(--primary-blue);
+}
+
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+    background-color: var(--primary-blue);
+}
+
+.menu-toggle.active {
+    position: fixed;
+    right: 1rem;
+    top: 35px;
+}
+
+/* Ensure the menu toggle is visible on the white background */
+
+.menu-overlay {
+    position: fixed;
+    top: 70px; /* Match the mobile header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+@media (min-width: 769px) {
+    .menu-overlay {
+        top: 0; /* Full screen on desktop */
+    }
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Footer Styles */
+footer {
+    background-color: rgb(32, 70, 155);
+    color: var(--white);
+    padding: 2rem 0;
+    margin-top: 0;
+}
+
+.footer-credits {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.footer-credits a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-credits a:hover {
+    color: var(--primary-blue-light);
+}
+
+.separator {
+    margin: 0 0.5rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: var(--white);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem;
+        height: 70px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    .menu-toggle {
+        display: flex;
+    }
+
+    nav {
+        position: fixed;
+        top: 70px; /* Match the mobile header height */
+        right: -100%;
+        width: 80%;
+        max-width: 300px;
+        height: calc(100vh - 70px); /* Subtract header height */
+        background-color: var(--white);
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    /* Ensure content is not covered by mobile nav */
+    body.menu-open {
+        overflow: hidden;
+    }
+
+    nav.active {
+        right: 0;
+    }
+
+    nav ul {
+        flex-direction: column;
+    }
+
+    nav ul li {
+        margin: 0 0 1.5rem 0;
+    }
+
+    nav ul li a {
+        font-size: 1.1rem;
+        display: block;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    nav ul li a:hover {
+        background-color: rgba(37, 99, 235, 0.05);
+        border-left: 3px solid var(--primary-blue);
+    }
+
+    nav ul li a.active {
+        background-color: rgba(37, 99, 235, 0.1);
+        border-left: 3px solid var(--primary-blue);
+        font-weight: 600;
+    }
+
+    /* Already defined above */
+
+    .footer-links {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Improve footer responsiveness */
+    footer .container {
+        padding: 1rem;
+    }
+
+    .footer-credits {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Adjust body and content for fixed header */
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Main content container */
+.main-content {
+    padding-top: 80px; /* Height of the header */
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Hero sections need special handling */
+.hero, .rsvp-hero {
+    margin-top: 0;
+    padding-top: 80px; /* Height of the header */
+}
+
+/* Dashboard container needs special handling */
+.dashboard-container {
+    margin-top: 0;
+    padding-top: 0 !important; /* No extra padding needed since we have main-content */
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding-top: 70px; /* Height of the mobile header */
+    }
+
+    .hero, .rsvp-hero {
+        padding-top: 70px; /* Height of the mobile header */
+    }
+
+    .dashboard-container {
+        padding-top: 0 !important; /* No extra padding needed since we have main-content */
+    }
+}
+
+/* Make main content fill available space */
+body > *:not(header):not(footer):not(.menu-overlay) {
+    flex: 1 0 auto;
+}
+
+/* Remove default margins that might cause spacing */
+section:first-of-type {
+    margin-top: 0;
+}
+
+section:last-of-type {
+    margin-bottom: 0;
+}

@@ -15,20 +15,19 @@
     <link rel="manifest" href="site.webmanifest">
     <meta name="msapplication-TileImage" content="logo.PNG">
     <meta name="msapplication-TileColor" content="#2b5797">
-    <!-- Theme color for Chrome, Firefox OS and Opera -->
-    <meta name="theme-color" content="#ffffff">
-    <!-- Theme color for Safari and Windows -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
-    <meta name="msapplication-navbutton-color" content="#ffffff">
+    <!-- Removed theme-color meta tags for better browser compatibility -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="msapplication-navbutton-color" content="#2b5797">
     <link rel="stylesheet" href="styles.css?v=1.2">
     <link rel="stylesheet" href="modern-dashboard.css">
+    <link rel="stylesheet" href="header-footer.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <!-- Dashboard enhancement script (loaded after Firebase SDK) -->
     <script src="rsvp-dashboard-fix.js"></script>
     <script src="rsvp-dashboard-charts-fix.js"></script>
@@ -71,6 +70,9 @@
             event.preventDefault();
         });
     </script>
+
+    <!-- Header/Footer Script - Only for dashboard pages outside login screen -->
+    <script src="header-footer.js?v=1.0" defer></script>
     <!-- RSVP System Script (Minimal) -->
     <script src="rsvp-system-minimal.js"></script>
     <!-- Sysadmin Dashboard Script -->
@@ -159,21 +161,7 @@
             z-index: 0;
         }
 
-        @keyframes pulse {
-            0% { transform: translate(0, 0); will-change: transform; }
-            50% { transform: translate(-5%, 5%); will-change: transform; }
-            100% { transform: translate(0, 0); will-change: transform; }
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(10px); will-change: opacity, transform; }
-            100% { opacity: 1; transform: translateY(0); will-change: opacity, transform; }
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); will-change: transform; }
-            100% { transform: rotate(360deg); will-change: transform; }
-        }
+        /* Animations moved to optimized-animations.css */
 
         .login-container {
             width: 100%;
@@ -861,9 +849,7 @@
             animation: spin 1s ease-in-out infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); will-change: transform; }
-        }
+        /* Animations moved to optimized-animations.css */
 
         .error-container {
             display: flex;
@@ -907,10 +893,7 @@
 
         /* Loading spinner is defined above */
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); will-change: transform; }
-            100% { transform: rotate(360deg); will-change: transform; }
-        }
+        /* Animations moved to optimized-animations.css */
 
         .error-details {
             font-size: 0.85rem;
@@ -1021,10 +1004,7 @@
             margin-right: 0.5rem;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); will-change: opacity, transform; }
-            to { opacity: 1; transform: translateY(0); will-change: opacity, transform; }
-        }
+        /* Animations moved to optimized-animations.css */
 
         /* Utilities Section Styles */
         .dashboard-section:last-child {
@@ -2370,27 +2350,7 @@
             text-align: center;
         }
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                will-change: transform;
-            }
-            to {
-                transform: translateX(0);
-                will-change: transform;
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                will-change: opacity;
-            }
-            to {
-                opacity: 1;
-                will-change: opacity;
-            }
-        }
+        /* Animations moved to optimized-animations.css */
 
         /* Modal styles */
         .modal {
@@ -2596,16 +2556,7 @@
             color: var(--danger);
         }
 
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                will-change: transform;
-            }
-            to {
-                transform: translateY(0);
-                will-change: transform;
-            }
-        }
+        /* Animations moved to optimized-animations.css */
 
         /* Responsive styles */
         @media (max-width: 768px) {
@@ -2712,6 +2663,7 @@
     </style>
 </head>
 <body>
+    <!-- Header will be injected by header-footer.js for non-login pages -->
     <div id="login-section" class="login-page">
         <div class="login-container">
             <div class="login-logo">
@@ -3763,23 +3715,7 @@
 
 
 
-    <footer>
-        <div class="container">
-            <div class="footer-credits">
-                <a href="https://jacobbarkin.com" target="_blank" rel="noopener noreferrer">Designed by Jacob Barkin</a>
-                <span class="separator">|</span>
-                <a href="https://askthekidz.com" target="_blank" rel="noopener noreferrer">Ask The Kidz</a>
-            </div>
-            <div class="footer-links">
-                <a href="index.html">Home</a>
-                <a href="journey.html">Eli's Journey</a>
-                <a href="the-big-day.html">Game Day Details</a>
-                <a href="rsvp.html">RSVP</a>
-                <a href="family-details.html">Family & Out-of-Town Guests</a>
-                <a href="rsvp-dashboard.html">RSVP Dashboard</a>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer will be injected by header-footer.js -->
 
 
 </body>

@@ -226,7 +226,8 @@ body.force-mobile-nav nav ul li a.active {
     /* Adjust hero sections for mobile */
     .hero, .rsvp-hero {
         min-height: 60vh;
-        margin-top: var(--header-height);
+        margin-top: 0;
+        padding-top: var(--header-height);
     }
 
     .rsvp-hero {
@@ -307,6 +308,7 @@ body.force-mobile-nav nav ul li a.active {
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 100;
+        -webkit-backdrop-filter: blur(2px);
         backdrop-filter: blur(2px);
         transition: all 0.3s ease;
     }
@@ -372,7 +374,7 @@ nav ul li a.active {
 .hero, .rsvp-hero {
     background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
     background-attachment: scroll; /* Ensure no parallax/fixed effect */
-    min-height: 70vh;
+    min-height: 100vh;
     width: 100%;
     display: flex;
     align-items: center;
@@ -382,7 +384,8 @@ nav ul li a.active {
     position: relative;
     margin: 0;
     padding: 0;
-    margin-top: var(--header-height);
+    padding-top: var(--header-height);
+    margin-top: 0;
     /* Prevent any dynamic positioning */
     transform: none !important;
     transition: none !important;
@@ -392,6 +395,8 @@ nav ul li a.active {
     min-height: 50vh;
     background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('coors_field-dusk.jpeg') no-repeat center center/cover;
     background-attachment: scroll; /* Ensure no parallax/fixed effect */
+    padding-top: var(--header-height);
+    margin-top: 0;
     /* Prevent any dynamic positioning */
     transform: none !important;
     transition: none !important;

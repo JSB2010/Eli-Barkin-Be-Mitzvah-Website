@@ -259,13 +259,14 @@ exports.manualSyncSheetChanges = functions.https.onRequest(async (req, res) => {
     console.log('Manual sync triggered');
     console.log('Service account:', functions.config().sheets.credentials.client_email);
 
-    // Call the sync function
-    await exports.syncSheetChanges.run();
+    // Call the sync function directly
+    const result = await syncGuestListFromSheet();
 
     console.log('Manual sync completed successfully');
     res.status(200).json({
       success: true,
-      message: 'Google Sheet to Firebase sync completed successfully'
+      message: 'Google Sheet to Firebase sync completed successfully',
+      result: result
     });
   } catch (error) {
     console.error('Error in manual sync:', error);

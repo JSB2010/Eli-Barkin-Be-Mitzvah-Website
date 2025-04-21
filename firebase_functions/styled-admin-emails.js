@@ -13,20 +13,20 @@ exports.sendStyledAdminNotification = functions.firestore
       const rsvpData = change.after.exists ? change.after.data() : null;
       const previousData = change.before.exists ? change.before.data() : null;
       const rsvpId = context.params.rsvpId;
-      
+
       // Determine the action type
       const isCreate = !change.before.exists && change.after.exists;
       const isUpdate = change.before.exists && change.after.exists;
       const isDelete = change.before.exists && !change.after.exists;
-      
+
       // If it's a delete, we don't need to send an email
       if (isDelete) {
         return null;
       }
-      
+
       // Get the admin email from environment
       const adminEmail = functions.config().admin.email || 'jacobsamuelbarkin@gmail.com';
-      
+
       // Create email transport
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -35,13 +35,13 @@ exports.sendStyledAdminNotification = functions.firestore
           pass: functions.config().gmail.password
         }
       });
-      
+
       // Determine if this is an out-of-town guest
       const isOutOfTown = rsvpData.isOutOfTown === true;
-      
+
       // Determine if they're attending
       const isAttending = rsvpData.attending === 'yes';
-      
+
       // Determine the email subject based on action type and guest type
       let subject = '';
       if (isCreate) {
@@ -55,12 +55,12 @@ exports.sendStyledAdminNotification = functions.firestore
           subject = `Out-of-Town RSVP Updated: ${rsvpData.name} ${isAttending ? 'is attending' : 'is not attending'}`;
         }
       }
-      
+
       // Format the date
       const submittedDate = rsvpData.submittedAt ?
         new Date(rsvpData.submittedAt.toDate()).toLocaleString() :
         new Date().toLocaleString();
-      
+
       // Format additional guests
       const additionalGuests = rsvpData.additionalGuests || [];
       const additionalGuestsHtml = additionalGuests.length > 0 ?
@@ -68,40 +68,40 @@ exports.sendStyledAdminNotification = functions.firestore
           ${additionalGuests.map(guest => `<li style="margin-bottom: 5px;">${guest}</li>`).join('')}
         </ul>` :
         '<p style="margin: 5px 0 15px;">None</p>';
-      
+
       // Determine changes if this is an update
       let changesHtml = '';
       if (isUpdate) {
         const changes = [];
-        
+
         // Check for changes in attendance
         if (rsvpData.attending !== previousData.attending) {
           changes.push(`<li>Attendance: ${previousData.attending === 'yes' ? 'Attending' : 'Not Attending'} → ${rsvpData.attending === 'yes' ? 'Attending' : 'Not Attending'}</li>`);
         }
-        
+
         // Check for changes in guest count
         if (rsvpData.guestCount !== previousData.guestCount) {
           changes.push(`<li>Guest Count: ${previousData.guestCount || 1} → ${rsvpData.guestCount || 1}</li>`);
         }
-        
+
         // Check for changes in additional guests
         const prevGuests = previousData.additionalGuests || [];
         const newGuests = rsvpData.additionalGuests || [];
         if (JSON.stringify(prevGuests) !== JSON.stringify(newGuests)) {
           changes.push(`<li>Additional Guests: Changed</li>`);
         }
-        
+
         // Check for changes in out-of-town event attendance
         if (isOutOfTown) {
           if (rsvpData.fridayDinner !== previousData.fridayDinner) {
             changes.push(`<li>Friday Dinner: ${previousData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'} → ${rsvpData.fridayDinner === 'yes' ? 'Attending' : 'Not Attending'}</li>`);
           }
-          
+
           if (rsvpData.sundayBrunch !== previousData.sundayBrunch) {
             changes.push(`<li>Sunday Brunch: ${previousData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'} → ${rsvpData.sundayBrunch === 'yes' ? 'Attending' : 'Not Attending'}</li>`);
           }
         }
-        
+
         if (changes.length > 0) {
           changesHtml = `
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #0d47a1; border-radius: 4px;">
@@ -113,10 +113,10 @@ exports.sendStyledAdminNotification = functions.firestore
           `;
         }
       }
-      
+
       // Create the email HTML content based on the action type and guest type
       let htmlContent = '';
-      
+
       // Base template for all emails
       const baseTemplate = `
         <!DOCTYPE html>
@@ -132,10 +132,10 @@ exports.sendStyledAdminNotification = functions.firestore
             <h1 style="color: #0d47a1; margin-bottom: 5px; font-size: 24px;">${subject}</h1>
             <p style="color: #666; font-size: 16px;">${submittedDate}</p>
           </div>
-          
+
           <!-- Content will be inserted here -->
           {{CONTENT}}
-          
+
           <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
             <p>This is an automated notification from the Eli Barkin Bar Mitzvah website.</p>
             <p>May 17, 2025 | Denver, Colorado</p>
@@ -144,7 +144,7 @@ exports.sendStyledAdminNotification = functions.firestore
         </body>
         </html>
       `;
-      
+
       // Content for new RSVP
       if (isCreate) {
         const newRsvpContent = `
@@ -153,25 +153,25 @@ exports.sendStyledAdminNotification = functions.firestore
               ${rsvpData.name} ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Bar Mitzvah
             </h2>
           </div>
-          
+
           <div style="margin-bottom: 20px;">
             <h3 style="color: #0d47a1; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; font-size: 18px;">Guest Information</h3>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Name:</div>
               <div>${rsvpData.name}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Email:</div>
               <div>${rsvpData.email || 'Not provided'}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Phone:</div>
               <div>${rsvpData.phone || 'Not provided'}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Attending:</div>
               <div>
@@ -180,23 +180,23 @@ exports.sendStyledAdminNotification = functions.firestore
                 </span>
               </div>
             </div>
-            
+
             ${isAttending ? `
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Guest Count:</div>
               <div>${rsvpData.guestCount || 1}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Additional Guests:</div>
               <div style="flex: 1;">${additionalGuestsHtml}</div>
             </div>
             ` : ''}
-            
+
             ${isOutOfTown && isAttending ? `
             <div style="margin-top: 20px; background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px;">
               <h3 style="margin-top: 0; color: #f57c00; font-size: 16px;">Out-of-Town Guest Events</h3>
-              
+
               <div style="display: flex; margin-bottom: 10px;">
                 <div style="width: 150px; font-weight: bold;">Friday Dinner:</div>
                 <div>
@@ -205,7 +205,7 @@ exports.sendStyledAdminNotification = functions.firestore
                   </span>
                 </div>
               </div>
-              
+
               <div style="display: flex; margin-bottom: 10px;">
                 <div style="width: 150px; font-weight: bold;">Sunday Brunch:</div>
                 <div>
@@ -218,7 +218,7 @@ exports.sendStyledAdminNotification = functions.firestore
             ` : ''}
           </div>
         `;
-        
+
         htmlContent = baseTemplate.replace('{{CONTENT}}', newRsvpContent);
       }
       // Content for updated RSVP
@@ -229,27 +229,27 @@ exports.sendStyledAdminNotification = functions.firestore
               ${rsvpData.name} has updated their RSVP
             </h2>
           </div>
-          
+
           ${changesHtml}
-          
+
           <div style="margin-bottom: 20px;">
             <h3 style="color: #0d47a1; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; font-size: 18px;">Current Information</h3>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Name:</div>
               <div>${rsvpData.name}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Email:</div>
               <div>${rsvpData.email || 'Not provided'}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Phone:</div>
               <div>${rsvpData.phone || 'Not provided'}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Attending:</div>
               <div>
@@ -258,23 +258,23 @@ exports.sendStyledAdminNotification = functions.firestore
                 </span>
               </div>
             </div>
-            
+
             ${isAttending ? `
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Guest Count:</div>
               <div>${rsvpData.guestCount || 1}</div>
             </div>
-            
+
             <div style="display: flex; margin-bottom: 10px;">
               <div style="width: 150px; font-weight: bold;">Additional Guests:</div>
               <div style="flex: 1;">${additionalGuestsHtml}</div>
             </div>
             ` : ''}
-            
+
             ${isOutOfTown && isAttending ? `
             <div style="margin-top: 20px; background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px;">
               <h3 style="margin-top: 0; color: #f57c00; font-size: 16px;">Out-of-Town Guest Events</h3>
-              
+
               <div style="display: flex; margin-bottom: 10px;">
                 <div style="width: 150px; font-weight: bold;">Friday Dinner:</div>
                 <div>
@@ -283,7 +283,7 @@ exports.sendStyledAdminNotification = functions.firestore
                   </span>
                 </div>
               </div>
-              
+
               <div style="display: flex; margin-bottom: 10px;">
                 <div style="width: 150px; font-weight: bold;">Sunday Brunch:</div>
                 <div>
@@ -296,10 +296,10 @@ exports.sendStyledAdminNotification = functions.firestore
             ` : ''}
           </div>
         `;
-        
+
         htmlContent = baseTemplate.replace('{{CONTENT}}', updatedRsvpContent);
       }
-      
+
       // Send the email
       const mailOptions = {
         from: '"Eli\'s Bar Mitzvah" <noreply@elibarkin.com>',
@@ -307,9 +307,9 @@ exports.sendStyledAdminNotification = functions.firestore
         subject: subject,
         html: htmlContent
       };
-      
+
       await transporter.sendMail(mailOptions);
-      
+
       // Log the email
       await admin.firestore().collection('emailLogs').add({
         type: 'admin-notification',
@@ -323,7 +323,7 @@ exports.sendStyledAdminNotification = functions.firestore
         isUpdate: isUpdate,
         timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
-      
+
       return null;
     } catch (error) {
       console.error('Error sending styled admin notification:', error);
