@@ -27,6 +27,56 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Inline script to ensure Firebase is initialized properly in Chrome -->
+    <script>
+        // This script ensures Firebase is properly initialized in Chrome
+        console.log('Chrome-specific Firebase initialization check');
+
+        // Function to initialize Firebase directly
+        function ensureFirebaseInitialized() {
+            try {
+                console.log('Ensuring Firebase is initialized...');
+
+                // Check if Firebase is available
+                if (typeof firebase === 'undefined') {
+                    console.error('Firebase not available yet, will retry');
+                    setTimeout(ensureFirebaseInitialized, 100);
+                    return;
+                }
+
+                // Initialize Firebase if not already initialized
+                if (!firebase.apps || firebase.apps.length === 0) {
+                    console.log('Initializing Firebase directly');
+                    firebase.initializeApp({
+                        apiKey: "AIzaSyBgAXectfPhAr3HqASJCewnfQJnGnfGAK8",
+                        authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",
+                        projectId: "eli-barkin-be-mitzvah",
+                        storageBucket: "eli-barkin-be-mitzvah.firebasestorage.app",
+                        messagingSenderId: "1058445082947",
+                        appId: "1:1058445082947:web:8ab0696d5782e63ddaeff6",
+                        measurementId: "G-QQBCYHVB9C"
+                    });
+                }
+
+                // Initialize Firestore if not already initialized
+                if (!window.db && typeof firebase.firestore === 'function') {
+                    console.log('Initializing Firestore directly');
+                    window.db = firebase.firestore();
+                }
+
+                console.log('Firebase initialization check complete');
+            } catch (error) {
+                console.error('Error in ensureFirebaseInitialized:', error);
+            }
+        }
+
+        // Run the initialization check immediately
+        ensureFirebaseInitialized();
+
+        // Also run it after a short delay to ensure it happens after all scripts are loaded
+        setTimeout(ensureFirebaseInitialized, 500);
+    </script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase Config - Load this first to initialize Firebase -->

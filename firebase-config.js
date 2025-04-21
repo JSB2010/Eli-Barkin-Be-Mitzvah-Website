@@ -9,6 +9,33 @@ const firebaseConfig = {
   measurementId: "G-QQBCYHVB9C"
 };
 
+// Detect browser type for browser-specific handling
+const isChromium = !!window.chrome;
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+console.log(`Firebase config - Browser detection: Chrome/Chromium: ${isChromium}, Safari: ${isSafari}`);
+
+// Special handling for Chrome/Chromium browsers
+if (isChromium && !isSafari) {
+  console.log('Firebase config - Using Chrome-specific initialization');
+
+  // Synchronous initialization for Chrome
+  try {
+    // Initialize Firebase immediately if not already initialized
+    if (!firebase.apps || firebase.apps.length === 0) {
+      console.log('Firebase config - Initializing Firebase synchronously for Chrome');
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    // Initialize Firestore immediately
+    if (!window.db) {
+      console.log('Firebase config - Initializing Firestore synchronously for Chrome');
+      window.db = firebase.firestore();
+    }
+  } catch (error) {
+    console.error('Firebase config - Error in Chrome-specific initialization:', error);
+  }
+}
+
 // Create a promise to track Firebase initialization
 window.firebaseInitialized = new Promise((resolve, reject) => {
   // Check if Firebase is already loaded
@@ -42,6 +69,13 @@ console.log('Setting up Firestore...');
 window.firestoreInitialized = window.firebaseInitialized.then(app => {
   console.log('Getting Firestore instance...');
   try {
+    // Use existing db instance if already created
+    if (window.db) {
+      console.log('Using existing Firestore instance');
+      return window.db;
+    }
+
+    // Create new Firestore instance
     const db = firebase.firestore();
     console.log('Firestore instance created successfully');
 
@@ -105,3 +139,21 @@ window.firestoreInitialized.then(() => {
   console.error('Firebase initialization failed:', error);
 });
 
+// Add a special retry mechanism for Chrome
+if (isChromium && !isSafari) {
+  // Check if Firebase is ready after a delay
+  setTimeout(() => {
+    if (!window.db) {
+      console.log('Firebase config - DB not ready after timeout, forcing initialization');
+      try {
+        window.db = firebase.firestore();
+        console.log('Firebase config - Forced Firestore initialization successful');
+
+        // Dispatch the firebase-ready event
+        document.dispatchEvent(new CustomEvent('firebase-ready'));
+      } catch (error) {
+        console.error('Firebase config - Forced initialization failed:', error);
+      }
+    }
+  }, 1000);
+}

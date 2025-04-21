@@ -2,11 +2,36 @@
  * Special fix script for RSVP dashboard
  * This script prevents the common JavaScript errors on the RSVP dashboard page
  * and ensures Firebase is properly initialized
+ * Includes special fixes for Chrome/Chromium browsers
  */
 
 // Execute immediately when the script loads
 (function() {
     console.log('RSVP Dashboard Fix: Initializing...');
+
+    // Detect browser type
+    const isChromium = !!window.chrome;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    console.log(`Browser detection: Chrome/Chromium: ${isChromium}, Safari: ${isSafari}`);
+
+    // Apply special fixes for Chrome/Chromium browsers
+    if (isChromium && !isSafari) {
+        console.log('Applying Chrome-specific fixes');
+
+        // Force Firebase to initialize synchronously for Chrome
+        if (typeof firebase !== 'undefined') {
+            try {
+                // Ensure Firestore is initialized immediately
+                if (!window.db && typeof firebase.firestore === 'function') {
+                    console.log('Chrome fix: Initializing Firestore immediately');
+                    window.db = firebase.firestore();
+                }
+            } catch (error) {
+                console.error('Chrome fix: Error initializing Firestore:', error);
+            }
+        }
+    }
 
     // Create a global error handler to catch and log errors
     window.addEventListener('error', function(event) {
