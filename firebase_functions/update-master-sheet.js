@@ -233,16 +233,32 @@ exports.updateMasterSheet = functions.firestore
           [[rsvpData.guestCount || 1]];
       }
 
-      // Set Adults (column P)
+      // Set Adults (column P) - now includes names instead of just count
       if (adultsIndex >= 0) {
-        updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
-          [[rsvpData.adultCount || (rsvpData.attending === 'yes' ? 1 : 0)]];
+        // Check if we have adult guest names
+        if (rsvpData.adultGuests && rsvpData.adultGuests.length > 0) {
+          // Use the names of adult guests
+          updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
+            [[rsvpData.adultGuests.join(', ')]];
+        } else {
+          // Fallback to just the count if no names are available
+          updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
+            [[rsvpData.adultCount || (rsvpData.attending === 'yes' ? 1 : 0)]];
+        }
       }
 
-      // Set Children (column Q)
+      // Set Children (column Q) - now includes names instead of just count
       if (childrenIndex >= 0) {
-        updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
-          [[rsvpData.childCount || 0]];
+        // Check if we have child guest names
+        if (rsvpData.childGuests && rsvpData.childGuests.length > 0) {
+          // Use the names of child guests
+          updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
+            [[rsvpData.childGuests.join(', ')]];
+        } else {
+          // Fallback to just the count if no names are available
+          updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
+            [[rsvpData.childCount || 0]];
+        }
       }
 
       // Set Submitted At (column R)
@@ -639,16 +655,32 @@ exports.manualUpdateMasterSheet = functions.https.onCall(async (data, context) =
             [[submission.guestCount || 1]];
         }
 
-        // Set Adults (column P)
+        // Set Adults (column P) - now includes names instead of just count
         if (adultsIndex >= 0) {
-          updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
-            [[submission.adultCount || (submission.attending === 'yes' ? 1 : 0)]];
+          // Check if we have adult guest names
+          if (submission.adultGuests && submission.adultGuests.length > 0) {
+            // Use the names of adult guests
+            updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
+              [[submission.adultGuests.join(', ')]];
+          } else {
+            // Fallback to just the count if no names are available
+            updateData[`${sheetName}!${String.fromCharCode(65 + adultsIndex)}${rowIndex}`] =
+              [[submission.adultCount || (submission.attending === 'yes' ? 1 : 0)]];
+          }
         }
 
-        // Set Children (column Q)
+        // Set Children (column Q) - now includes names instead of just count
         if (childrenIndex >= 0) {
-          updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
-            [[submission.childCount || 0]];
+          // Check if we have child guest names
+          if (submission.childGuests && submission.childGuests.length > 0) {
+            // Use the names of child guests
+            updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
+              [[submission.childGuests.join(', ')]];
+          } else {
+            // Fallback to just the count if no names are available
+            updateData[`${sheetName}!${String.fromCharCode(65 + childrenIndex)}${rowIndex}`] =
+              [[submission.childCount || 0]];
+          }
         }
 
         // Set Submitted At (column R)

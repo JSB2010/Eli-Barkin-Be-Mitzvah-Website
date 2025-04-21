@@ -31,6 +31,108 @@ exports.sendStyledAdminNotification = sendStyledAdminNotification;
 exports.sendStyledRsvpConfirmation = sendStyledRsvpConfirmation;
 exports.sendStyledRsvpUpdateConfirmation = sendStyledRsvpUpdateConfirmation;
 
+/**
+ * Cloud Function to store and retrieve API keys securely
+ */
+exports.initializeApiKeys = functions.https.onCall(async (data, context) => {
+  // Check if the user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to initialize API keys.'
+    );
+  }
+
+  try {
+    // Get the API keys collection reference
+    const db = admin.firestore();
+    const apiKeysRef = db.collection('apiKeys').doc('config');
+
+    // Check if the document already exists
+    const doc = await apiKeysRef.get();
+    if (doc.exists) {
+      console.log('API keys already exist, not overwriting');
+      return { success: true, message: 'API keys already exist' };
+    }
+
+    // Initialize with values from environment variables
+    await apiKeysRef.set({
+      github: functions.config().github?.token || null,
+      googleAnalytics: {
+        viewId: functions.config().google?.viewid || null,
+        clientId: functions.config().google?.clientid || null,
+        clientSecret: functions.config().google?.clientsecret || null
+      },
+      cloudflare: {
+        email: functions.config().cloudflare?.email || null,
+        apiKey: functions.config().cloudflare?.apikey || null,
+        zoneId: functions.config().cloudflare?.zoneid || null
+      },
+      brevo: functions.config().brevo?.apikey || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: context.auth.uid
+    });
+
+    return { success: true, message: 'API keys initialized successfully' };
+  } catch (error) {
+    console.error('Error initializing API keys:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error initializing API keys: ${error.message}`
+    );
+  }
+});
+
+/**
+ * Cloud Function to get API keys
+ */
+exports.getApiKeys = functions.https.onCall(async (data, context) => {
+  // Check if the user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to get API keys.'
+    );
+  }
+
+  try {
+    // Get the API keys from Firestore
+    const db = admin.firestore();
+    const apiKeysDoc = await db.collection('apiKeys').doc('config').get();
+
+    if (!apiKeysDoc.exists) {
+      return {
+        github: null,
+        googleAnalytics: { viewId: null, clientId: null, clientSecret: null },
+        cloudflare: { email: null, apiKey: null, zoneId: null },
+        brevo: null
+      };
+    }
+
+    const apiKeys = apiKeysDoc.data();
+    return {
+      github: apiKeys.github,
+      googleAnalytics: {
+        viewId: apiKeys.googleAnalytics?.viewId || null,
+        clientId: apiKeys.googleAnalytics?.clientId || null,
+        clientSecret: apiKeys.googleAnalytics?.clientSecret || null
+      },
+      cloudflare: {
+        email: apiKeys.cloudflare?.email || null,
+        apiKey: apiKeys.cloudflare?.apiKey || null,
+        zoneId: apiKeys.cloudflare?.zoneId || null
+      },
+      brevo: apiKeys.brevo
+    };
+  } catch (error) {
+    console.error('Error getting API keys:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error getting API keys: ${error.message}`
+    );
+  }
+});
+
 // Configure the email transport using nodemailer
 // For Gmail, you'll need to create an "App Password" in your Google Account
 // See: https://support.google.com/accounts/answer/185833
