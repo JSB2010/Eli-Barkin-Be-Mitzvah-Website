@@ -566,10 +566,14 @@ const RSVPSystem = {
             console.log('Hiding loading indicator');
             const loadingElement = document.getElementById('loading');
             if (loadingElement) {
+                // Only show success message if the element is currently visible
+                const isCurrentlyVisible = !loadingElement.classList.contains('hidden');
+
+                // Hide the loading element
                 loadingElement.classList.add('hidden');
 
-                // Show toast notification
-                if (typeof ToastSystem !== 'undefined') {
+                // Show toast notification only if it was visible before (prevents multiple notifications)
+                if (isCurrentlyVisible && typeof ToastSystem !== 'undefined') {
                     ToastSystem.success('Data loaded successfully');
                 }
             } else {

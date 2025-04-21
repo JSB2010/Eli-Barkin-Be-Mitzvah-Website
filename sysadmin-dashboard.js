@@ -72,30 +72,70 @@ const SysadminDashboard = {
     // Load API keys from Firebase
     loadApiKeys: function() {
         try {
-            // Call the Firebase function to get API keys
-            const getApiKeys = firebase.functions().httpsCallable('getApiKeys');
-            getApiKeys().then(result => {
-                this.state.apiKeys = result.data;
-                console.log('API keys loaded from Firebase');
-                this.updateApiKeyStatus();
+            // First check if we can access the API keys directly from Firestore
+            // This is a fallback method that doesn't rely on Cloud Functions
+            this.state.db.collection('apiKeys').doc('config').get()
+                .then(doc => {
+                    if (doc.exists) {
+                        // We found API keys in Firestore, use them
+                        const apiKeys = doc.data();
+                        this.state.apiKeys = {
+                            github: apiKeys.github || null,
+                            googleAnalytics: {
+                                viewId: apiKeys.googleAnalytics?.viewId || null,
+                                clientId: apiKeys.googleAnalytics?.clientId || null,
+                                clientSecret: apiKeys.googleAnalytics?.clientSecret || null
+                            },
+                            cloudflare: {
+                                email: apiKeys.cloudflare?.email || null,
+                                apiKey: apiKeys.cloudflare?.apiKey || null,
+                                zoneId: apiKeys.cloudflare?.zoneId || null
+                            },
+                            brevo: apiKeys.brevo || null
+                        };
+                        console.log('API keys loaded directly from Firestore');
+                        this.updateApiKeyStatus();
+                        this.refreshAllData();
+                        return;
+                    }
 
-                // Initialize API keys if they don't exist
-                if (!this.state.apiKeys.github && !this.state.apiKeys.brevo) {
-                    console.log('API keys not found, initializing...');
-                    this.initializeApiKeysInFirebase();
-                } else {
-                    // Load data with the retrieved API keys
+                    // If no keys in Firestore, try the Cloud Function
+                    console.log('No API keys found in Firestore, trying Cloud Function...');
+                    const getApiKeys = firebase.functions().httpsCallable('getApiKeys');
+                    return getApiKeys();
+                })
+                .then(result => {
+                    // This will only run if we called the Cloud Function
+                    if (result && result.data) {
+                        this.state.apiKeys = result.data;
+                        console.log('API keys loaded from Firebase Cloud Function');
+                        this.updateApiKeyStatus();
+
+                        // Initialize API keys if they don't exist
+                        if (!this.state.apiKeys.github && !this.state.apiKeys.brevo) {
+                            console.log('API keys not found, initializing...');
+                            this.initializeApiKeysInFirebase();
+                        } else {
+                            // Load data with the retrieved API keys
+                            this.refreshAllData();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading API keys:', error);
+                    // Don't show error toast - we'll use default keys instead
+
+                    // Use default API keys (empty values) and continue
+                    console.log('Using default empty API keys');
+                    this.updateApiKeyStatus();
                     this.refreshAllData();
-                }
-            }).catch(error => {
-                console.error('Error loading API keys from Firebase:', error);
-                ToastSystem.error('Failed to load API configuration', 'Error');
-
-                // Try to initialize API keys if there was an error
-                this.initializeApiKeysInFirebase();
-            });
+                });
         } catch (error) {
             console.error('Error in loadApiKeys:', error);
+            // Use default API keys (empty values) and continue
+            console.log('Using default empty API keys due to error');
+            this.updateApiKeyStatus();
+            this.refreshAllData();
         }
     },
 

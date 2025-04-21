@@ -1566,8 +1566,13 @@ const RSVPSystem = {
 
     // Helper method to update latest RSVP
     updateLatestRSVP: function() {
+        console.log('Updating latest RSVP with', this.state.submissions.length, 'submissions');
+
+        // Update latest RSVP info
         if (this.state.submissions.length > 0) {
             const latestRsvp = this.state.submissions[0]; // Submissions are already sorted by date desc
+            console.log('Latest RSVP:', latestRsvp);
+
             const latestRsvpNameElem = document.getElementById('latest-rsvp-name');
             const latestRsvpTimeElem = document.getElementById('latest-rsvp-time');
 
@@ -1579,6 +1584,18 @@ const RSVPSystem = {
                 const formattedDate = latestRsvp.submittedAt.toLocaleDateString() + ' ' +
                                      latestRsvp.submittedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 latestRsvpTimeElem.textContent = `Submitted on ${formattedDate}`;
+            }
+        } else {
+            // No submissions yet
+            const latestRsvpNameElem = document.getElementById('latest-rsvp-name');
+            const latestRsvpTimeElem = document.getElementById('latest-rsvp-time');
+
+            if (latestRsvpNameElem) {
+                latestRsvpNameElem.textContent = 'No RSVPs yet';
+            }
+
+            if (latestRsvpTimeElem) {
+                latestRsvpTimeElem.textContent = '';
             }
         }
 
