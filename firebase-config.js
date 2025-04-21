@@ -9,151 +9,190 @@ const firebaseConfig = {
   measurementId: "G-QQBCYHVB9C"
 };
 
-// Detect browser type for browser-specific handling
-const isChromium = !!window.chrome;
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-console.log(`Firebase config - Browser detection: Chrome/Chromium: ${isChromium}, Safari: ${isSafari}`);
+/**
+ * Improved Firebase initialization that works reliably across all browsers
+ * This uses a hybrid approach with both synchronous and asynchronous initialization
+ */
 
-// Special handling for Chrome/Chromium browsers
-if (isChromium && !isSafari) {
-  console.log('Firebase config - Using Chrome-specific initialization');
-
-  // Synchronous initialization for Chrome
-  try {
-    // Initialize Firebase immediately if not already initialized
-    if (!firebase.apps || firebase.apps.length === 0) {
-      console.log('Firebase config - Initializing Firebase synchronously for Chrome');
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    // Initialize Firestore immediately
-    if (!window.db) {
-      console.log('Firebase config - Initializing Firestore synchronously for Chrome');
-      window.db = firebase.firestore();
-    }
-  } catch (error) {
-    console.error('Firebase config - Error in Chrome-specific initialization:', error);
-  }
-}
-
-// Create a promise to track Firebase initialization
-window.firebaseInitialized = new Promise((resolve, reject) => {
-  // Check if Firebase is already loaded
-  if (typeof firebase === 'undefined') {
-    console.error('Firebase SDK not loaded. Make sure Firebase scripts are included before this file.');
-    reject(new Error('Firebase SDK not loaded'));
-    return;
-  }
-
-  // Initialize Firebase
-  console.log('Initializing Firebase...');
-  try {
-    // Check if Firebase is already initialized
-    if (firebase.apps && firebase.apps.length > 0) {
-      console.log('Firebase already initialized, using existing app');
-      resolve(firebase.apps[0]);
-    } else {
-      // Initialize new Firebase app
-      const app = firebase.initializeApp(firebaseConfig);
-      console.log('Firebase initialized successfully');
-      resolve(app);
-    }
-  } catch (error) {
-    console.error('Error initializing Firebase:', error);
-    reject(error);
-  }
-});
-
-// Get Firestore instance
-console.log('Setting up Firestore...');
-window.firestoreInitialized = window.firebaseInitialized.then(app => {
-  console.log('Getting Firestore instance...');
-  try {
-    // Use existing db instance if already created
-    if (window.db) {
-      console.log('Using existing Firestore instance');
-      return window.db;
-    }
-
-    // Create new Firestore instance
-    const db = firebase.firestore();
-    console.log('Firestore instance created successfully');
-
-    // Export the db for use in other files
-    window.db = db;
-
-    // Test Firestore connection
-    console.log('Testing Firestore connection...');
-    return db.collection('guestList').limit(1).get()
-      .then(snapshot => {
-        console.log('Firestore connection successful, found', snapshot.size, 'documents');
-        return db;
-      })
-      .catch(error => {
-        console.error('Error testing Firestore connection:', error);
-        if (error.code === 'permission-denied') {
-          console.error('Permission denied error. User may not be authenticated or lacks permissions.');
-        }
-        // Still return the db even if the test fails
-        return db;
-      });
-  } catch (error) {
-    console.error('Error creating Firestore instance:', error);
-    throw error;
-  }
-}).catch(error => {
-  console.error('Failed to initialize Firestore:', error);
-  return null;
-});
-
-// Initialize Analytics if available
-window.firebaseInitialized.then(app => {
-  if (firebase.analytics) {
-    try {
-      const analytics = firebase.analytics();
-      console.log('Firebase Analytics initialized');
-      window.analytics = analytics;
-      return analytics;
-    } catch (error) {
-      console.error('Error initializing Firebase Analytics:', error);
-      return null;
-    }
-  }
-  return null;
-}).catch(error => {
-  console.error('Failed to initialize Analytics:', error);
-  return null;
-});
-
-// Provide a helper function to check if Firebase is ready
-window.isFirebaseReady = function() {
-  return window.db !== undefined && window.db !== null;
+// Global state to track initialization
+window.firebaseState = {
+  initialized: false,
+  initializing: false,
+  error: null
 };
 
-// Notify when Firebase is ready
-window.firestoreInitialized.then(() => {
-  console.log('Firebase and Firestore are fully initialized and ready to use');
-  // Dispatch a custom event that other scripts can listen for
-  document.dispatchEvent(new CustomEvent('firebase-ready'));
-}).catch(error => {
-  console.error('Firebase initialization failed:', error);
-});
+// Synchronous initialization - always try this first
+function initializeFirebaseSync() {
+  if (window.firebaseState.initialized || window.firebaseState.initializing) return true;
 
-// Add a special retry mechanism for Chrome
-if (isChromium && !isSafari) {
-  // Check if Firebase is ready after a delay
-  setTimeout(() => {
-    if (!window.db) {
-      console.log('Firebase config - DB not ready after timeout, forcing initialization');
-      try {
-        window.db = firebase.firestore();
-        console.log('Firebase config - Forced Firestore initialization successful');
+  console.log('Attempting synchronous Firebase initialization');
+  window.firebaseState.initializing = true;
 
-        // Dispatch the firebase-ready event
-        document.dispatchEvent(new CustomEvent('firebase-ready'));
-      } catch (error) {
-        console.error('Firebase config - Forced initialization failed:', error);
-      }
+  try {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+      console.error('Firebase SDK not loaded');
+      window.firebaseState.initializing = false;
+      return false;
     }
-  }, 1000);
+
+    // Initialize Firebase if not already initialized
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfig);
+      console.log('Firebase initialized synchronously');
+    } else {
+      console.log('Firebase already initialized');
+    }
+
+    // Initialize Firestore
+    if (!window.db && typeof firebase.firestore === 'function') {
+      window.db = firebase.firestore();
+      console.log('Firestore initialized synchronously');
+    }
+
+    // Initialize Analytics if available
+    if (!window.analytics && firebase.analytics) {
+      window.analytics = firebase.analytics();
+      console.log('Analytics initialized synchronously');
+    }
+
+    window.firebaseState.initialized = true;
+    window.firebaseState.initializing = false;
+
+    // Dispatch event for other scripts
+    document.dispatchEvent(new CustomEvent('firebase-ready'));
+
+    return true;
+  } catch (error) {
+    console.error('Error in synchronous Firebase initialization:', error);
+    window.firebaseState.error = error;
+    window.firebaseState.initializing = false;
+    return false;
+  }
 }
+
+// Asynchronous initialization - use this as a backup
+function initializeFirebaseAsync() {
+  if (window.firebaseState.initialized) return Promise.resolve(window.db);
+  if (window.firebaseState.initializing) {
+    console.log('Firebase initialization already in progress');
+    return new Promise((resolve) => {
+      document.addEventListener('firebase-ready', () => resolve(window.db), { once: true });
+    });
+  }
+
+  console.log('Starting asynchronous Firebase initialization');
+  window.firebaseState.initializing = true;
+
+  return new Promise((resolve, reject) => {
+    try {
+      // Check if Firebase is available
+      if (typeof firebase === 'undefined') {
+        const error = new Error('Firebase SDK not loaded');
+        window.firebaseState.error = error;
+        window.firebaseState.initializing = false;
+        reject(error);
+        return;
+      }
+
+      // Initialize Firebase if not already initialized
+      let app;
+      if (!firebase.apps || firebase.apps.length === 0) {
+        app = firebase.initializeApp(firebaseConfig);
+        console.log('Firebase initialized asynchronously');
+      } else {
+        app = firebase.apps[0];
+        console.log('Using existing Firebase app');
+      }
+
+      // Initialize Firestore
+      if (!window.db) {
+        window.db = firebase.firestore();
+        console.log('Firestore initialized asynchronously');
+      }
+
+      // Initialize Analytics if available
+      if (firebase.analytics && !window.analytics) {
+        window.analytics = firebase.analytics();
+        console.log('Analytics initialized asynchronously');
+      }
+
+      // Test Firestore connection
+      window.db.collection('guestList').limit(1).get()
+        .then(() => {
+          console.log('Firestore connection test successful');
+          window.firebaseState.initialized = true;
+          window.firebaseState.initializing = false;
+
+          // Dispatch event for other scripts
+          document.dispatchEvent(new CustomEvent('firebase-ready'));
+
+          resolve(window.db);
+        })
+        .catch(error => {
+          console.error('Error testing Firestore connection:', error);
+          // Still consider Firebase initialized even if the test fails
+          window.firebaseState.initialized = true;
+          window.firebaseState.initializing = false;
+
+          // Dispatch event for other scripts
+          document.dispatchEvent(new CustomEvent('firebase-ready'));
+
+          resolve(window.db);
+        });
+    } catch (error) {
+      console.error('Error in asynchronous Firebase initialization:', error);
+      window.firebaseState.error = error;
+      window.firebaseState.initializing = false;
+      reject(error);
+    }
+  });
+}
+
+// Helper function to check if Firebase is ready
+window.isFirebaseReady = function() {
+  return window.firebaseState.initialized && window.db !== undefined;
+};
+
+// Helper function to wait for Firebase to be ready
+window.waitForFirebase = function() {
+  if (window.firebaseState.initialized) {
+    return Promise.resolve(window.db);
+  }
+
+  return new Promise((resolve) => {
+    document.addEventListener('firebase-ready', () => resolve(window.db), { once: true });
+
+    // Also set a timeout to prevent infinite waiting
+    setTimeout(() => {
+      if (!window.firebaseState.initialized) {
+        console.log('Firebase initialization timeout, forcing initialization');
+        initializeFirebaseSync();
+        resolve(window.db);
+      }
+    }, 5000);
+  });
+};
+
+// For backward compatibility
+window.firebaseInitialized = Promise.resolve();
+window.firestoreInitialized = Promise.resolve(window.db);
+
+// Try synchronous initialization first
+const syncInitSuccessful = initializeFirebaseSync();
+
+// If synchronous init failed, try asynchronous initialization
+if (!syncInitSuccessful) {
+  console.log('Synchronous initialization unsuccessful, falling back to asynchronous');
+  initializeFirebaseAsync().catch(error => {
+    console.error('Both synchronous and asynchronous initialization failed:', error);
+  });
+}
+
+// Add a final safety check that runs after a delay
+setTimeout(() => {
+  if (!window.firebaseState.initialized) {
+    console.log('Firebase not initialized after timeout, forcing initialization');
+    initializeFirebaseSync();
+  }
+}, 2000);

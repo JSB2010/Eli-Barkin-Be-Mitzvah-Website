@@ -1,49 +1,23 @@
 /**
- * Special fix script for RSVP dashboard
- * This script prevents the common JavaScript errors on the RSVP dashboard page
- * and ensures Firebase is properly initialized
- * Includes special fixes for Chrome/Chromium browsers
+ * RSVP Dashboard Enhancement Script
+ * Provides improved tooltips and error handling for the RSVP dashboard
  */
 
 // Execute immediately when the script loads
 (function() {
-    console.log('RSVP Dashboard Fix: Initializing...');
-
-    // Detect browser type
-    const isChromium = !!window.chrome;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-    console.log(`Browser detection: Chrome/Chromium: ${isChromium}, Safari: ${isSafari}`);
-
-    // Apply special fixes for Chrome/Chromium browsers
-    if (isChromium && !isSafari) {
-        console.log('Applying Chrome-specific fixes');
-
-        // Force Firebase to initialize synchronously for Chrome
-        if (typeof firebase !== 'undefined') {
-            try {
-                // Ensure Firestore is initialized immediately
-                if (!window.db && typeof firebase.firestore === 'function') {
-                    console.log('Chrome fix: Initializing Firestore immediately');
-                    window.db = firebase.firestore();
-                }
-            } catch (error) {
-                console.error('Chrome fix: Error initializing Firestore:', error);
-            }
-        }
-    }
+    console.log('RSVP Dashboard Enhancements: Initializing...');
 
     // Create a global error handler to catch and log errors
     window.addEventListener('error', function(event) {
         console.error('Global error caught:', event.error);
 
         // Log additional information about the error
-        if (event.error && event.error.stack) {
+        if (event.error?.stack) {
             console.error('Error stack:', event.error.stack);
         }
 
         // Prevent the error from propagating if it's one of the known errors
-        if (event.error && event.error.message) {
+        if (event.error?.message) {
             const errorMsg = event.error.message.toLowerCase();
 
             // Check for known error patterns
@@ -117,218 +91,27 @@
                 };
             }
 
-            // Patch RSVPSystem.initDashboard to handle Firebase initialization better
-            if (typeof RSVPSystem !== 'undefined' && typeof RSVPSystem.initDashboard === 'function') {
-                console.log('Patching RSVPSystem.initDashboard for better Firebase handling');
-
-                // Save the original method
-                RSVPSystem._originalInitDashboard = RSVPSystem.initDashboard;
-
-                // Replace with our enhanced version
-                RSVPSystem.initDashboard = function() {
-                    try {
-                        console.log('Enhanced dashboard initialization starting...');
-
-                        // Reset loading state
-                        this.state.submissionsLoaded = false;
-                        this.state.guestListLoaded = false;
-                        this.state.loadingError = null;
-
-                        // Show loading indicator
-                        this.showLoading();
-
-                        // Check if Firebase is available
-                        const firebaseAvailable = typeof firebase !== 'undefined';
-
-                        if (!firebaseAvailable) {
-                            console.error('Firebase not available, waiting for it to load...');
-
-                            // Wait for Firebase to be ready
-                            setTimeout(() => {
-                                console.log('Retrying dashboard initialization...');
-                                this.initDashboard();
-                            }, 1000);
-
-                            return true; // Return true to prevent error message
-                        }
-
-                        // Initialize Firestore if needed
-                        if (!this.state.db) {
-                            console.log('Initializing Firestore...');
-
-                            try {
-                                // Try to get the global db instance first
-                                if (window.db) {
-                                    console.log('Using global db instance');
-                                    this.state.db = window.db;
-                                } else {
-                                    // Create a new Firestore instance
-                                    console.log('Creating new Firestore instance');
-                                    this.state.db = firebase.firestore();
-                                }
-
-                                console.log('Firestore initialized successfully');
-                            } catch (error) {
-                                console.error('Error initializing Firestore:', error);
-
-                                // Wait and retry once more
-                                setTimeout(() => {
-                                    console.log('Retrying Firestore initialization...');
-                                    try {
-                                        this.state.db = firebase.firestore();
-                                        console.log('Firestore initialized successfully on retry');
-
-                                        // Now fetch the data
-                                        this.fetchSubmissions();
-                                        this.fetchGuestList();
-                                    } catch (retryError) {
-                                        console.error('Failed to initialize Firestore on retry:', retryError);
-                                        this.showError('Could not connect to the database. Please try refreshing the page.');
-                                    }
-                                }, 2000);
-
-                                return true; // Return true to prevent error message
-                            }
-                        }
-
-                        // Fetch data
-                        console.log('Fetching submissions and guest list...');
-                        this.fetchSubmissions();
-                        this.fetchGuestList();
-
-                        // Add a safety timeout to hide the loading indicator after 30 seconds
-                        setTimeout(() => {
-                            try {
-                                const loadingElement = document.getElementById('loading');
-                                if (loadingElement && !loadingElement.classList.contains('hidden')) {
-                                    console.log('Safety timeout reached, hiding loading indicator');
-                                    this.hideLoading();
-
-                                    // Show toast notification
-                                    if (typeof ToastSystem !== 'undefined') {
-                                        ToastSystem.warning('Loading took longer than expected. Some data might not be available.', 'Timeout');
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error in safety timeout handler:', error);
-                            }
-                        }, 30000);
-
-                        console.log('Enhanced dashboard initialization complete');
-                        return true;
-                    } catch (error) {
-                        console.error('Error in enhanced dashboard initialization:', error);
-                        this.hideLoading();
-                        this.showError('Could not initialize the dashboard. Please try refreshing the page.');
-                        return false;
-                    }
-                };
-            }
-
-            // Patch RSVPSystem.fetchSubmissions to handle permission errors better
-            if (typeof RSVPSystem !== 'undefined' && typeof RSVPSystem.fetchSubmissions === 'function') {
-                console.log('Patching RSVPSystem.fetchSubmissions for better error handling');
-
-                // Save the original method
-                RSVPSystem._originalFetchSubmissions = RSVPSystem.fetchSubmissions;
-
-                // Replace with our enhanced version
-                RSVPSystem.fetchSubmissions = function() {
-                    try {
-                        console.log('Enhanced fetchSubmissions starting...');
-
-                        if (!this.state.db) {
-                            console.error('No database connection available for fetchSubmissions');
-                            return;
-                        }
-
-                        console.log('Fetching submissions from Firestore...');
-
-                        // Use a more reliable collection name
-                        const collectionName = 'sheetRsvps';
-
-                        this.state.db.collection(collectionName).get()
-                            .then(snapshot => {
-                                console.log(`Fetched ${snapshot.size} submissions`);
-
-                                const submissions = [];
-                                snapshot.forEach(doc => {
-                                    const data = doc.data();
-                                    submissions.push({
-                                        id: doc.id,
-                                        ...data,
-                                        submittedAt: data.submittedAt ? data.submittedAt.toDate() : new Date()
-                                    });
-                                });
-
-                                this.state.submissions = submissions;
-                                this.state.submissionsLoaded = true;
-
-                                // Process the data
-                                this.processSubmissions();
-
-                                // Check if all data is loaded
-                                this.checkAllDataLoaded();
-                            })
-                            .catch(error => {
-                                console.error(`Error fetching submissions from ${collectionName}:`, error);
-
-                                // Try an alternative collection name if the first one fails
-                                const altCollectionName = 'rsvps';
-                                console.log(`Trying alternative collection: ${altCollectionName}`);
-
-                                this.state.db.collection(altCollectionName).get()
-                                    .then(snapshot => {
-                                        console.log(`Fetched ${snapshot.size} submissions from ${altCollectionName}`);
-
-                                        const submissions = [];
-                                        snapshot.forEach(doc => {
-                                            const data = doc.data();
-                                            submissions.push({
-                                                id: doc.id,
-                                                ...data,
-                                                submittedAt: data.submittedAt ? data.submittedAt.toDate() : new Date()
-                                            });
-                                        });
-
-                                        this.state.submissions = submissions;
-                                        this.state.submissionsLoaded = true;
-
-                                        // Process the data
-                                        this.processSubmissions();
-
-                                        // Check if all data is loaded
-                                        this.checkAllDataLoaded();
-                                    })
-                                    .catch(altError => {
-                                        console.error(`Error fetching submissions from ${altCollectionName}:`, altError);
-                                        this.state.submissionsLoaded = true; // Mark as loaded even though it failed
-                                        this.state.submissions = []; // Empty array
-
-                                        // Check if all data is loaded
-                                        this.checkAllDataLoaded();
-                                    });
-                            });
-                    } catch (error) {
-                        console.error('Error in enhanced fetchSubmissions:', error);
-                        this.state.submissionsLoaded = true; // Mark as loaded even though it failed
-                        this.state.submissions = []; // Empty array
-
-                        // Check if all data is loaded
-                        this.checkAllDataLoaded();
-                    }
-                };
-            }
-
             console.log('Function patching complete');
         } catch (error) {
             console.error('Error patching functions:', error);
         }
     }
 
+    // Function to ensure Firebase is ready
+    function ensureFirebaseReady() {
+        // Use the new waitForFirebase helper if available
+        if (typeof window.waitForFirebase === 'function') {
+            window.waitForFirebase().then(() => {
+                console.log('Firebase is ready, dashboard can proceed');
+            }).catch(error => {
+                console.error('Error waiting for Firebase:', error);
+            });
+        }
+    }
+
     // Function to run when DOM is ready
     function onDOMReady() {
-        console.log('DOM ready, applying RSVP dashboard fixes');
+        console.log('DOM ready, applying RSVP dashboard enhancements');
 
         // Initialize native tooltips
         initNativeTooltips();
@@ -336,7 +119,10 @@
         // Patch problematic functions
         patchProblematicFunctions();
 
-        console.log('RSVP Dashboard Fix: All fixes applied');
+        // Ensure Firebase is ready
+        ensureFirebaseReady();
+
+        console.log('RSVP Dashboard Enhancements: All enhancements applied');
     }
 
     // Run when DOM is ready
