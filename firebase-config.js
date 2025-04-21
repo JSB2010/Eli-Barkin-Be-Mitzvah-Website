@@ -21,6 +21,11 @@ window.firebaseState = {
   error: null
 };
 
+// Detect browser type for browser-specific handling
+const isChromium = !!window.chrome;
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+console.log(`Firebase config - Browser detection: Chrome/Chromium: ${isChromium}, Safari: ${isSafari}`);
+
 // Synchronous initialization - always try this first
 function initializeFirebaseSync() {
   if (window.firebaseState.initialized || window.firebaseState.initializing) return true;
@@ -44,9 +49,24 @@ function initializeFirebaseSync() {
       console.log('Firebase already initialized');
     }
 
-    // Initialize Firestore
+    // Initialize Firestore with special handling for Chrome
     if (!window.db && typeof firebase.firestore === 'function') {
       window.db = firebase.firestore();
+
+      // For Chrome, we need to ensure settings are applied correctly
+      if (isChromium && !isSafari) {
+        try {
+          // Apply settings that work better in Chrome
+          window.db.settings({
+            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+            ignoreUndefinedProperties: true
+          });
+          console.log('Applied Chrome-specific Firestore settings');
+        } catch (settingsError) {
+          console.warn('Could not apply Chrome-specific settings:', settingsError);
+        }
+      }
+
       console.log('Firestore initialized synchronously');
     }
 
@@ -96,18 +116,31 @@ function initializeFirebaseAsync() {
       }
 
       // Initialize Firebase if not already initialized
-      let app;
       if (!firebase.apps || firebase.apps.length === 0) {
-        app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         console.log('Firebase initialized asynchronously');
       } else {
-        app = firebase.apps[0];
         console.log('Using existing Firebase app');
       }
 
-      // Initialize Firestore
+      // Initialize Firestore with special handling for Chrome
       if (!window.db) {
         window.db = firebase.firestore();
+
+        // For Chrome, we need to ensure settings are applied correctly
+        if (isChromium && !isSafari) {
+          try {
+            // Apply settings that work better in Chrome
+            window.db.settings({
+              cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+              ignoreUndefinedProperties: true
+            });
+            console.log('Applied Chrome-specific Firestore settings (async)');
+          } catch (settingsError) {
+            console.warn('Could not apply Chrome-specific settings (async):', settingsError);
+          }
+        }
+
         console.log('Firestore initialized asynchronously');
       }
 
@@ -117,34 +150,46 @@ function initializeFirebaseAsync() {
         console.log('Analytics initialized asynchronously');
       }
 
-      // Test Firestore connection
-      window.db.collection('guestList').limit(1).get()
-        .then(() => {
-          console.log('Firestore connection test successful');
-          window.firebaseState.initialized = true;
-          window.firebaseState.initializing = false;
+      // For Chrome, we'll skip the connection test as it can cause issues
+      if (isChromium && !isSafari) {
+        console.log('Skipping connection test for Chrome');
+        window.firebaseState.initialized = true;
+        window.firebaseState.initializing = false;
 
-          // Dispatch event for other scripts
-          document.dispatchEvent(new CustomEvent('firebase-ready'));
+        // Dispatch event for other scripts
+        document.dispatchEvent(new CustomEvent('firebase-ready'));
 
-          resolve(window.db);
-        })
-        .catch(error => {
-          console.error('Error testing Firestore connection:', error);
-          // Still consider Firebase initialized even if the test fails
-          window.firebaseState.initialized = true;
-          window.firebaseState.initializing = false;
+        resolve(window.db);
+      } else {
+        // Test Firestore connection for non-Chrome browsers
+        window.db.collection('guestList').limit(1).get()
+          .then(() => {
+            console.log('Firestore connection test successful');
+            window.firebaseState.initialized = true;
+            window.firebaseState.initializing = false;
 
-          // Dispatch event for other scripts
-          document.dispatchEvent(new CustomEvent('firebase-ready'));
+            // Dispatch event for other scripts
+            document.dispatchEvent(new CustomEvent('firebase-ready'));
 
-          resolve(window.db);
-        });
+            resolve(window.db);
+          })
+          .catch(error => {
+            console.error('Error testing Firestore connection:', error);
+            // Still consider Firebase initialized even if the test fails
+            window.firebaseState.initialized = true;
+            window.firebaseState.initializing = false;
+
+            // Dispatch event for other scripts
+            document.dispatchEvent(new CustomEvent('firebase-ready'));
+
+            resolve(window.db);
+          });
+      }
     } catch (error) {
       console.error('Error in asynchronous Firebase initialization:', error);
       window.firebaseState.error = error;
       window.firebaseState.initializing = false;
-      reject(error);
+      reject(new Error('Firebase initialization failed: ' + (error.message || 'Unknown error')));
     }
   });
 }
@@ -194,5 +239,43 @@ setTimeout(() => {
   if (!window.firebaseState.initialized) {
     console.log('Firebase not initialized after timeout, forcing initialization');
     initializeFirebaseSync();
+
+    // If still not initialized, try one more time with a direct approach
+    if (!window.firebaseState.initialized && typeof firebase !== 'undefined') {
+      console.log('Final attempt to initialize Firebase');
+      try {
+        // Direct initialization without any fancy logic
+        if (!firebase.apps || firebase.apps.length === 0) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        if (!window.db) {
+          window.db = firebase.firestore();
+        }
+
+        window.firebaseState.initialized = true;
+        document.dispatchEvent(new CustomEvent('firebase-ready'));
+        console.log('Final initialization attempt completed');
+      } catch (error) {
+        console.error('Final initialization attempt failed:', error);
+      }
+    }
   }
 }, 2000);
+
+// Add an extra safety check specifically for Chrome
+if (isChromium && !isSafari) {
+  setTimeout(() => {
+    console.log('Chrome-specific safety check running');
+    if (!window.db && typeof firebase !== 'undefined') {
+      try {
+        window.db = firebase.firestore();
+        window.firebaseState.initialized = true;
+        document.dispatchEvent(new CustomEvent('firebase-ready'));
+        console.log('Chrome safety check: Firestore initialized');
+      } catch (error) {
+        console.error('Chrome safety check failed:', error);
+      }
+    }
+  }, 3000);
+}

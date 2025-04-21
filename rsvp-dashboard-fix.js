@@ -99,13 +99,63 @@
 
     // Function to ensure Firebase is ready
     function ensureFirebaseReady() {
+        console.log('Ensuring Firebase is ready...');
+
+        // Check if Firebase is already initialized
+        if (window.db && typeof window.db.collection === 'function') {
+            console.log('Firebase already initialized, dashboard can proceed');
+            return;
+        }
+
         // Use the new waitForFirebase helper if available
         if (typeof window.waitForFirebase === 'function') {
             window.waitForFirebase().then(() => {
                 console.log('Firebase is ready, dashboard can proceed');
             }).catch(error => {
                 console.error('Error waiting for Firebase:', error);
+                forceFirebaseInitialization();
             });
+        } else {
+            // Fallback if waitForFirebase is not available
+            forceFirebaseInitialization();
+        }
+    }
+
+    // Function to force Firebase initialization as a last resort
+    function forceFirebaseInitialization() {
+        console.log('Forcing Firebase initialization as fallback');
+
+        try {
+            // Check if Firebase is available
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded, cannot force initialization');
+                return;
+            }
+
+            // Initialize Firebase if not already initialized
+            if (!firebase.apps || firebase.apps.length === 0) {
+                firebase.initializeApp({
+                    apiKey: "AIzaSyBgAXectfPhAr3HqASJCewnfQJnGnfGAK8",
+                    authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",
+                    projectId: "eli-barkin-be-mitzvah",
+                    storageBucket: "eli-barkin-be-mitzvah.firebasestorage.app",
+                    messagingSenderId: "1058445082947",
+                    appId: "1:1058445082947:web:8ab0696d5782e63ddaeff6",
+                    measurementId: "G-QQBCYHVB9C"
+                });
+                console.log('Firebase initialized by fallback');
+            }
+
+            // Initialize Firestore if not already initialized
+            if (!window.db && typeof firebase.firestore === 'function') {
+                window.db = firebase.firestore();
+                console.log('Firestore initialized by fallback');
+
+                // Dispatch the firebase-ready event
+                document.dispatchEvent(new CustomEvent('firebase-ready'));
+            }
+        } catch (error) {
+            console.error('Error in fallback Firebase initialization:', error);
         }
     }
 

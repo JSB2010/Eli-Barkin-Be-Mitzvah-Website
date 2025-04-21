@@ -20,12 +20,12 @@
     <link rel="stylesheet" href="modern-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Dashboard enhancement script -->
-    <script src="rsvp-dashboard-fix.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Dashboard enhancement script (loaded after Firebase SDK) -->
+    <script src="rsvp-dashboard-fix.js"></script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase Config - Load this first to initialize Firebase -->
@@ -52,6 +52,17 @@
             if (typeof ToastSystem !== 'undefined') {
                 ToastSystem.error('An error occurred: ' + event.error.message, 'Error');
             }
+        });
+
+        // Add handler for unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.error('An error occurred in background task', 'Error');
+            }
+
+            // Prevent the default browser error popup in Chrome
+            event.preventDefault();
         });
     </script>
     <!-- RSVP System Script (Minimal) -->
