@@ -855,6 +855,153 @@ exports.sendRsvpUpdateConfirmation = functions.firestore
     }
   });
 
+/**
+ * Cloud Function to store and retrieve API keys securely
+ */
+exports.storeApiKeys = functions.https.onCall(async (data, context) => {
+  // Check if the user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to store API keys.'
+    );
+  }
+
+  try {
+    // Get the API keys collection reference
+    const db = admin.firestore();
+    const apiKeysRef = db.collection('apiKeys').doc('config');
+
+    // Store the API keys
+    await apiKeysRef.set({
+      github: data.github || null,
+      googleAnalytics: {
+        viewId: data.googleAnalytics?.viewId || null,
+        clientId: data.googleAnalytics?.clientId || null,
+        clientSecret: data.googleAnalytics?.clientSecret || null
+      },
+      cloudflare: {
+        email: data.cloudflare?.email || null,
+        apiKey: data.cloudflare?.apiKey || null,
+        zoneId: data.cloudflare?.zoneId || null
+      },
+      brevo: data.brevo || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: context.auth.uid
+    });
+
+    return { success: true, message: 'API keys stored successfully' };
+  } catch (error) {
+    console.error('Error storing API keys:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      'Error storing API keys. Please try again.'
+    );
+  }
+});
+
+/**
+ * Initialize API keys with the provided values
+ */
+exports.initializeApiKeys = functions.https.onCall(async (data, context) => {
+  // Check if the user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to initialize API keys.'
+    );
+  }
+
+  try {
+    // Get the API keys collection reference
+    const db = admin.firestore();
+    const apiKeysRef = db.collection('apiKeys').doc('config');
+
+    // Check if API keys already exist
+    const doc = await apiKeysRef.get();
+    if (doc.exists) {
+      console.log('API keys already initialized, skipping');
+      return { success: true, message: 'API keys already initialized' };
+    }
+
+    // Initialize with the provided values
+    await apiKeysRef.set({
+      github: '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',
+      googleAnalytics: {
+        viewId: null,
+        clientId: '1058445082947-sbqanv791uvdvsnr13kaku4mid3k43ue.apps.googleusercontent.com',
+        clientSecret: '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'
+      },
+      cloudflare: {
+        email: null,
+        apiKey: 'xnZM6q4uIOHAvSrXM5o7SVUrvzdss5ZObJmo40G5',
+        zoneId: null
+      },
+      brevo: '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',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: context.auth.uid
+    });
+
+    return { success: true, message: 'API keys initialized successfully' };
+  } catch (error) {
+    console.error('Error initializing API keys:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      'Error initializing API keys. Please try again.'
+    );
+  }
+});
+
+/**
+ * Cloud Function to retrieve API keys
+ */
+exports.getApiKeys = functions.https.onCall(async (data, context) => {
+  // Check if the user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be logged in to retrieve API keys.'
+    );
+  }
+
+  try {
+    // Get the API keys from Firestore
+    const db = admin.firestore();
+    const apiKeysDoc = await db.collection('apiKeys').doc('config').get();
+
+    if (!apiKeysDoc.exists) {
+      return {
+        github: null,
+        googleAnalytics: { viewId: null, clientId: null, clientSecret: null },
+        cloudflare: { email: null, apiKey: null, zoneId: null },
+        brevo: null
+      };
+    }
+
+    const apiKeys = apiKeysDoc.data();
+    return {
+      github: apiKeys.github,
+      googleAnalytics: {
+        viewId: apiKeys.googleAnalytics?.viewId || null,
+        clientId: apiKeys.googleAnalytics?.clientId || null,
+        clientSecret: apiKeys.googleAnalytics?.clientSecret || null
+      },
+      cloudflare: {
+        email: apiKeys.cloudflare?.email || null,
+        apiKey: apiKeys.cloudflare?.apiKey || null,
+        zoneId: apiKeys.cloudflare?.zoneId || null
+      },
+      brevo: apiKeys.brevo
+    };
+  } catch (error) {
+    console.error('Error retrieving API keys:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      'Error retrieving API keys. Please try again.'
+    );
+  }
+});
+
 exports.updateGuestListSheet = functions.firestore
   .document('sheetRsvps/{rsvpId}')
   .onCreate(async (snapshot, context) => {

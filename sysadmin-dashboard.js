@@ -43,33 +43,193 @@ const SysadminDashboard = {
             console.error('Error initializing Firestore for Sysadmin Dashboard:', error);
         }
 
-        // Load saved API keys
-        this.loadApiKeys();
+        // Check authentication status
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                console.log('User is authenticated, loading API keys');
+                // Load saved API keys
+                this.loadApiKeys();
+            } else {
+                console.log('User is not authenticated, using default API keys');
+                // Use the API keys that were pre-filled
+                this.updateApiKeyStatus();
+            }
+        });
 
         // Set up event listeners
         this.setupEventListeners();
 
+        // Initialize authentication
+        this.initAuth();
+
         console.log('Sysadmin Dashboard initialized');
     },
 
-    // Load API keys from local storage
-    loadApiKeys: function() {
-        try {
-            const savedKeys = localStorage.getItem('sysadmin_api_keys');
-            if (savedKeys) {
-                this.state.apiKeys = JSON.parse(savedKeys);
-                console.log('API keys loaded from local storage');
-                this.updateApiKeyFields();
-                this.updateApiKeyStatus();
+    // Initialize authentication
+    initAuth: function() {
+        // Set up authentication UI
+        const authSection = document.getElementById('auth-section');
+        if (authSection) {
+            // Check if user is already logged in
+            const user = firebase.auth().currentUser;
+            if (user) {
+                authSection.innerHTML = `
+                    <div class="auth-status">
+                        <span class="status-indicator online"><i class="fas fa-circle"></i> Logged in as ${user.email}</span>
+                        <button id="logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
+                    </div>
+                `;
+
+                // Add logout event listener
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    firebase.auth().signOut().then(() => {
+                        console.log('User signed out');
+                        this.updateAuthUI();
+                    }).catch(error => {
+                        console.error('Error signing out:', error);
+                    });
+                });
+
+                // Initialize API keys in Firebase if needed
+                this.initializeApiKeysInFirebase();
+            } else {
+                authSection.innerHTML = `
+                    <div class="auth-status">
+                        <span class="status-indicator warning"><i class="fas fa-circle"></i> Not logged in</span>
+                        <button id="login-btn" class="btn btn-primary btn-sm">Login</button>
+                    </div>
+                `;
+
+                // Add login event listener
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    // Use email/password authentication
+                    const email = prompt('Enter your email:');
+                    const password = prompt('Enter your password:');
+
+                    if (email && password) {
+                        firebase.auth().signInWithEmailAndPassword(email, password)
+                            .then(userCredential => {
+                                console.log('User logged in:', userCredential.user);
+                                this.updateAuthUI();
+                                this.loadApiKeys(); // Load API keys after login
+                                this.initializeApiKeysInFirebase(); // Initialize API keys if needed
+                            })
+                            .catch(error => {
+                                console.error('Error logging in:', error);
+                                ToastSystem.error('Login failed: ' + error.message, 'Authentication Error');
+                            });
+                    }
+                });
             }
-        } catch (error) {
-            console.error('Error loading API keys:', error);
         }
     },
 
-    // Save API keys to local storage
+    // Initialize API keys in Firebase
+    initializeApiKeysInFirebase: function() {
+        try {
+            // Call the Firebase function to initialize API keys
+            const initializeApiKeys = firebase.functions().httpsCallable('initializeApiKeys');
+            initializeApiKeys().then(result => {
+                console.log('API keys initialization result:', result.data);
+                // Load the API keys after initialization
+                this.loadApiKeys();
+            }).catch(error => {
+                console.error('Error initializing API keys:', error);
+            });
+        } catch (error) {
+            console.error('Error in initializeApiKeysInFirebase:', error);
+        }
+    },
+
+    // Update authentication UI based on current auth state
+    updateAuthUI: function() {
+        const authSection = document.getElementById('auth-section');
+        if (!authSection) return;
+
+        const user = firebase.auth().currentUser;
+        if (user) {
+            authSection.innerHTML = `
+                <div class="auth-status">
+                    <span class="status-indicator online"><i class="fas fa-circle"></i> Logged in as ${user.email}</span>
+                    <button id="logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
+                </div>
+            `;
+
+            // Add logout event listener
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                firebase.auth().signOut().then(() => {
+                    console.log('User signed out');
+                    this.updateAuthUI();
+                }).catch(error => {
+                    console.error('Error signing out:', error);
+                });
+            });
+        } else {
+            authSection.innerHTML = `
+                <div class="auth-status">
+                    <span class="status-indicator warning"><i class="fas fa-circle"></i> Not logged in</span>
+                    <button id="login-btn" class="btn btn-primary btn-sm">Login</button>
+                </div>
+            `;
+
+            // Add login event listener
+            document.getElementById('login-btn').addEventListener('click', () => {
+                // Use email/password authentication
+                const email = prompt('Enter your email:');
+                const password = prompt('Enter your password:');
+
+                if (email && password) {
+                    firebase.auth().signInWithEmailAndPassword(email, password)
+                        .then(userCredential => {
+                            console.log('User logged in:', userCredential.user);
+                            this.updateAuthUI();
+                            this.loadApiKeys(); // Load API keys after login
+                        })
+                        .catch(error => {
+                            console.error('Error logging in:', error);
+                            ToastSystem.error('Login failed: ' + error.message, 'Authentication Error');
+                        });
+                }
+            });
+        }
+    },
+
+    // Load API keys from Firebase
+    loadApiKeys: function() {
+        try {
+            // Check if user is authenticated
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                console.log('User not authenticated, cannot load API keys');
+                return;
+            }
+
+            // Call the Firebase function to get API keys
+            const getApiKeys = firebase.functions().httpsCallable('getApiKeys');
+            getApiKeys().then(result => {
+                this.state.apiKeys = result.data;
+                console.log('API keys loaded from Firebase');
+                this.updateApiKeyFields();
+                this.updateApiKeyStatus();
+            }).catch(error => {
+                console.error('Error loading API keys from Firebase:', error);
+                ToastSystem.error('Failed to load API configuration', 'Error');
+            });
+        } catch (error) {
+            console.error('Error in loadApiKeys:', error);
+        }
+    },
+
+    // Save API keys to Firebase
     saveApiKeys: function() {
         try {
+            // Check if user is authenticated
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                ToastSystem.error('You must be logged in to save API keys', 'Authentication Required');
+                return;
+            }
+
             // Get values from form fields
             this.state.apiKeys.github = document.getElementById('github-token').value.trim();
 
@@ -83,20 +243,25 @@ const SysadminDashboard = {
 
             this.state.apiKeys.brevo = document.getElementById('brevo-api-key').value.trim();
 
-            // Save to local storage
-            localStorage.setItem('sysadmin_api_keys', JSON.stringify(this.state.apiKeys));
-            console.log('API keys saved to local storage');
+            // Call the Firebase function to store API keys
+            const storeApiKeys = firebase.functions().httpsCallable('storeApiKeys');
+            storeApiKeys(this.state.apiKeys).then(result => {
+                console.log('API keys saved to Firebase:', result);
 
-            // Update status indicators
-            this.updateApiKeyStatus();
+                // Update status indicators
+                this.updateApiKeyStatus();
 
-            // Show success message
-            ToastSystem.success('API configuration saved successfully', 'Configuration Saved');
+                // Show success message
+                ToastSystem.success('API configuration saved successfully', 'Configuration Saved');
 
-            // Refresh data with new API keys
-            this.refreshAllData();
+                // Refresh data with new API keys
+                this.refreshAllData();
+            }).catch(error => {
+                console.error('Error saving API keys to Firebase:', error);
+                ToastSystem.error('Failed to save API configuration', 'Error');
+            });
         } catch (error) {
-            console.error('Error saving API keys:', error);
+            console.error('Error in saveApiKeys:', error);
             ToastSystem.error('Failed to save API configuration', 'Error');
         }
     },
@@ -659,8 +824,12 @@ const SysadminDashboard = {
             }]
         };
 
-        // Create the chart
-        new Chart(ctx, {
+        // Create the chart and store it in state
+        if (this.state.charts.pagesChart) {
+            this.state.charts.pagesChart.destroy();
+        }
+
+        this.state.charts.pagesChart = new Chart(ctx, {
             type: 'bar',
             data: data,
             options: {
@@ -709,8 +878,12 @@ const SysadminDashboard = {
             }]
         };
 
-        // Create the chart
-        new Chart(ctx, {
+        // Create the chart and store it in state
+        if (this.state.charts.sourcesChart) {
+            this.state.charts.sourcesChart.destroy();
+        }
+
+        this.state.charts.sourcesChart = new Chart(ctx, {
             type: 'doughnut',
             data: data,
             options: {
@@ -745,8 +918,12 @@ const SysadminDashboard = {
             }]
         };
 
-        // Create the chart
-        new Chart(ctx, {
+        // Create the chart and store it in state
+        if (this.state.charts.devicesChart) {
+            this.state.charts.devicesChart.destroy();
+        }
+
+        this.state.charts.devicesChart = new Chart(ctx, {
             type: 'pie',
             data: data,
             options: {
@@ -885,7 +1062,13 @@ const SysadminDashboard = {
     createEmailCharts: function() {
         const activityCtx = document.getElementById('email-activity-chart');
         if (activityCtx) {
-            new Chart(activityCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.emailActivityChart) {
+                this.state.charts.emailActivityChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.emailActivityChart = new Chart(activityCtx, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -920,7 +1103,13 @@ const SysadminDashboard = {
 
         const performanceCtx = document.getElementById('email-performance-chart');
         if (performanceCtx) {
-            new Chart(performanceCtx, {
+            // Destroy existing chart if it exists
+            if (this.state.charts.emailPerformanceChart) {
+                this.state.charts.emailPerformanceChart.destroy();
+            }
+
+            // Create and store the new chart
+            this.state.charts.emailPerformanceChart = new Chart(performanceCtx, {
                 type: 'bar',
                 data: {
                     labels: ['Delivered', 'Opened', 'Clicked'],
