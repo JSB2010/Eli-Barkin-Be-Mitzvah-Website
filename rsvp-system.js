@@ -1,5 +1,8 @@
 // RSVP Dashboard System - Completely isolated namespace
 const RSVPSystem = {
+    // Debug mode
+    DEBUG_MODE: true,
+
     // Internal state
     state: {
         db: null,
@@ -17,19 +20,130 @@ const RSVPSystem = {
         guestSortDirection: 'asc',
         searchTerm: '',
         guestSearchTerm: '',
-        responseFilter: 'all'
+        responseFilter: 'all',
+        debugLog: []
+    },
+
+    // Debug logging functions
+    debug: {
+        log: function(message, data = null, type = 'info') {
+            if (!RSVPSystem.DEBUG_MODE) return;
+
+            const timestamp = new Date().toISOString();
+            const logEntry = {
+                timestamp,
+                message,
+                data,
+                type
+            };
+
+            // Add to state
+            RSVPSystem.state.debugLog.push(logEntry);
+
+            // Log to console
+            console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`, data || '');
+
+            // Update debug panel if it exists
+            RSVPSystem.updateDebugPanel(logEntry);
+        },
+
+        info: function(message, data = null) {
+            this.log(message, data, 'info');
+        },
+
+        warn: function(message, data = null) {
+            this.log(message, data, 'warn');
+        },
+
+        error: function(message, data = null) {
+            this.log(message, data, 'error');
+        },
+
+        debug: function(message, data = null) {
+            this.log(message, data, 'debug');
+        },
+
+        clear: function() {
+            RSVPSystem.state.debugLog = [];
+            const debugLogElement = document.getElementById('debug-log');
+            if (debugLogElement) {
+                debugLogElement.innerHTML = '';
+            }
+        }
+    },
+
+    // Update the debug panel with a new log entry
+    updateDebugPanel: function(logEntry) {
+        const debugLogElement = document.getElementById('debug-log');
+        if (!debugLogElement) return;
+
+        const entryElement = document.createElement('div');
+        entryElement.className = `log-entry ${logEntry.type}`;
+
+        const timestamp = document.createElement('span');
+        timestamp.className = 'timestamp';
+        timestamp.textContent = new Date(logEntry.timestamp).toLocaleTimeString();
+
+        const message = document.createElement('span');
+        message.className = 'message';
+        message.textContent = logEntry.message;
+
+        entryElement.appendChild(timestamp);
+        entryElement.appendChild(message);
+
+        if (logEntry.data) {
+            const dataElement = document.createElement('div');
+            dataElement.className = 'data';
+            dataElement.textContent = typeof logEntry.data === 'object' ?
+                JSON.stringify(logEntry.data, null, 2) : logEntry.data.toString();
+            entryElement.appendChild(dataElement);
+        }
+
+        debugLogElement.appendChild(entryElement);
+        debugLogElement.scrollTop = debugLogElement.scrollHeight;
+    },
+
+    // Initialize debug panel controls
+    initDebugControls: function() {
+        const clearDebugBtn = document.getElementById('clear-debug');
+        const toggleDebugBtn = document.getElementById('toggle-debug');
+        const debugPanel = document.querySelector('.debug-panel');
+
+        if (clearDebugBtn) {
+            clearDebugBtn.addEventListener('click', () => {
+                this.debug.clear();
+            });
+        }
+
+        if (toggleDebugBtn && debugPanel) {
+            toggleDebugBtn.addEventListener('click', () => {
+                const debugContent = debugPanel.querySelector('.debug-content');
+                if (debugContent) {
+                    if (debugContent.style.display === 'none') {
+                        debugContent.style.display = 'block';
+                        toggleDebugBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+                    } else {
+                        debugContent.style.display = 'none';
+                        toggleDebugBtn.innerHTML = '<i class="fas fa-eye"></i> Show';
+                    }
+                }
+            });
+        }
     },
 
     // Initialize the system
     init: function() {
-        console.log('RSVP System initializing...');
+        this.debug.info('RSVP System initializing...');
+
+        // Initialize debug panel controls
+        this.initDebugControls();
 
         // Initialize Firestore
         try {
             this.state.db = firebase.firestore();
-            console.log('Firestore initialized successfully');
+            this.debug.info('Firestore initialized successfully');
         } catch (error) {
-            console.error('Error initializing Firestore:', error);
+            this.debug.error('Error initializing Firestore:', error);
             this.showError('Could not connect to database: ' + error.message);
         }
 
@@ -262,12 +376,19 @@ const RSVPSystem = {
             loadingElement.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> Error: ${message}</p>`;
             loadingElement.style.display = 'block';
         }
-        console.error('Error:', message);
+        this.debug.error('Error:', message);
+
+        // Add error to debug log with stack trace
+        try {
+            throw new Error(message);
+        } catch (e) {
+            this.debug.error('Stack trace:', e.stack);
+        }
     },
 
     // Fetch submissions from Firestore
     fetchSubmissions: function() {
-        console.log('RSVPSystem.fetchSubmissions called');
+        this.debug.info('RSVPSystem.fetchSubmissions called');
 
         this.showLoading();
 
@@ -277,15 +398,23 @@ const RSVPSystem = {
         }
 
         if (!this.state.db) {
-            this.showError('Database connection not available');
+            const errorMsg = 'Database connection not available';
+            this.debug.error(errorMsg);
+            this.showError(errorMsg);
             return;
         }
 
-        console.log('Fetching from sheetRsvps collection...');
+        this.debug.info('Fetching from sheetRsvps collection...');
+
+        // Add timestamp to track how long the query takes
+        const startTime = new Date().getTime();
 
         this.state.db.collection('sheetRsvps').orderBy('submittedAt', 'desc').get()
             .then((querySnapshot) => {
-                console.log('Query successful, received', querySnapshot.size, 'documents');
+                const endTime = new Date().getTime();
+                const queryTime = endTime - startTime;
+
+                this.debug.info(`Query successful, received ${querySnapshot.size} documents in ${queryTime}ms`);
 
                 this.state.submissions = querySnapshot.docs.map(doc => {
                     const data = doc.data() || {};
@@ -294,7 +423,7 @@ const RSVPSystem = {
                     try {
                         submittedDate = data.submittedAt?.toDate() || new Date();
                     } catch (e) {
-                        console.warn('Error converting timestamp for doc:', doc.id, e);
+                        this.debug.warn(`Error converting timestamp for doc: ${doc.id}`, e);
                         submittedDate = new Date();
                     }
 
@@ -305,31 +434,44 @@ const RSVPSystem = {
                     };
                 });
 
-                console.log('Processed submissions data:', this.state.submissions.length, 'items');
+                this.debug.info(`Processed submissions data: ${this.state.submissions.length} items`);
+
+                // Log the first submission for debugging
+                if (this.state.submissions.length > 0) {
+                    this.debug.debug('First submission sample:', this.state.submissions[0]);
+                }
 
                 // Process the data
                 this.processSubmissions();
             })
             .catch((error) => {
-                console.error('Error fetching submissions:', error);
+                this.debug.error('Error fetching submissions:', error);
                 this.showError('Error loading data: ' + error.message);
             });
     },
 
     // Fetch guest list from Firestore
     fetchGuestList: function() {
-        console.log('RSVPSystem.fetchGuestList called');
+        this.debug.info('RSVPSystem.fetchGuestList called');
 
         if (!this.state.db) {
-            console.error('Firestore database is not available for guest list');
+            const errorMsg = 'Firestore database is not available for guest list';
+            this.debug.error(errorMsg);
+            this.showError(errorMsg);
             return;
         }
 
-        console.log('Fetching from guestList collection...');
+        this.debug.info('Fetching from guestList collection...');
+
+        // Add timestamp to track how long the query takes
+        const startTime = new Date().getTime();
 
         this.state.db.collection('guestList').get()
             .then((querySnapshot) => {
-                console.log('Guest list query successful, received', querySnapshot.size, 'documents');
+                const endTime = new Date().getTime();
+                const queryTime = endTime - startTime;
+
+                this.debug.info(`Guest list query successful, received ${querySnapshot.size} documents in ${queryTime}ms`);
 
                 this.state.guests = querySnapshot.docs.map(doc => {
                     const data = doc.data() || {};
@@ -349,13 +491,19 @@ const RSVPSystem = {
                     };
                 });
 
-                console.log('Processed guest list data:', this.state.guests.length, 'items');
+                this.debug.info(`Processed guest list data: ${this.state.guests.length} items`);
+
+                // Log the first guest for debugging
+                if (this.state.guests.length > 0) {
+                    this.debug.debug('First guest sample:', this.state.guests[0]);
+                }
 
                 // Process the guest list
                 this.processGuestList();
             })
             .catch((error) => {
-                console.error('Error fetching guest list:', error);
+                this.debug.error('Error fetching guest list:', error);
+                this.showError('Error loading guest list: ' + error.message);
             });
     },
 
@@ -736,6 +884,17 @@ const RSVPSystem = {
                         valueA = a.actualGuestCount || 0;
                         valueB = b.actualGuestCount || 0;
                         break;
+                    case 'location':
+                        // Determine if guests are out-of-town (not from Colorado)
+                        const isOutOfTownA = a.address && a.address.state &&
+                                            a.address.state.toUpperCase() !== 'CO' &&
+                                            a.address.state.toUpperCase() !== 'COLORADO';
+                        const isOutOfTownB = b.address && b.address.state &&
+                                            b.address.state.toUpperCase() !== 'CO' &&
+                                            b.address.state.toUpperCase() !== 'COLORADO';
+                        valueA = isOutOfTownA ? 1 : 0;
+                        valueB = isOutOfTownB ? 1 : 0;
+                        break;
                     default:
                         valueA = a[this.state.guestSortColumn] || '';
                         valueB = b[this.state.guestSortColumn] || '';
@@ -928,11 +1087,22 @@ const RSVPSystem = {
                 }
             }
 
+            // Determine if guest is out-of-town (not from Colorado)
+            const isOutOfTown = guest.address && guest.address.state &&
+                                guest.address.state.toUpperCase() !== 'CO' &&
+                                guest.address.state.toUpperCase() !== 'COLORADO';
+
+            // Create location badge
+            const locationBadge = isOutOfTown ?
+                `<span class="location-badge out-of-town"><i class="fas fa-plane"></i> Out-of-Town</span>` :
+                `<span class="location-badge local"><i class="fas fa-home"></i> Local</span>`;
+
             row.innerHTML = `
                 <td>${guest.name || ''}</td>
                 <td>${responseStatus}</td>
                 <td>${rsvpResponse}</td>
                 <td>${guest.hasResponded ? (guest.actualGuestCount || 0) : '-'}</td>
+                <td>${locationBadge}</td>
                 <td>
                     <button class="btn-icon view-guest-details" data-id="${guest.id}" title="View Details">
                         <i class="fas fa-eye"></i>
@@ -1063,11 +1233,15 @@ const RSVPSystem = {
         if (window.ageBreakdownChart instanceof Chart) {
             window.ageBreakdownChart.destroy();
         }
+        if (window.outOfTownEventsChart instanceof Chart) {
+            window.outOfTownEventsChart.destroy();
+        }
 
         // Get chart canvases
         const attendanceChartCanvas = document.getElementById('attendance-chart');
         const timelineChartCanvas = document.getElementById('timeline-chart');
         const ageBreakdownChartCanvas = document.getElementById('age-breakdown-chart');
+        const outOfTownEventsChartCanvas = document.getElementById('out-of-town-events-chart');
 
         // Attendance breakdown chart
         const attendingCount = this.state.submissions.filter(submission => submission.attending === 'yes').length;
@@ -1210,6 +1384,89 @@ const RSVPSystem = {
                     <div class="prediction-range">Range: ${lowerBound} - ${upperBound}</div>
                 </div>
             `;
+        }
+
+        // Out-of-town events chart
+        if (outOfTownEventsChartCanvas && this.state.submissions.length > 0) {
+            console.log('Creating out-of-town events chart');
+
+            // Calculate out-of-town event stats
+            const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
+
+            // Count out-of-town guests
+            let outOfTownCount = 0;
+            let fridayDinnerCount = 0;
+            let sundayBrunchCount = 0;
+
+            attendingSubmissions.forEach(submission => {
+                // Check if guest is out-of-town based on state
+                const isOutOfTown = submission.isOutOfTown ||
+                                   (submission.address && submission.address.state &&
+                                    submission.address.state.toUpperCase() !== 'CO' &&
+                                    submission.address.state.toUpperCase() !== 'COLORADO');
+
+                if (isOutOfTown) {
+                    // Count total out-of-town guests
+                    outOfTownCount += submission.guestCount || 1;
+
+                    // Count event attendance
+                    if (submission.fridayDinner === 'yes') {
+                        fridayDinnerCount += submission.guestCount || 1;
+                    }
+
+                    if (submission.sundayBrunch === 'yes') {
+                        sundayBrunchCount += submission.guestCount || 1;
+                    }
+                }
+            });
+
+            // Update the out-of-town stats in the UI
+            const outOfTownCountElem = document.getElementById('out-of-town-count');
+            const fridayDinnerCountElem = document.getElementById('friday-dinner-count');
+            const sundayBrunchCountElem = document.getElementById('sunday-brunch-count');
+
+            if (outOfTownCountElem) outOfTownCountElem.textContent = outOfTownCount;
+            if (fridayDinnerCountElem) fridayDinnerCountElem.textContent = fridayDinnerCount;
+            if (sundayBrunchCountElem) sundayBrunchCountElem.textContent = sundayBrunchCount;
+
+            // Create the chart
+            window.outOfTownEventsChart = new Chart(outOfTownEventsChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Out-of-Town Guests', 'Friday Dinner', 'Sunday Brunch'],
+                    datasets: [{
+                        data: [outOfTownCount, fridayDinnerCount, sundayBrunchCount],
+                        backgroundColor: ['#1e88e5', '#f97316', '#10b981'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value} guests`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // Submissions timeline chart
@@ -1922,6 +2179,9 @@ const RSVPSystem = {
         const adultGuests = submission.adultGuests || [];
         const childGuests = submission.childGuests || [];
 
+        // Determine if guest is out-of-town (not from Colorado)
+        const isOutOfTown = submission.isOutOfTown || false;
+
         // Create the content
         const content = `
             <div class="modal-details">
@@ -1975,6 +2235,37 @@ const RSVPSystem = {
                             ${this.renderGuestList(childGuests)}
                         </div>
                     </div>
+                    ${isOutOfTown && submission.attending === 'yes' ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Location:</span>
+                        <span class="detail-value">
+                            <span class="location-badge out-of-town"><i class="fas fa-plane"></i> Out-of-Town Guest</span>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Out-of-Town Events:</span>
+                        <div class="detail-value">
+                            <div class="out-of-town-events">
+                                <div class="event-item">
+                                    <span class="event-name">Friday Night Dinner at Linger:</span>
+                                    <span class="event-response ${submission.fridayDinner === 'yes' ? 'attending' : 'not-attending'}">
+                                        ${submission.fridayDinner === 'yes' ?
+                                            '<i class="fas fa-check-circle"></i> Attending' :
+                                            '<i class="fas fa-times-circle"></i> Not Attending'}
+                                    </span>
+                                </div>
+                                <div class="event-item">
+                                    <span class="event-name">Sunday Brunch at Eli's Home:</span>
+                                    <span class="event-response ${submission.sundayBrunch === 'yes' ? 'attending' : 'not-attending'}">
+                                        ${submission.sundayBrunch === 'yes' ?
+                                            '<i class="fas fa-check-circle"></i> Attending' :
+                                            '<i class="fas fa-times-circle"></i> Not Attending'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -2056,6 +2347,15 @@ const RSVPSystem = {
             submissionDate.toLocaleDateString() + ' ' + submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
             'Not submitted';
 
+        // Determine if guest is out-of-town (not from Colorado)
+        const isOutOfTown = guest.address && guest.address.state &&
+                            guest.address.state.toUpperCase() !== 'CO' &&
+                            guest.address.state.toUpperCase() !== 'COLORADO';
+
+        // Get out-of-town event responses
+        const fridayDinner = guest.fridayDinner === 'yes' ? 'Yes' : 'No';
+        const sundayBrunch = guest.sundayBrunch === 'yes' ? 'Yes' : 'No';
+
         // Create the content
         const content = `
             <div class="modal-details">
@@ -2075,6 +2375,14 @@ const RSVPSystem = {
                     <div class="detail-item">
                         <span class="detail-label">Address:</span>
                         <span class="detail-value address">${formattedAddress}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Location:</span>
+                        <span class="detail-value">
+                            ${isOutOfTown ?
+                                '<span class="location-badge out-of-town"><i class="fas fa-plane"></i> Out-of-Town Guest</span>' :
+                                '<span class="location-badge local"><i class="fas fa-home"></i> Local Guest</span>'}
+                        </span>
                     </div>
                 </div>
 
@@ -2122,6 +2430,31 @@ const RSVPSystem = {
                         <span class="detail-label">Submission Date:</span>
                         <span class="detail-value">${formattedDate}</span>
                     </div>
+                    ${isOutOfTown && guest.hasResponded && guest.response === 'attending' ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Out-of-Town Events:</span>
+                        <div class="detail-value">
+                            <div class="out-of-town-events">
+                                <div class="event-item">
+                                    <span class="event-name">Friday Night Dinner at Linger:</span>
+                                    <span class="event-response ${guest.fridayDinner === 'yes' ? 'attending' : 'not-attending'}">
+                                        ${guest.fridayDinner === 'yes' ?
+                                            '<i class="fas fa-check-circle"></i> Attending' :
+                                            '<i class="fas fa-times-circle"></i> Not Attending'}
+                                    </span>
+                                </div>
+                                <div class="event-item">
+                                    <span class="event-name">Sunday Brunch at Eli's Home:</span>
+                                    <span class="event-response ${guest.sundayBrunch === 'yes' ? 'attending' : 'not-attending'}">
+                                        ${guest.sundayBrunch === 'yes' ?
+                                            '<i class="fas fa-check-circle"></i> Attending' :
+                                            '<i class="fas fa-times-circle"></i> Not Attending'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
                     ` : ''}
                 </div>
             </div>

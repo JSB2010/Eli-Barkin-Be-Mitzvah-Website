@@ -7,7 +7,8 @@
 const testUsers = [
   "Jacob Barkin",
   "Hagen Zuzu Barkin",
-  "Alton Barkin"
+  "Alton Barkin",
+  "Jesse Strassburger"
 ];
 
 // Initialize Firebase (using the same config as the main app)
