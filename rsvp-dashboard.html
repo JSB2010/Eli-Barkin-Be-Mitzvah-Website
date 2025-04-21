@@ -1264,7 +1264,8 @@
             gap: 0.5rem;
         }
 
-        .btn-sm {
+        /* Button small size override */
+        .btn-sm-custom {
             padding: 0.35rem 0.75rem;
             font-size: 0.8rem;
         }
@@ -1962,53 +1963,9 @@
             position: relative;
         }
 
-        /* Debug panel styles */
-        .debug-panel {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            color: #f0f0f0;
-            border: 1px solid #444;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
+        /* Debug panel styles - moved to external CSS */
 
-        .debug-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #2d2d2d;
-            border-bottom: 1px solid #444;
-        }
-
-        .debug-header h3 {
-            margin: 0;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #f0f0f0;
-        }
-
-        .debug-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .debug-content {
-            padding: 15px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .debug-log {
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+        /* Debug panel styles moved to external CSS */
 
         .debug-log .log-entry {
             margin-bottom: 8px;
@@ -2041,20 +1998,12 @@
             color: #2196f3;
         }
 
-        .btn-sm {
+        .btn-xs {
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
         }
 
-        .btn-outline-secondary {
-            background-color: transparent;
-            border: 1px solid #888;
-            color: #f0f0f0;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #444;
-        }
+        /* Button styles moved to external CSS */
 
         /* Response rate by category chart */
         .category-chart-container {
@@ -2091,48 +2040,9 @@
             background-color: var(--danger);
         }
 
-        /* Dashboard Tabs Styles */
-        .dashboard-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--medium-gray);
-            padding-bottom: 0.5rem;
-        }
+        /* Dashboard Tabs Styles moved to external CSS */
 
-        .tab-button {
-            background: none;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--dark-gray);
-            cursor: pointer;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .tab-button:hover {
-            background-color: var(--light-gray);
-            color: var(--primary-blue);
-        }
-
-        .tab-button.active {
-            background-color: var(--primary-blue);
-            color: var(--white);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
+        /* Tab styles moved to external CSS */
 
         /* Sysadmin Dashboard Styles */
         .section-description {
@@ -2339,10 +2249,17 @@
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
-                opacity: 0;
             }
             to {
                 transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
                 opacity: 1;
             }
         }
@@ -2554,11 +2471,9 @@
         @keyframes slideDown {
             from {
                 transform: translateY(-50px);
-                opacity: 0;
             }
             to {
                 transform: translateY(0);
-                opacity: 1;
             }
         }
 
@@ -2702,14 +2617,14 @@
         <div class="dashboard-container">
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">Guest Management Dashboard</h1>
-                    <p class="dashboard-subtitle">Track and manage guest list and RSVPs for Eli's Be Mitzvah</p>
+                    <h1 class="dashboard-title">RSVP Dashboard</h1>
+                    <p class="dashboard-subtitle">Eli's Be Mitzvah Guest Management</p>
                 </div>
                 <div class="dashboard-actions">
-                    <button type="button" id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh Data</button>
-                    <button type="button" id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync with Google Sheet</button>
-                    <button type="button" id="show-debug-btn" class="btn info"><i class="fas fa-bug"></i> Debug Panel</button>
+                    <button type="button" id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh</button>
+                    <button type="button" id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync Sheet</button>
                     <button type="button" id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    <button type="button" id="show-debug-btn" class="btn-icon"><i class="fas fa-bug"></i></button>
                 </div>
             </div>
 
