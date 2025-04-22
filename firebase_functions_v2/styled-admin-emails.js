@@ -155,7 +155,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
 
         <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
           <p>This is an automated notification from the Eli Barkin Bar Mitzvah website.</p>
-          <p>May 17, 2025 | Denver, Colorado</p>
+          <p>May 17, 2024 | Denver, Colorado</p>
           <a href="https://elibarkin.com/rsvp-dashboard.html" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">View RSVP Dashboard</a>
         </div>
       </body>
