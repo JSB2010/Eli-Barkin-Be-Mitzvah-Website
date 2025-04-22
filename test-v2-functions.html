@@ -95,6 +95,20 @@
         <pre id="callable-result">No result yet</pre>
     </div>
 
+    <div class="test-section">
+        <h2>Firestore Trigger Functions</h2>
+
+        <div>
+            <button type="button" id="create-test-rsvp-btn">Create Test RSVP</button>
+            <button type="button" id="create-test-outoftown-rsvp-btn">Create Out-of-Town Test RSVP</button>
+            <button type="button" id="update-test-rsvp-btn" disabled>Update Test RSVP</button>
+            <button type="button" id="delete-test-rsvp-btn" disabled>Delete Test RSVP</button>
+        </div>
+
+        <h3>Result:</h3>
+        <pre id="trigger-result">No result yet</pre>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -165,7 +179,7 @@
         document.getElementById('test-function-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/testV2Function', {
+                const response = await fetch('https://testv2function-gwduhqjv4a-uc.a.run.app', {
                     mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
@@ -181,7 +195,7 @@
         document.getElementById('manual-sync-sheet-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2', {
+                const response = await fetch('https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app', {
                     mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
@@ -197,7 +211,7 @@
         document.getElementById('remove-duplicates-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/removeDuplicateGuestsV2', {
+                const response = await fetch('https://removeduplicateguestsv2-gwduhqjv4a-uc.a.run.app', {
                     mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
@@ -213,7 +227,7 @@
         document.getElementById('import-guest-list-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/importGuestListV2', {
+                const response = await fetch('https://importguestlistv2-gwduhqjv4a-uc.a.run.app', {
                     mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
@@ -260,6 +274,178 @@
                 callableResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(result.data, null, 2)}`;
             } catch (error) {
                 callableResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        // Test Firestore Trigger Functions
+        const triggerResult = document.getElementById('trigger-result');
+        const updateTestRsvpBtn = document.getElementById('update-test-rsvp-btn');
+        const deleteTestRsvpBtn = document.getElementById('delete-test-rsvp-btn');
+        let currentTestRsvpId = null;
+
+        // Test data for a regular RSVP
+        const testRsvpData = {
+            name: 'Jesse Strassburger',
+            email: 'test@example.com',
+            phone: '555-123-4567',
+            attending: 'yes',
+            guestCount: 2,
+            adultGuests: ['Jesse Strassburger', 'Guest Two'],
+            childGuests: [],
+            additionalGuests: ['Guest Two'],
+            state: 'CO',
+            isOutOfTown: false,
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Test data for an out-of-town RSVP
+        const testOutOfTownRsvpData = {
+            name: 'Jesse Strassburger',
+            email: 'outoftown@example.com',
+            phone: '555-987-6543',
+            attending: 'yes',
+            guestCount: 2,
+            adultGuests: ['Jesse Strassburger', 'Guest Two'],
+            childGuests: [],
+            additionalGuests: ['Guest Two'],
+            state: 'NY',
+            isOutOfTown: true,
+            fridayDinner: 'yes',
+            sundayBrunch: 'yes',
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Create a test RSVP
+        document.getElementById('create-test-rsvp-btn').addEventListener('click', async () => {
+            try {
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nPlease log in first`;
+                    return;
+                }
+
+                triggerResult.textContent = 'Creating test RSVP...';
+
+                // Create a test RSVP document
+                const testRsvpRef = firebase.firestore().collection('sheetRsvps').doc('test-rsvp-' + Date.now());
+                await testRsvpRef.set(testRsvpData);
+
+                currentTestRsvpId = testRsvpRef.id;
+                triggerResult.innerHTML = `<span class="success">Success:</span>\nCreated test RSVP with ID: ${currentTestRsvpId}`;
+
+                // Enable update and delete buttons
+                updateTestRsvpBtn.disabled = false;
+                deleteTestRsvpBtn.disabled = false;
+            } catch (error) {
+                triggerResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        // Create a test out-of-town RSVP
+        document.getElementById('create-test-outoftown-rsvp-btn').addEventListener('click', async () => {
+            try {
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nPlease log in first`;
+                    return;
+                }
+
+                triggerResult.textContent = 'Creating test out-of-town RSVP...';
+
+                // Create a test out-of-town RSVP document
+                const testRsvpRef = firebase.firestore().collection('sheetRsvps').doc('test-outoftown-' + Date.now());
+                await testRsvpRef.set(testOutOfTownRsvpData);
+
+                currentTestRsvpId = testRsvpRef.id;
+                triggerResult.innerHTML = `<span class="success">Success:</span>\nCreated test out-of-town RSVP with ID: ${currentTestRsvpId}`;
+
+                // Enable update and delete buttons
+                updateTestRsvpBtn.disabled = false;
+                deleteTestRsvpBtn.disabled = false;
+            } catch (error) {
+                triggerResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        // Update the test RSVP
+        document.getElementById('update-test-rsvp-btn').addEventListener('click', async () => {
+            try {
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nPlease log in first`;
+                    return;
+                }
+
+                if (!currentTestRsvpId) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nNo test RSVP to update. Create one first.`;
+                    return;
+                }
+
+                triggerResult.textContent = 'Updating test RSVP...';
+
+                // Get the current RSVP document
+                const testRsvpRef = firebase.firestore().collection('sheetRsvps').doc(currentTestRsvpId);
+                const doc = await testRsvpRef.get();
+
+                if (!doc.exists) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nTest RSVP not found. It may have been deleted.`;
+                    currentTestRsvpId = null;
+                    updateTestRsvpBtn.disabled = true;
+                    deleteTestRsvpBtn.disabled = true;
+                    return;
+                }
+
+                const data = doc.data();
+
+                // Update based on whether it's an out-of-town RSVP or not
+                if (data.isOutOfTown) {
+                    await testRsvpRef.update({
+                        fridayDinner: data.fridayDinner === 'yes' ? 'no' : 'yes',
+                        sundayBrunch: data.sundayBrunch === 'yes' ? 'no' : 'yes',
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    await testRsvpRef.update({
+                        guestCount: data.guestCount + 1,
+                        additionalGuests: [...data.additionalGuests, 'Guest Three'],
+                        adultGuests: [...data.adultGuests, 'Guest Three'],
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                triggerResult.innerHTML = `<span class="success">Success:</span>\nUpdated test RSVP with ID: ${currentTestRsvpId}`;
+            } catch (error) {
+                triggerResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        // Delete the test RSVP
+        document.getElementById('delete-test-rsvp-btn').addEventListener('click', async () => {
+            try {
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nPlease log in first`;
+                    return;
+                }
+
+                if (!currentTestRsvpId) {
+                    triggerResult.innerHTML = `<span class="error">Error:</span>\nNo test RSVP to delete. Create one first.`;
+                    return;
+                }
+
+                triggerResult.textContent = 'Deleting test RSVP...';
+
+                // Delete the test RSVP document
+                await firebase.firestore().collection('sheetRsvps').doc(currentTestRsvpId).delete();
+
+                triggerResult.innerHTML = `<span class="success">Success:</span>\nDeleted test RSVP with ID: ${currentTestRsvpId}`;
+
+                // Disable update and delete buttons
+                currentTestRsvpId = null;
+                updateTestRsvpBtn.disabled = true;
+                deleteTestRsvpBtn.disabled = true;
+            } catch (error) {
+                triggerResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
             }
         });
     </script>
