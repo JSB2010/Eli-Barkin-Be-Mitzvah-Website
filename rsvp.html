@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="inline-styles.css?v=1.0">
     <link rel="stylesheet" href="animations.css?v=1.0">
     <link rel="stylesheet" href="optimized-animations.css?v=1.0">
+    <link rel="stylesheet" href="rsvp-counter.css?v=1.0">
     <link rel="stylesheet" href="update-mode.css?v=1.0">
     <link rel="stylesheet" href="header-footer.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -57,6 +58,7 @@
             overflow: hidden;
             transition: all 0.4s ease;
             border: none;
+            border-top: 4px solid #4a89dc;
         }
 
         /* Removed blue top border */
@@ -180,6 +182,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             position: relative;
             overflow: hidden;
+            border: 1px solid #e0e0e0;
         }
 
         .radio-options label:hover {
@@ -381,9 +384,10 @@
             margin-bottom: 30px;
             background-color: #f9f9f9;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
+            border-left: 3px solid #4a89dc;
         }
 
         .guest-section:hover {
@@ -401,9 +405,10 @@
             margin-bottom: 15px;
             padding: 15px;
             background-color: white;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
+            border: 1px solid #eaeaea;
         }
 
         .guest-field:hover {
@@ -551,16 +556,17 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-top: 3px solid #4a89dc;
+            border-left: 3px solid #4a89dc;
         }
 
         .event-option {
             background-color: white;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
+            border: 1px solid #eaeaea;
         }
 
         .event-option:hover {
@@ -713,7 +719,7 @@
                                 <div class="form-group" id="childCountGroup">
                                     <label for="childCount">Number of children:</label>
                                     <input type="number" id="childCount" name="childCount" min="0" value="0">
-                                    <div class="input-hint">Children under 13 years old</div>
+                                    <div class="input-hint">Children under 18 years old</div>
                                 </div>
                             </div>
 
@@ -761,5 +767,6 @@
 
     <script src="firebase-rsvp.js"></script>
     <script src="rsvp-guest-search.js"></script>
+    <script src="rsvp-counter.js"></script>
 </body>
 </html>

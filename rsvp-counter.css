@@ -1,0 +1,77 @@
+/* Styles for the number input counter */
+.number-input-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.number-input-container input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    text-align: center;
+    border-radius: 10px;
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+.number-input-container input[type="number"]::-webkit-inner-spin-button,
+.number-input-container input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-input-button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a89dc 0%, #3a79cc 100%);
+    color: white;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 2;
+}
+
+.number-input-button:hover {
+    background: linear-gradient(135deg, #3a79cc 0%, #2d6cbe 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.number-input-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+.number-input-button.minus {
+    left: 5px;
+}
+
+.number-input-button.plus {
+    right: 5px;
+}
+
+.number-input-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Animation for button press */
+@keyframes buttonPress {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.number-input-button:active:not(:disabled) {
+    animation: buttonPress 0.2s ease;
+}

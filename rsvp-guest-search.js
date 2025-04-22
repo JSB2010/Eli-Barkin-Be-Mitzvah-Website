@@ -940,34 +940,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
 
-                    // Ensure the primary guest name field (index 0) is filled even if adultGuests array was empty but adultCount > 0
-                    if (adultInputs[0] && !adultInputs[0].value && submission.name) {
-                        adultInputs[0].value = submission.name;
-                        console.log(`[prefillForm] Set primary adult name from submission.name: ${submission.name}`);
-
-                        // Force direct DOM update
-                        try {
-                            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(adultInputs[0], submission.name);
-                            adultInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                        } catch (e) {
-                            console.warn(`[prefillForm] Failed to force primary name update: ${e.message}`);
-                        }
-                    }
+                    // Don't autofill the primary guest name field
                 } else if (adultCount > 0) {
-                    // Handle case where adultCount > 0 but adultGuests array is missing/empty
-                    const firstAdultInput = adultGuestsContainer.querySelector('input');
-                    if (firstAdultInput && submission.name) {
-                        firstAdultInput.value = submission.name;
-                        console.log(`[prefillForm] Set primary adult name from submission.name (no array): ${submission.name}`);
-
-                        // Force direct DOM update
-                        try {
-                            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(firstAdultInput, submission.name);
-                            firstAdultInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        } catch (e) {
-                            console.warn(`[prefillForm] Failed to force primary name update (no array): ${e.message}`);
-                        }
-                    }
+                    // Don't autofill the primary guest name field
                 }
 
                 // Pre-fill child guest names
@@ -1065,9 +1040,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const label = document.createElement('label');
             label.setAttribute('for', `adultName${i+1}`);
-            // Use selected guest's name for the first adult label if available
-            const primaryGuestName = window.selectedGuest ? window.selectedGuest.name : 'Primary Guest';
-            label.textContent = i === 0 ? `${primaryGuestName}'s Name:` : `Adult Guest ${i + 1}:`;
+            // Use a generic label for all adult guests
+            label.textContent = i === 0 ? `Adult 1:` : `Adult ${i + 1}:`;
 
 
             const input = document.createElement('input');
@@ -1080,12 +1054,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store the index as a data attribute for easier debugging
             input.setAttribute('data-guest-index', i);
 
-            // Pre-fill the first field with the selected guest's name ONLY if it's a NEW submission
-            // For updates, prefillFormWithExistingData handles filling names
-            if (i === 0 && window.selectedGuest && !window.existingSubmission) {
-                 input.value = window.selectedGuest.name;
-
-            }
+            // Don't pre-fill the first field with the selected guest's name
+            // Let the user enter the name manually
 
             // Special case for update mode with fallback submission
             if (i === 0 && window.existingSubmission?.name) {
