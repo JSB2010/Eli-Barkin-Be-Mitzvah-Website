@@ -2058,8 +2058,8 @@ const RSVPSystem = {
             syncStatusElem.className = 'activity-status status-pending';
         }
 
-        // Call the Cloud Function to sync with Google Sheet
-        const functionUrl = 'https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChanges';
+        // Call the Cloud Function to sync with Google Sheet (v2)
+        const functionUrl = 'https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app';
 
         fetch(functionUrl)
             .then(response => {
@@ -2238,8 +2238,8 @@ const RSVPSystem = {
             createdAt: new Date()
         };
 
-        // Call Cloud Function to add guest to Google Sheet
-        const addGuestFunction = firebase.functions().httpsCallable('addGuestToSheet');
+        // Call Cloud Function to add guest to Google Sheet (v2)
+        const addGuestFunction = firebase.functions().httpsCallable('importGuestListV2');
 
         addGuestFunction(guest)
             .then(result => {

@@ -1764,8 +1764,8 @@ document.addEventListener('DOMContentLoaded', function() {
             syncSheetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
             syncSheetBtn.disabled = true;
 
-            // Call the manual sync function
-            fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChanges')
+            // Call the manual sync function (v2)
+            fetch('https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app')
                 .then(response => response.json())
                 .then(data => {
                     console.log('Sync response:', data);

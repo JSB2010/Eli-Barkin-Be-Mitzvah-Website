@@ -179,8 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualSyncSheetChanges');
+            // Call the Cloud Function (v2)
+            const syncFunction = firebase.functions().httpsCallable('manualSyncSheetChangesV2');
             const result = await syncFunction();
 
             // Display results
@@ -475,8 +475,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualUpdateAllRsvps');
+            // Call the Cloud Function (v2)
+            const syncFunction = firebase.functions().httpsCallable('syncGuestToSheetV2');
             const result = await syncFunction();
 
             // Display results
@@ -538,8 +538,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualUpdateMasterSheet');
+            // Call the Cloud Function (v2)
+            const syncFunction = firebase.functions().httpsCallable('manualUpdateMasterSheetV2');
             const result = await syncFunction();
 
             // Display results
