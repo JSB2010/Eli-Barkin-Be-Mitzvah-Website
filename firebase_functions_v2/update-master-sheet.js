@@ -508,6 +508,8 @@ exports.manualUpdateMasterSheetV2 = onCall({
       masterSheetId = (sheetsSheetIdValue || "1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk").trim();
       // Remove any newline characters that might be in the sheet ID
       masterSheetId = masterSheetId.replace(/[\r\n]+/g, '');
+      // Remove any URL-encoded newline characters (%0A)
+      masterSheetId = masterSheetId.replace(/%0A/g, '');
       console.log('Sheet ID after cleaning:', masterSheetId);
       console.log('Using master sheet ID:', masterSheetId);
 

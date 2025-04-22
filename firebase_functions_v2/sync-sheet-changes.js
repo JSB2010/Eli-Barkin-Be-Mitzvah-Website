@@ -67,6 +67,8 @@ async function syncGuestListFromSheet() {
     let sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
     // Remove any newline characters that might be in the sheet ID
     sheetId = sheetId.replace(/[\r\n]+/g, '');
+    // Remove any URL-encoded newline characters (%0A)
+    sheetId = sheetId.replace(/%0A/g, '');
     console.log('Sheet ID after cleaning:', sheetId);
 
     // Get the service account credentials from secrets

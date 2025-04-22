@@ -40,6 +40,8 @@ exports.syncGuestToSheetV2 = onDocumentWritten({
     let sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
     // Remove any newline characters that might be in the sheet ID
     sheetId = sheetId.replace(/[\r\n]+/g, '');
+    // Remove any URL-encoded newline characters (%0A)
+    sheetId = sheetId.replace(/%0A/g, '');
     console.log('Sheet ID after cleaning:', sheetId);
 
     // Set up Google Sheets authentication

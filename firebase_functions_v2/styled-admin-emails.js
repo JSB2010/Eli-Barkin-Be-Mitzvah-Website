@@ -46,10 +46,12 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: gmailEmail.value(),
-        pass: gmailPassword.value()
+        user: gmailEmail.value().trim().replace(/[\r\n]+/g, ''),
+        pass: gmailPassword.value().trim().replace(/[\r\n]+/g, '')
       }
     });
+
+    console.log('Using Gmail email:', gmailEmail.value().trim().substring(0, 5) + '...');
 
     // Determine if this is an out-of-town guest
     const isOutOfTown = rsvpData.isOutOfTown === true;

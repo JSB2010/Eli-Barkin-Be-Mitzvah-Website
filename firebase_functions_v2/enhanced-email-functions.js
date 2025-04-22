@@ -37,7 +37,11 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     const apiKey = defaultClient.authentications['api-key'];
     // Make sure the API key doesn't have any special characters or whitespace
-    apiKey.apiKey = brevoApiKey.value().trim();
+    let apiKeyValue = brevoApiKey.value().trim();
+    // Remove any newline characters
+    apiKeyValue = apiKeyValue.replace(/[\r\n]+/g, '');
+    console.log('Using Brevo API key:', apiKeyValue.substring(0, 5) + '...');
+    apiKey.apiKey = apiKeyValue;
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
@@ -131,7 +135,12 @@ exports.sendStyledRsvpUpdateConfirmationV2 = onDocumentUpdated({
     // Configure Brevo API client
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = brevoApiKey.value();
+    // Make sure the API key doesn't have any special characters or whitespace
+    let apiKeyValue = brevoApiKey.value().trim();
+    // Remove any newline characters
+    apiKeyValue = apiKeyValue.replace(/[\r\n]+/g, '');
+    console.log('Using Brevo API key:', apiKeyValue.substring(0, 5) + '...');
+    apiKey.apiKey = apiKeyValue;
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
