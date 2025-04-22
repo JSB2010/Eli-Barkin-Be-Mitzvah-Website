@@ -9,8 +9,19 @@ exports.removeDuplicateGuestsV2 = onRequest({
   maxInstances: 1,
   memory: '256MiB',
   timeoutSeconds: 300,
-  region: 'us-central1'
+  region: 'us-central1',
+  cors: true // Enable CORS for all origins
 }, async (req, res) => {
+  // Set CORS headers manually for better browser compatibility
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
   try {
     console.log('Starting duplicate guest removal process');
 

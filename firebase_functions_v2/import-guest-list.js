@@ -16,8 +16,19 @@ exports.importGuestListV2 = onRequest({
   memory: '256MiB',
   timeoutSeconds: 120,
   region: 'us-central1',
-  secrets: [sheetsCredentials, sheetsSheetId]
+  secrets: [sheetsCredentials, sheetsSheetId],
+  cors: true // Enable CORS for all origins
 }, async (req, res) => {
+  // Set CORS headers manually for better browser compatibility
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
   try {
     // Get the service account credentials from secrets
     const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());

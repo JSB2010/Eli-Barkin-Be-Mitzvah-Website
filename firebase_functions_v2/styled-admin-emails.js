@@ -22,7 +22,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
 }, async (event) => {
   const change = event.data;
   if (!change) return null;
-  
+
   try {
     // Get the RSVP data
     const rsvpData = change.after.exists ? change.after.data() : null;

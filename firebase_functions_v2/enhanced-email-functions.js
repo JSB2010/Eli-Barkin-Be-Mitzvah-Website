@@ -21,7 +21,7 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
 }, async (event) => {
   const snapshot = event.data;
   if (!snapshot) return null;
-  
+
   try {
     // Get the RSVP data
     const rsvpData = snapshot.data();
@@ -92,7 +92,7 @@ exports.sendStyledRsvpUpdateConfirmationV2 = onDocumentUpdated({
 }, async (event) => {
   const change = event.data;
   if (!change) return null;
-  
+
   try {
     // Get the before and after data
     const beforeData = change.before.data();

@@ -435,6 +435,11 @@ exports.updateMasterSheetV2 = onDocumentWritten({
 /**
  * Manual function to update all existing RSVPs in the master sheet
  */
+/**
+ * Helper function to add delay between API calls to avoid quota limits
+ */
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 exports.manualUpdateMasterSheetV2 = onCall({
   minInstances: 0,
   maxInstances: 1,
@@ -600,7 +605,8 @@ exports.manualUpdateMasterSheetV2 = onCall({
     let skippedCount = 0;
     const updateResults = [];
 
-    for (const submission of submissions) {
+    for (let i = 0; i < submissions.length; i++) {
+      const submission = submissions[i];
       try {
         const name = submission.name.trim().toLowerCase();
         const rowIndex = nameToRowIndex[name];
@@ -741,6 +747,13 @@ exports.manualUpdateMasterSheetV2 = onCall({
           });
 
           console.log(`Updated master sheet for guest: ${submission.name} at row ${rowIndex}`);
+
+          // Add delay between API calls to avoid quota limits
+          // Only add delay if not the last item
+          if (i < submissions.length - 1) {
+            console.log('Adding delay between API calls to avoid quota limits...');
+            await sleep(1000); // 1 second delay between updates
+          }
         }
       } catch (error) {
         console.error(`Error processing submission for ${submission.name}:`, error);
@@ -749,6 +762,12 @@ exports.manualUpdateMasterSheetV2 = onCall({
           status: 'error',
           error: error.message
         });
+
+        // If we hit a quota limit, add a longer delay
+        if (error.message && error.message.includes('Quota exceeded')) {
+          console.log('Quota exceeded, adding longer delay...');
+          await sleep(5000); // 5 second delay after quota error
+        }
       }
     }
 
