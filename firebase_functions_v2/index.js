@@ -3,7 +3,6 @@ const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 
 // Import functions
-const { testV2Function } = require('./test-function');
 const { removeDuplicateGuestsV2 } = require('./remove-duplicates');
 const { manualSyncSheetChangesV2 } = require('./sync-sheet-changes');
 const { sendStyledRsvpConfirmationV2, sendStyledRsvpUpdateConfirmationV2 } = require('./enhanced-email-functions');
@@ -84,7 +83,6 @@ exports.getApiKeysV2 = onCall({
 });
 
 // Export functions
-exports.testV2Function = testV2Function;
 exports.removeDuplicateGuestsV2 = removeDuplicateGuestsV2;
 exports.manualSyncSheetChangesV2 = manualSyncSheetChangesV2;
 exports.sendStyledRsvpConfirmationV2 = sendStyledRsvpConfirmationV2;

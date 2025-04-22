@@ -94,7 +94,7 @@ exports.manualUpdateMasterSheetV2 = onCall({
   try {
     // Get all RSVP submissions from Firestore
     const snapshot = await admin.firestore().collection('sheetRsvps').get();
-    
+
     if (snapshot.empty) {
       return {
         success: false,
@@ -323,7 +323,29 @@ async function updateMasterSheet(submissions) {
 
           // Set checkbox for Submitted column
           if (submittedIndex >= 0) {
-            updateData[`${sheetName}!${String.fromCharCode(65 + submittedIndex)}${rowIndex}`] = [['TRUE']];
+            // Create a checkbox instead of just text
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: masterSheetId,
+              resource: {
+                requests: [{
+                  repeatCell: {
+                    range: {
+                      sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                      startRowIndex: rowIndex - 1,
+                      endRowIndex: rowIndex,
+                      startColumnIndex: submittedIndex,
+                      endColumnIndex: submittedIndex + 1
+                    },
+                    cell: {
+                      userEnteredValue: {
+                        boolValue: true
+                      }
+                    },
+                    fields: 'userEnteredValue'
+                  }
+                }]
+              }
+            });
           }
 
           // Set Submission ID
@@ -348,8 +370,29 @@ async function updateMasterSheet(submissions) {
 
           // Set Attending checkbox
           if (attendingIndex >= 0) {
-            updateData[`${sheetName}!${String.fromCharCode(65 + attendingIndex)}${rowIndex}`] =
-              [[submission.attending === 'yes' ? 'TRUE' : 'FALSE']];
+            // Create a checkbox instead of just text
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: masterSheetId,
+              resource: {
+                requests: [{
+                  repeatCell: {
+                    range: {
+                      sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                      startRowIndex: rowIndex - 1,
+                      endRowIndex: rowIndex,
+                      startColumnIndex: attendingIndex,
+                      endColumnIndex: attendingIndex + 1
+                    },
+                    cell: {
+                      userEnteredValue: {
+                        boolValue: submission.attending === 'yes'
+                      }
+                    },
+                    fields: 'userEnteredValue'
+                  }
+                }]
+              }
+            });
           }
 
           // Set Guest Count
@@ -395,14 +438,56 @@ async function updateMasterSheet(submissions) {
           if (isOutOfTown) {
             // Set Dinner at Linger checkbox
             if (dinnerAtLingerIndex >= 0) {
-              updateData[`${sheetName}!${String.fromCharCode(65 + dinnerAtLingerIndex)}${rowIndex}`] =
-                [[submission.fridayDinner === 'yes' ? 'TRUE' : 'FALSE']];
+              // Create a checkbox instead of just text
+              await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: masterSheetId,
+                resource: {
+                  requests: [{
+                    repeatCell: {
+                      range: {
+                        sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                        startRowIndex: rowIndex - 1,
+                        endRowIndex: rowIndex,
+                        startColumnIndex: dinnerAtLingerIndex,
+                        endColumnIndex: dinnerAtLingerIndex + 1
+                      },
+                      cell: {
+                        userEnteredValue: {
+                          boolValue: submission.fridayDinner === 'yes'
+                        }
+                      },
+                      fields: 'userEnteredValue'
+                    }
+                  }]
+                }
+              });
             }
 
             // Set Sunday Brunch checkbox
             if (sundayBrunchIndex >= 0) {
-              updateData[`${sheetName}!${String.fromCharCode(65 + sundayBrunchIndex)}${rowIndex}`] =
-                [[submission.sundayBrunch === 'yes' ? 'TRUE' : 'FALSE']];
+              // Create a checkbox instead of just text
+              await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: masterSheetId,
+                resource: {
+                  requests: [{
+                    repeatCell: {
+                      range: {
+                        sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                        startRowIndex: rowIndex - 1,
+                        endRowIndex: rowIndex,
+                        startColumnIndex: sundayBrunchIndex,
+                        endColumnIndex: sundayBrunchIndex + 1
+                      },
+                      cell: {
+                        userEnteredValue: {
+                          boolValue: submission.sundayBrunch === 'yes'
+                        }
+                      },
+                      fields: 'userEnteredValue'
+                    }
+                  }]
+                }
+              });
             }
           }
 
