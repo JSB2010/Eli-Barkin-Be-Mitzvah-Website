@@ -56,8 +56,8 @@ const SysadminDashboard = {
     // Initialize API keys in Firebase if needed
     initializeApiKeysInFirebase: function() {
         try {
-            // Call the Firebase function to initialize API keys
-            const initializeApiKeys = firebase.functions().httpsCallable('initializeApiKeys');
+            // Call the Firebase function to initialize API keys (v2)
+            const initializeApiKeys = firebase.functions().httpsCallable('getApiKeysV2');
             initializeApiKeys().then(result => {
                 console.log('API keys initialization result:', result.data);
                 // Load the API keys after initialization
@@ -102,9 +102,9 @@ const SysadminDashboard = {
                         return;
                     }
 
-                    // If no keys in Firestore, try the Cloud Function
-                    console.log('No API keys found in Firestore, trying Cloud Function...');
-                    const getApiKeys = firebase.functions().httpsCallable('getApiKeys');
+                    // If no keys in Firestore, try the Cloud Function (v2)
+                    console.log('No API keys found in Firestore, trying Cloud Function v2...');
+                    const getApiKeys = firebase.functions().httpsCallable('getApiKeysV2');
                     return getApiKeys();
                 })
                 .then(result => {
@@ -217,8 +217,8 @@ const SysadminDashboard = {
             syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
         }
 
-        // Call the Firebase function to update the master sheet
-        const manualUpdateMasterSheet = firebase.functions().httpsCallable('manualUpdateMasterSheet');
+        // Call the Firebase function to update the master sheet (v2)
+        const manualUpdateMasterSheet = firebase.functions().httpsCallable('manualUpdateMasterSheetV2');
 
         manualUpdateMasterSheet()
             .then(result => {

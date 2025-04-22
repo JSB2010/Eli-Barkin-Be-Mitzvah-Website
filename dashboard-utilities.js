@@ -179,9 +179,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualSyncSheetChanges');
-            const result = await syncFunction();
+            // Call the Cloud Function (v2)
+            const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = { data: await response.json() };
 
             // Display results
             if (result.data && result.data.success) {
@@ -475,8 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualUpdateAllRsvps');
+            // Call the Cloud Function (v2)
+            const syncFunction = firebase.functions().httpsCallable('syncGuestToSheetV2');
             const result = await syncFunction();
 
             // Display results
@@ -538,8 +543,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `);
 
-            // Call the Cloud Function
-            const syncFunction = firebase.functions().httpsCallable('manualUpdateMasterSheet');
+            // Call the Cloud Function (v2)
+            const syncFunction = firebase.functions().httpsCallable('manualUpdateMasterSheetV2');
             const result = await syncFunction();
 
             // Display results

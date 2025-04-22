@@ -1,15 +1,17 @@
 {
-  "functions": {
-    "source": "firebase_functions",
-    "runtime": "nodejs18",
-    "codebase": "default",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log"
-    ]
-  },
+  "functions": [
+    {
+      "source": "firebase_functions_v2",
+      "runtime": "nodejs20",
+      "codebase": "v2",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

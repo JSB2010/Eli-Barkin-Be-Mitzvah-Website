@@ -1,17 +1,47 @@
-const functions = require('firebase-functions');
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const { google } = require('googleapis');
+
+// Define secrets for Google Sheets
+const sheetsCredentials = defineSecret('SHEETS_CREDENTIALS');
+const sheetsSheetId = defineSecret('SHEETS_SHEET_ID');
 
 /**
  * HTTP endpoint to import guest list from Google Sheet to Firestore
  */
-exports.importGuestList = functions.https.onRequest(async (req, res) => {
-  try {
-    // Get the service account credentials from environment
-    const serviceAccountCredentials = functions.config().sheets.credentials;
+exports.importGuestListV2 = onRequest({
+  minInstances: 0,
+  maxInstances: 10,
+  memory: '256MiB',
+  timeoutSeconds: 120,
+  region: 'us-central1',
+  secrets: [sheetsCredentials, sheetsSheetId],
+  cors: {
+    origin: true, // Allow requests from any origin
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 3600
+  }
+}, async (req, res) => {
+  // Set CORS headers manually for better browser compatibility
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Get the sheet ID from environment or use the specific one
-    const sheetId = functions.config().sheets.sheet_id || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    // Get the service account credentials from secrets
+    const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());
+
+    // Get the sheet ID from secrets or use the specific one
+    // Trim the sheet ID to remove any whitespace or newlines
+    const sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
+    console.log('Sheet ID after trimming:', sheetId);
 
     // Set up Google Sheets authentication
     const auth = new google.auth.GoogleAuth({
@@ -53,7 +83,7 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
     // Get all data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: sheetName, // Get all data
+      range: `${sheetName}!A:Z`, // Get all data with a valid range
     });
 
     if (!response.data.values || response.data.values.length <= 1) {
@@ -98,7 +128,6 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
     const emailIndex = headers.indexOf('Email');
     const phoneIndex = headers.indexOf('Phone');
     const categoryIndex = headers.indexOf('Category');
-    // maxGuestsIndex removed
 
     // Get Firestore database
     const db = admin.firestore();
@@ -129,7 +158,6 @@ exports.importGuestList = functions.https.onRequest(async (req, res) => {
         email: emailIndex >= 0 && row[emailIndex] ? row[emailIndex] : '',
         phone: phoneIndex >= 0 && row[phoneIndex] ? row[phoneIndex] : '',
         category: categoryIndex >= 0 && row[categoryIndex] ? row[categoryIndex] : '',
-        // maxAllowedGuests removed
         hasResponded: false,
         response: '',
         actualGuestCount: 0,
