@@ -10,7 +10,12 @@ exports.removeDuplicateGuestsV2 = onRequest({
   memory: '256MiB',
   timeoutSeconds: 300,
   region: 'us-central1',
-  cors: true // Enable CORS for all origins
+  cors: {
+    origin: true, // Allow requests from any origin
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 3600
+  }
 }, async (req, res) => {
   // Set CORS headers manually for better browser compatibility
   res.set('Access-Control-Allow-Origin', '*');

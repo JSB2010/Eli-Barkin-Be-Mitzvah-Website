@@ -17,7 +17,12 @@ exports.manualSyncSheetChangesV2 = onRequest({
   timeoutSeconds: 120,
   region: 'us-central1',
   secrets: [sheetsCredentials, sheetsSheetId],
-  cors: true // Enable CORS for all origins
+  cors: {
+    origin: true, // Allow requests from any origin
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 3600
+  }
 }, async (req, res) => {
   // Set CORS headers manually for better browser compatibility
   res.set('Access-Control-Allow-Origin', '*');
