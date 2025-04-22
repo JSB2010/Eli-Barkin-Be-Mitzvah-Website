@@ -36,9 +36,9 @@
 
 ### Phase 5: Cleanup
 
-1. ⬜ Remove v1 functions
+1. ✅ Remove v1 functions
 2. ✅ Update client code to use v2 functions
-3. ⬜ Remove v1 codebase
+3. ✅ Remove v1 codebase
 
 ## Migration Process for Each Function
 

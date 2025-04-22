@@ -1,17 +1,6 @@
 {
   "functions": [
     {
-      "source": "firebase_functions",
-      "runtime": "nodejs20",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
-    },
-    {
       "source": "firebase_functions_v2",
       "runtime": "nodejs20",
       "codebase": "v2",

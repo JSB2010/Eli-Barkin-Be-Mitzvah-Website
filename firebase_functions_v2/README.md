@@ -45,11 +45,11 @@ The following secrets need to be configured:
 4. Tested each function to ensure it works correctly
 5. Updated the migration plan to track progress
 
-## Next Steps
+## Migration Complete
 
 1. ✅ Test all v2 functions thoroughly
 2. ✅ Update client code to use v2 functions
-3. ⬜ Remove v1 functions once all v2 functions are working correctly
+3. ✅ Remove v1 functions once all v2 functions are working correctly
 
 ## Notes
 
