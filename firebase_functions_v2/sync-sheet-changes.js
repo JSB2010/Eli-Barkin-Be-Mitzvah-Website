@@ -47,7 +47,9 @@ async function syncGuestListFromSheet() {
     console.log('Starting guest list sync from sheet');
 
     // Get the sheet ID from secrets or use the specific one
-    const sheetId = sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
+    // Trim the sheet ID to remove any whitespace or newlines
+    const sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
+    console.log('Sheet ID after trimming:', sheetId);
 
     // Get the service account credentials from secrets
     const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());

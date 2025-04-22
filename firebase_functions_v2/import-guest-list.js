@@ -23,7 +23,9 @@ exports.importGuestListV2 = onRequest({
     const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());
 
     // Get the sheet ID from secrets or use the specific one
-    const sheetId = sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
+    // Trim the sheet ID to remove any whitespace or newlines
+    const sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
+    console.log('Sheet ID after trimming:', sheetId);
 
     // Set up Google Sheets authentication
     const auth = new google.auth.GoogleAuth({

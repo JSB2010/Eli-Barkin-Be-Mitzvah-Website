@@ -452,7 +452,19 @@ exports.manualUpdateMasterSheetV2 = onCall({
   }
 
   try {
+    console.log('Starting manualUpdateMasterSheetV2 function');
+    console.log('Auth user:', request.auth ? request.auth.uid : 'No auth');
+
+    // Get the service account credentials from secrets
+    console.log('Getting sheet credentials and ID');
+    const sheetsCredentialsValue = sheetsCredentials.value();
+    const sheetsSheetIdValue = sheetsSheetId.value();
+
+    console.log('Sheet ID:', sheetsSheetIdValue);
+    console.log('Credentials available:', !!sheetsCredentialsValue);
+
     // Get all submissions
+    console.log('Fetching RSVP submissions from Firestore');
     const submissionsSnapshot = await admin.firestore().collection('sheetRsvps').get();
     const submissions = [];
 
@@ -462,6 +474,8 @@ exports.manualUpdateMasterSheetV2 = onCall({
         ...doc.data()
       });
     });
+
+    console.log(`Found ${submissions.length} RSVP submissions in Firestore`);
 
     if (submissions.length === 0) {
       return {
@@ -474,19 +488,38 @@ exports.manualUpdateMasterSheetV2 = onCall({
     console.log(`Found ${submissions.length} RSVP submissions to process`);
 
     // Get the service account credentials from secrets
-    const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());
+    let serviceAccountCredentials;
+    let masterSheetId;
+    let auth;
+    let client;
+    let sheets;
 
-    // Get the sheet ID from secrets or use the specific one
-    const masterSheetId = sheetsSheetId.value() || "1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk";
+    try {
+      serviceAccountCredentials = JSON.parse(sheetsCredentialsValue);
+      console.log('Successfully parsed service account credentials');
 
-    // Set up Google Sheets authentication
-    const auth = new google.auth.GoogleAuth({
-      credentials: serviceAccountCredentials,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets']
-    });
+      // Get the sheet ID from secrets or use the specific one
+      // Trim the sheet ID to remove any whitespace or newlines
+      masterSheetId = (sheetsSheetIdValue || "1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk").trim();
+      console.log('Sheet ID after trimming:', masterSheetId);
+      console.log('Using master sheet ID:', masterSheetId);
 
-    const client = await auth.getClient();
-    const sheets = google.sheets({ version: 'v4', auth: client });
+      // Set up Google Sheets authentication
+      auth = new google.auth.GoogleAuth({
+        credentials: serviceAccountCredentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+      });
+
+      client = await auth.getClient();
+      sheets = google.sheets({ version: 'v4', auth: client });
+      console.log('Successfully set up Google Sheets API client');
+    } catch (error) {
+      console.error('Error setting up Google Sheets:', error);
+      throw new HttpsError(
+        'internal',
+        `Error with Google Sheets setup: ${error.message}`
+      );
+    }
 
     // Get the sheet names
     const sheetsResponse = await sheets.spreadsheets.get({
