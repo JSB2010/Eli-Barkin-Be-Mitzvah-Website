@@ -1765,7 +1765,12 @@ document.addEventListener('DOMContentLoaded', function() {
             syncSheetBtn.disabled = true;
 
             // Call the manual sync function (v2)
-            fetch('https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app')
+            fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     console.log('Sync response:', data);

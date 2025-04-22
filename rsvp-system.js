@@ -2059,7 +2059,7 @@ const RSVPSystem = {
         }
 
         // Call the Cloud Function to sync with Google Sheet (v2)
-        const functionUrl = 'https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app';
+        const functionUrl = 'https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2';
 
         fetch(functionUrl)
             .then(response => {

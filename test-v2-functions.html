@@ -165,7 +165,12 @@
         document.getElementById('test-function-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/testV2Function');
+                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/testV2Function', {
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = await response.json();
                 httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {
@@ -176,7 +181,12 @@
         document.getElementById('manual-sync-sheet-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2');
+                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2', {
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = await response.json();
                 httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {
@@ -187,7 +197,12 @@
         document.getElementById('remove-duplicates-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/removeDuplicateGuestsV2');
+                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/removeDuplicateGuestsV2', {
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = await response.json();
                 httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {
@@ -198,7 +213,12 @@
         document.getElementById('import-guest-list-btn').addEventListener('click', async () => {
             try {
                 httpResult.textContent = 'Loading...';
-                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/importGuestListV2');
+                const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/importGuestListV2', {
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = await response.json();
                 httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {

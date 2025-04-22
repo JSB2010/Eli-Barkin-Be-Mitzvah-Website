@@ -180,8 +180,13 @@ document.addEventListener('DOMContentLoaded', function() {
             `);
 
             // Call the Cloud Function (v2)
-            const syncFunction = firebase.functions().httpsCallable('manualSyncSheetChangesV2');
-            const result = await syncFunction();
+            const response = await fetch('https://us-central1-eli-barkin-be-mitzvah.cloudfunctions.net/manualSyncSheetChangesV2', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = { data: await response.json() };
 
             // Display results
             if (result.data && result.data.success) {
