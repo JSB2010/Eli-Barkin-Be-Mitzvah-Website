@@ -59,7 +59,8 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
     // Configure Brevo API client
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = brevoApiKey.value();
+    // Make sure the API key doesn't have any special characters or whitespace
+    apiKey.apiKey = brevoApiKey.value().trim();
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 

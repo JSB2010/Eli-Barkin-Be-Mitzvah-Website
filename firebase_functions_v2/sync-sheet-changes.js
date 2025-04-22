@@ -64,8 +64,10 @@ async function syncGuestListFromSheet() {
 
     // Get the sheet ID from secrets or use the specific one
     // Trim the sheet ID to remove any whitespace or newlines
-    const sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
-    console.log('Sheet ID after trimming:', sheetId);
+    let sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
+    // Remove any newline characters that might be in the sheet ID
+    sheetId = sheetId.replace(/[\r\n]+/g, '');
+    console.log('Sheet ID after cleaning:', sheetId);
 
     // Get the service account credentials from secrets
     const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());

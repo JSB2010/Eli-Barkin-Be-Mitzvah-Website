@@ -506,7 +506,9 @@ exports.manualUpdateMasterSheetV2 = onCall({
       // Get the sheet ID from secrets or use the specific one
       // Trim the sheet ID to remove any whitespace or newlines
       masterSheetId = (sheetsSheetIdValue || "1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk").trim();
-      console.log('Sheet ID after trimming:', masterSheetId);
+      // Remove any newline characters that might be in the sheet ID
+      masterSheetId = masterSheetId.replace(/[\r\n]+/g, '');
+      console.log('Sheet ID after cleaning:', masterSheetId);
       console.log('Using master sheet ID:', masterSheetId);
 
       // Set up Google Sheets authentication

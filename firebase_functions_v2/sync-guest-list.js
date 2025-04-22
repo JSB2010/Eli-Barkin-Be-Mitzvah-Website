@@ -36,7 +36,11 @@ exports.syncGuestToSheetV2 = onDocumentWritten({
     const serviceAccountCredentials = JSON.parse(sheetsCredentials.value());
 
     // Get the sheet ID from secrets or use the specific one
-    const sheetId = sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk';
+    // Trim the sheet ID to remove any whitespace or newlines
+    let sheetId = (sheetsSheetId.value() || '1e9ejByxnDLAMi_gJPiSQyiRbHougbzwLFeH6GNLjAnk').trim();
+    // Remove any newline characters that might be in the sheet ID
+    sheetId = sheetId.replace(/[\r\n]+/g, '');
+    console.log('Sheet ID after cleaning:', sheetId);
 
     // Set up Google Sheets authentication
     const auth = new google.auth.GoogleAuth({
