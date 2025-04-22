@@ -47,9 +47,9 @@ The following secrets need to be configured:
 
 ## Next Steps
 
-1. Test all v2 functions thoroughly
-2. Update client code to use v2 functions
-3. Remove v1 functions once all v2 functions are working correctly
+1. ✅ Test all v2 functions thoroughly
+2. ✅ Update client code to use v2 functions
+3. ⬜ Remove v1 functions once all v2 functions are working correctly
 
 ## Notes
 
