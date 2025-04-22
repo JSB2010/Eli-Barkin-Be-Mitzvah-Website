@@ -15,9 +15,9 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
   const isAttending = rsvpData.attending === 'yes';
 
   // Format the date
-  const eventDate = 'May 17, 2024';
-  const eventTime = '10:00 AM';
-  const eventLocation = 'Temple Emanuel, 51 Grape St, Denver, CO 80220';
+  const eventDate = 'August 23, 2025';
+  const eventTime = '4:00 PM';
+  const eventLocation = 'Coors Field, 2001 Blake St, Denver, CO 80205';
 
   // Format additional guests as a list
   let guestListHtml = '';
@@ -50,8 +50,8 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
           <h4 style="margin-top: 0; color: ${attendingFridayDinner ? '#2e7d32' : '#c62828'}; font-size: 16px;">
             Friday Night Dinner at Linger
           </h4>
-          <p><strong>Date:</strong> Friday, May 16, 2024</p>
-          <p><strong>Time:</strong> 6:30 PM</p>
+          <p><strong>Date:</strong> Friday, August 22, 2025</p>
+          <p><strong>Time:</strong> 5:30 PM</p>
           <p><strong>Location:</strong> Linger Restaurant, 2030 W 30th Ave, Denver, CO 80211</p>
           <p><strong>Status:</strong> ${attendingFridayDinner ? 'You are attending' : 'You are not attending'}</p>
         </div>
@@ -60,9 +60,9 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
           <h4 style="margin-top: 0; color: ${attendingSundayBrunch ? '#2e7d32' : '#c62828'}; font-size: 16px;">
             Sunday Brunch at Eli's Home
           </h4>
-          <p><strong>Date:</strong> Sunday, May 19, 2024</p>
-          <p><strong>Time:</strong> 10:00 AM</p>
-          <p><strong>Location:</strong> Eli's Home, Denver, CO</p>
+          <p><strong>Date:</strong> Sunday, August 24, 2025</p>
+          <p><strong>Time:</strong> 9:30 AM</p>
+          <p><strong>Location:</strong> Eli's Home, 1245 S Gaylord St, Denver, CO 80210</p>
           <p><strong>Status:</strong> ${attendingSundayBrunch ? 'You are attending' : 'You are not attending'}</p>
         </div>
 
@@ -117,7 +117,7 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
       <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
         <p>We're looking forward to celebrating with you!</p>
         <p>The Barkin Family</p>
-        <p>May 17, 2024 | Denver, Colorado</p>
+        <p>August 23, 2025 | Denver, Colorado</p>
         <a href="https://elibarkin.com" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">Visit Event Website</a>
       </div>
     </body>
@@ -141,9 +141,9 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
   const attendanceChanged = beforeData.attending !== afterData.attending;
 
   // Format the date
-  const eventDate = 'May 17, 2024';
-  const eventTime = '10:00 AM';
-  const eventLocation = 'Temple Emanuel, 51 Grape St, Denver, CO 80220';
+  const eventDate = 'August 23, 2025';
+  const eventTime = '4:00 PM';
+  const eventLocation = 'Coors Field, 2001 Blake St, Denver, CO 80205';
 
   // Format additional guests as a list
   let guestListHtml = '';
@@ -229,8 +229,8 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
           <h4 style="margin-top: 0; color: ${attendingFridayDinner ? '#2e7d32' : '#c62828'}; font-size: 16px;">
             Friday Night Dinner at Linger
           </h4>
-          <p><strong>Date:</strong> Friday, May 16, 2024</p>
-          <p><strong>Time:</strong> 6:30 PM</p>
+          <p><strong>Date:</strong> Friday, August 22, 2025</p>
+          <p><strong>Time:</strong> 5:30 PM</p>
           <p><strong>Location:</strong> Linger Restaurant, 2030 W 30th Ave, Denver, CO 80211</p>
           <p><strong>Status:</strong> ${attendingFridayDinner ? 'You are attending' : 'You are not attending'}</p>
         </div>
@@ -239,9 +239,9 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
           <h4 style="margin-top: 0; color: ${attendingSundayBrunch ? '#2e7d32' : '#c62828'}; font-size: 16px;">
             Sunday Brunch at Eli's Home
           </h4>
-          <p><strong>Date:</strong> Sunday, May 19, 2024</p>
-          <p><strong>Time:</strong> 10:00 AM</p>
-          <p><strong>Location:</strong> Eli's Home, Denver, CO</p>
+          <p><strong>Date:</strong> Sunday, August 24, 2025</p>
+          <p><strong>Time:</strong> 9:30 AM</p>
+          <p><strong>Location:</strong> Eli's Home, 1245 S Gaylord St, Denver, CO 80210</p>
           <p><strong>Status:</strong> ${attendingSundayBrunch ? 'You are attending' : 'You are not attending'}</p>
         </div>
 
@@ -298,7 +298,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
       <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
         <p>We're looking forward to celebrating with you!</p>
         <p>The Barkin Family</p>
-        <p>May 17, 2024 | Denver, Colorado</p>
+        <p>August 23, 2025 | Denver, Colorado</p>
         <a href="https://elibarkin.com" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">Visit Event Website</a>
       </div>
     </body>
