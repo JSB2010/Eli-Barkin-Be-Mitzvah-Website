@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Firebase Functions v2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0d47a1;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+        }
+        button {
+            background-color: #0d47a1;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #1565c0;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Firebase Functions v2</h1>
+
+    <div class="test-section">
+        <h2>HTTP Functions</h2>
+
+        <div>
+            <button id="test-function-btn">Test testV2Function</button>
+            <button id="manual-sync-sheet-btn">Test manualSyncSheetChangesV2</button>
+            <button id="remove-duplicates-btn">Test removeDuplicateGuestsV2</button>
+            <button id="import-guest-list-btn">Test importGuestListV2</button>
+        </div>
+
+        <h3>Result:</h3>
+        <pre id="http-result">No result yet</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Callable Functions</h2>
+
+        <div>
+            <button id="get-api-keys-btn">Test getApiKeysV2</button>
+            <button id="manual-update-master-sheet-btn">Test manualUpdateMasterSheetV2</button>
+        </div>
+
+        <h3>Result:</h3>
+        <pre id="callable-result">No result yet</pre>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQJCYQQQQQQQQQQQQQQQQQQQQQQQQQQQQ",
+            authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",
+            projectId: "eli-barkin-be-mitzvah",
+            storageBucket: "eli-barkin-be-mitzvah.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890abcdef",
+            measurementId: "G-ABCDEFGHIJ"
+        };
+
+        // Note: This is a placeholder config. The actual config will be used when running in the browser.
+
+        firebase.initializeApp(firebaseConfig);
+
+        // Get elements
+        const httpResult = document.getElementById('http-result');
+        const callableResult = document.getElementById('callable-result');
+
+        // Test HTTP Functions
+        document.getElementById('test-function-btn').addEventListener('click', async () => {
+            try {
+                httpResult.textContent = 'Loading...';
+                const response = await fetch('https://testv2function-gwduhqjv4a-uc.a.run.app');
+                const data = await response.json();
+                httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                httpResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        document.getElementById('manual-sync-sheet-btn').addEventListener('click', async () => {
+            try {
+                httpResult.textContent = 'Loading...';
+                const response = await fetch('https://manualsyncsheetchangesv2-gwduhqjv4a-uc.a.run.app');
+                const data = await response.json();
+                httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                httpResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        document.getElementById('remove-duplicates-btn').addEventListener('click', async () => {
+            try {
+                httpResult.textContent = 'Loading...';
+                const response = await fetch('https://removeduplicateguestsv2-gwduhqjv4a-uc.a.run.app');
+                const data = await response.json();
+                httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                httpResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        document.getElementById('import-guest-list-btn').addEventListener('click', async () => {
+            try {
+                httpResult.textContent = 'Loading...';
+                const response = await fetch('https://importguestlistv2-gwduhqjv4a-uc.a.run.app');
+                const data = await response.json();
+                httpResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                httpResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        // Test Callable Functions
+        document.getElementById('get-api-keys-btn').addEventListener('click', async () => {
+            try {
+                callableResult.textContent = 'Loading...';
+
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    // Sign in anonymously for testing
+                    await firebase.auth().signInAnonymously();
+                }
+
+                const getApiKeys = firebase.functions().httpsCallable('getApiKeysV2');
+                const result = await getApiKeys();
+                callableResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(result.data, null, 2)}`;
+            } catch (error) {
+                callableResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+
+        document.getElementById('manual-update-master-sheet-btn').addEventListener('click', async () => {
+            try {
+                callableResult.textContent = 'Loading...';
+
+                // Check if user is logged in
+                if (!firebase.auth().currentUser) {
+                    // Sign in anonymously for testing
+                    await firebase.auth().signInAnonymously();
+                }
+
+                const manualUpdateMasterSheet = firebase.functions().httpsCallable('manualUpdateMasterSheetV2');
+                const result = await manualUpdateMasterSheet();
+                callableResult.innerHTML = `<span class="success">Success:</span>\n${JSON.stringify(result.data, null, 2)}`;
+            } catch (error) {
+                callableResult.innerHTML = `<span class="error">Error:</span>\n${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
