@@ -8,6 +8,7 @@
 
 .number-input-container input[type="number"] {
     -moz-appearance: textfield; /* Firefox */
+    appearance: textfield; /* Standard */
     text-align: center;
     border-radius: 10px;
     padding-left: 45px;
