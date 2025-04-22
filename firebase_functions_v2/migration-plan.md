@@ -14,6 +14,7 @@
 2. ✅ getApiKeysV2 (already migrated)
 3. ✅ removeDuplicateGuestsV2 (renamed to avoid conflicts)
 4. ✅ manualSyncSheetChangesV2 (renamed to avoid conflicts, needs troubleshooting)
+5. ✅ importGuestListV2 (renamed to avoid conflicts)
 
 ### Phase 2: Migrate Firestore Trigger Functions
 
@@ -23,6 +24,7 @@
 4. ✅ sendOutOfTownGuestEmailV2 (renamed to avoid conflicts)
 5. ✅ sendOutOfTownEventNotificationV2 (renamed to avoid conflicts)
 6. ✅ updateMasterSheetV2 (renamed to avoid conflicts)
+7. ✅ syncGuestToSheetV2 (renamed to avoid conflicts)
 
 ### Phase 3: Migrate Scheduled Functions
 

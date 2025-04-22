@@ -12,6 +12,8 @@ const { sendOutOfTownGuestEmailV2 } = require('./out-of-town-emails');
 const { sendOutOfTownEventNotificationV2 } = require('./out-of-town-notifications');
 const { updateMasterSheetV2, manualUpdateMasterSheetV2 } = require('./update-master-sheet');
 const { syncSheetChangesV2 } = require('./sync-sheet-scheduled');
+const { importGuestListV2 } = require('./import-guest-list');
+const { syncGuestToSheetV2 } = require('./sync-guest-list');
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -93,3 +95,5 @@ exports.sendOutOfTownEventNotificationV2 = sendOutOfTownEventNotificationV2;
 exports.updateMasterSheetV2 = updateMasterSheetV2;
 exports.manualUpdateMasterSheetV2 = manualUpdateMasterSheetV2;
 exports.syncSheetChangesV2 = syncSheetChangesV2;
+exports.importGuestListV2 = importGuestListV2;
+exports.syncGuestToSheetV2 = syncGuestToSheetV2;
