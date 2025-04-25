@@ -37,10 +37,28 @@ node_modules/
 # Optional eslint cache
 .eslintcache
 
-# Service account keys
+# Service account keys and credentials
 *-firebase-adminsdk-*.json
+*-service-account-*.json
 eli-barkin-be-mitzvah-*.json
 auth_users.json
+serviceAccountKey.json
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# API keys and secrets
+.secret.json
+apiKeys.json
+secrets.json
+
+# Local configuration
+config.local.js
+firebase-config.local.js
 
 # Mac files
 .DS_Store

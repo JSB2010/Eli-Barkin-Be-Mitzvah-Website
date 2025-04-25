@@ -134,7 +134,8 @@
 
             // Initialize Firebase if not already initialized
             if (!firebase.apps || firebase.apps.length === 0) {
-                firebase.initializeApp({
+                // Use the global firebaseConfig object if available
+                firebase.initializeApp(window.firebaseConfig || {
                     apiKey: "AIzaSyBgAXectfPhAr3HqASJCewnfQJnGnfGAK8",
                     authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",
                     projectId: "eli-barkin-be-mitzvah",

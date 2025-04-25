@@ -1,4 +1,7 @@
 // Firebase configuration
+// Note: This API key is restricted to this domain and specific Firebase services
+// It can only be used for Firebase Authentication and Firestore from approved domains
+// This is safe to include in client-side code as it has proper security rules and restrictions
 const firebaseConfig = {
   apiKey: "AIzaSyBgAXectfPhAr3HqASJCewnfQJnGnfGAK8",
   authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",

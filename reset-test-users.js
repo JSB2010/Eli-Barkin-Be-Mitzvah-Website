@@ -11,16 +11,8 @@ const testUsers = [
   "Jesse Strassburger"
 ];
 
-// Initialize Firebase (using the same config as the main app)
-const firebaseConfig = {
-  apiKey: "AIzaSyBgAXectfPhAr3HqASJCewnfQJnGnfGAK8",
-  authDomain: "eli-barkin-be-mitzvah.firebaseapp.com",
-  projectId: "eli-barkin-be-mitzvah",
-  storageBucket: "eli-barkin-be-mitzvah.firebasestorage.app",
-  messagingSenderId: "1058445082947",
-  appId: "1:1058445082947:web:8ab0696d5782e63ddaeff6",
-  measurementId: "G-QQBCYHVB9C"
-};
+// Use the Firebase config from the main app
+// This script will be loaded after firebase-config.js which defines firebaseConfig
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
