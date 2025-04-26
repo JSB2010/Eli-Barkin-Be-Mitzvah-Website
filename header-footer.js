@@ -105,6 +105,10 @@ function injectFooter() {
                     <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
                     <span class="separator">|</span>
                     <a href="https://askthekidz.com" target="_blank" rel="noopener">Ask The Kidz</a>
+                    <span class="separator">|</span>
+                    <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" rel="noopener" class="github-link">
+                        <i class="fab fa-github"></i> View on GitHub
+                    </a>
                 </div>
                 <div class="footer-links">
                     <a href="index.html">Home</a>
