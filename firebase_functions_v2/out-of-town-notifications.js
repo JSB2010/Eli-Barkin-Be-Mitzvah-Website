@@ -119,25 +119,45 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
-    sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "noreply@elibarkin.com" };
+    sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
     sendSmtpEmail.to = [{ email: adminEmailValue }];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
 
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Out-of-town event notification sent:', result);
+    try {
+      console.log('Attempting to send out-of-town notification to admin:', adminEmailValue);
+      console.log('Email sender:', JSON.stringify(sendSmtpEmail.sender));
+      const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Out-of-town event notification sent:', JSON.stringify(result));
 
-    // Log the notification
-    await admin.firestore().collection('emailLogs').add({
-      type: 'out-of-town-notification',
-      recipient: adminEmailValue,
-      subject: subject,
-      rsvpId: rsvpId,
-      guestName: rsvpData.name,
-      fridayDinner: rsvpData.fridayDinner,
-      sundayBrunch: rsvpData.sundayBrunch,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      messageId: result.messageId
-    });
+      // Log the notification
+      await admin.firestore().collection('emailLogs').add({
+        type: 'out-of-town-notification',
+        recipient: adminEmailValue,
+        subject: subject,
+        rsvpId: rsvpId,
+        guestName: rsvpData.name,
+        fridayDinner: rsvpData.fridayDinner,
+        sundayBrunch: rsvpData.sundayBrunch,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        messageId: result.messageId,
+        success: true
+      });
+    } catch (emailError) {
+      console.error('Error in sendTransacEmail for out-of-town notification:', emailError);
+      console.error('Error details:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError)));
+
+      // Log the failed email attempt
+      await admin.firestore().collection('emailLogs').add({
+        type: 'out-of-town-notification-failed',
+        recipient: adminEmailValue,
+        subject: subject,
+        rsvpId: rsvpId,
+        guestName: rsvpData.name,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        error: emailError.message || 'Unknown error',
+        success: false
+      });
+    }
 
     return null;
   } catch (error) {

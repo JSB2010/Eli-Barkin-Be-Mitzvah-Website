@@ -60,21 +60,42 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
     };
 
     // Send the email
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Styled confirmation email sent to:', rsvpData.email);
+    try {
+      console.log('Attempting to send email to:', rsvpData.email);
+      console.log('Email sender:', JSON.stringify(sendSmtpEmail.sender));
+      const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Styled confirmation email sent to:', rsvpData.email);
+      console.log('Email result:', JSON.stringify(result));
 
-    // Log the email
-    await admin.firestore().collection('emailLogs').add({
-      type: 'rsvp-confirmation',
-      recipient: rsvpData.email,
-      recipientName: rsvpData.name,
-      subject: sendSmtpEmail.subject,
-      rsvpId: rsvpId,
-      isAttending: rsvpData.attending === 'yes',
-      isOutOfTown: rsvpData.isOutOfTown === true,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      messageId: result.messageId
-    });
+      // Log the email
+      await admin.firestore().collection('emailLogs').add({
+        type: 'rsvp-confirmation',
+        recipient: rsvpData.email,
+        recipientName: rsvpData.name,
+        subject: sendSmtpEmail.subject,
+        rsvpId: rsvpId,
+        isAttending: rsvpData.attending === 'yes',
+        isOutOfTown: rsvpData.isOutOfTown === true,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        messageId: result.messageId,
+        success: true
+      });
+    } catch (emailError) {
+      console.error('Error in sendTransacEmail:', emailError);
+      console.error('Error details:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError)));
+
+      // Log the failed email attempt
+      await admin.firestore().collection('emailLogs').add({
+        type: 'rsvp-confirmation-failed',
+        recipient: rsvpData.email,
+        recipientName: rsvpData.name,
+        subject: sendSmtpEmail.subject,
+        rsvpId: rsvpId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        error: emailError.message || 'Unknown error',
+        success: false
+      });
+    }
 
     return null;
   } catch (error) {
@@ -159,28 +180,49 @@ exports.sendStyledRsvpUpdateConfirmationV2 = onDocumentUpdated({
     };
 
     // Send the email
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Styled update confirmation email sent to:', afterData.email);
+    try {
+      console.log('Attempting to send update email to:', afterData.email);
+      console.log('Email sender:', JSON.stringify(sendSmtpEmail.sender));
+      const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Styled update confirmation email sent to:', afterData.email);
+      console.log('Email result:', JSON.stringify(result));
 
-    // Log the email
-    await admin.firestore().collection('emailLogs').add({
-      type: 'rsvp-update-confirmation',
-      recipient: afterData.email,
-      recipientName: afterData.name,
-      subject: sendSmtpEmail.subject,
-      rsvpId: rsvpId,
-      isAttending: afterData.attending === 'yes',
-      isOutOfTown: afterData.isOutOfTown === true,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      messageId: result.messageId,
-      changes: {
-        attendance: hasAttendanceChanged,
-        guestCount: hasGuestCountChanged,
-        guestList: hasAdditionalGuestsChanged || hasAdultGuestsChanged || hasChildGuestsChanged,
-        fridayDinner: hasFridayDinnerChanged,
-        sundayBrunch: hasSundayBrunchChanged
-      }
-    });
+      // Log the email
+      await admin.firestore().collection('emailLogs').add({
+        type: 'rsvp-update-confirmation',
+        recipient: afterData.email,
+        recipientName: afterData.name,
+        subject: sendSmtpEmail.subject,
+        rsvpId: rsvpId,
+        isAttending: afterData.attending === 'yes',
+        isOutOfTown: afterData.isOutOfTown === true,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        messageId: result.messageId,
+        success: true,
+        changes: {
+          attendance: hasAttendanceChanged,
+          guestCount: hasGuestCountChanged,
+          guestList: hasAdditionalGuestsChanged || hasAdultGuestsChanged || hasChildGuestsChanged,
+          fridayDinner: hasFridayDinnerChanged,
+          sundayBrunch: hasSundayBrunchChanged
+        }
+      });
+    } catch (emailError) {
+      console.error('Error in sendTransacEmail for update:', emailError);
+      console.error('Error details:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError)));
+
+      // Log the failed email attempt
+      await admin.firestore().collection('emailLogs').add({
+        type: 'rsvp-update-confirmation-failed',
+        recipient: afterData.email,
+        recipientName: afterData.name,
+        subject: sendSmtpEmail.subject,
+        rsvpId: rsvpId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        error: emailError.message || 'Unknown error',
+        success: false
+      });
+    }
 
     return null;
   } catch (error) {
