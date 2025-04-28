@@ -18,5 +18,9 @@
         "titleBar.inactiveBackground": "#822d0599",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "peacock.color": "#822d05"
+    "peacock.color": "#822d05",
+    "sonarlint.connectedMode.project": {
+        "connectionId": "jsb2010",
+        "projectKey": "JSB2010_Eli-Barkin-Be-Mitzvah-Website"
+    }
 }
