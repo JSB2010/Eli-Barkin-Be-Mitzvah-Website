@@ -122,6 +122,9 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
     sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
     sendSmtpEmail.to = [{ email: adminEmailValue }];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
+    sendSmtpEmail.headers = {
+      "X-Entity-Ref-ID": `admin-out-of-town-notification-${rsvpId}`
+    };
 
     try {
       console.log('Attempting to send out-of-town notification to admin:', adminEmailValue);

@@ -56,7 +56,12 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
       },
       to: [{ email: rsvpData.email, name: rsvpData.name }],
       subject: 'Thank You for Your RSVP to Eli\'s Bar Mitzvah',
-      htmlContent: htmlContent
+      htmlContent: htmlContent,
+      replyTo: { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" },
+      headers: {
+        "List-Unsubscribe": "<mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe>",
+        "X-Entity-Ref-ID": `rsvp-${rsvpId}`
+      }
     };
 
     // Send the email
@@ -176,7 +181,12 @@ exports.sendStyledRsvpUpdateConfirmationV2 = onDocumentUpdated({
       },
       to: [{ email: afterData.email, name: afterData.name }],
       subject: 'Your RSVP to Eli\'s Bar Mitzvah Has Been Updated',
-      htmlContent: htmlContent
+      htmlContent: htmlContent,
+      replyTo: { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" },
+      headers: {
+        "List-Unsubscribe": "<mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe>",
+        "X-Entity-Ref-ID": `rsvp-update-${rsvpId}`
+      }
     };
 
     // Send the email

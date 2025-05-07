@@ -95,8 +95,16 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="x-apple-disable-message-reformatting">
+        <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+        <meta name="color-scheme" content="light">
+        <meta name="supported-color-schemes" content="light">
         <title>Eli's Bar Mitzvah - Out-of-Town Guest Information</title>
         <style>
+          /* iOS blue links */
+          a[x-apple-data-detectors] {color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}
+          /* Gmail blue links */
+          u + #body a {color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}
           body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
@@ -199,7 +207,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
       </head>
       <body>
         <div class="header">
-          <img src="https://elibarkin.com/images/logo.png" alt="Eli's Bar Mitzvah Logo">
+          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo">
           <h1>Out-of-Town Guest Information</h1>
           <p>Special events for our out-of-town guests</p>
         </div>
@@ -267,6 +275,11 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
           <p>This email was sent regarding your RSVP to Eli Barkin's Bar Mitzvah.</p>
           <p>May 17, 2025 | Denver, Colorado</p>
           <a href="https://elibarkin.com" class="button">Visit Event Website</a>
+          <p style="margin-top: 20px; font-size: 12px; color: #999;">
+            If you received this by mistake, please ignore this message.<br>
+            <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Contact%20regarding%20Eli%27s%20Bar%20Mitzvah" style="color: #0d47a1; text-decoration: underline;">Contact us</a> if you have any questions.<br>
+            <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe" style="color: #999; text-decoration: underline;">Unsubscribe</a> from these notifications.
+          </p>
         </div>
       </body>
       </html>
@@ -279,6 +292,10 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
     sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
     sendSmtpEmail.to = [{ email: rsvpData.email, name: rsvpData.name }];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
+    sendSmtpEmail.headers = {
+      "List-Unsubscribe": "<mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe>",
+      "X-Entity-Ref-ID": `out-of-town-${rsvpId}`
+    };
 
     try {
       console.log('Attempting to send out-of-town email to:', rsvpData.email);

@@ -1,0 +1,16 @@
+{
+  "name": "email-deliverability-tests",
+  "version": "1.0.0",
+  "description": "Email deliverability testing tools for Eli's Bar Mitzvah website",
+  "main": "email-deliverability-test.js",
+  "scripts": {
+    "test": "node email-deliverability-test.js",
+    "install-deps": "npm install axios chalk"
+  },
+  "author": "Jacob Barkin",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chalk": "^4.1.2"
+  }
+}

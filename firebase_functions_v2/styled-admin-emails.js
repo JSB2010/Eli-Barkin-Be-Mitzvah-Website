@@ -145,7 +145,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       </head>
       <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://elibarkin.com/images/logo.png" alt="Eli's Bar Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
+          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
           <h1 style="color: #0d47a1; margin-bottom: 5px; font-size: 24px;">${subject}</h1>
           <p style="color: #666; font-size: 16px;">${submittedDate}</p>
         </div>
@@ -319,10 +319,13 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
 
     // Send the email
     const mailOptions = {
-      from: '"Eli\'s Bar Mitzvah" <noreply@elibarkin.com>',
+      from: '"Eli\'s Bar Mitzvah" <rsvps@elibarkin.com>',
       to: adminEmailValue,
       subject: subject,
-      html: htmlContent
+      html: htmlContent,
+      headers: {
+        'X-Entity-Ref-ID': `admin-notification-${rsvpId}`
+      }
     };
 
     await transporter.sendMail(mailOptions);
