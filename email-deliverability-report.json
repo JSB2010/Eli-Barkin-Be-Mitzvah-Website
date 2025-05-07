@@ -1,0 +1,30 @@
+{
+  "domain": "elibarkin.com",
+  "email": "rsvps@elibarkin.com",
+  "timestamp": "2025-05-07T17:36:56.755Z",
+  "score": 35,
+  "rating": "POOR",
+  "tests": {
+    "spf": {
+      "pass": true,
+      "record": "v=spf1 include:spf.sendinblue.com include:_spf.google.com ~all"
+    },
+    "dkim": {
+      "pass": false,
+      "record": null
+    },
+    "dmarc": {
+      "pass": true,
+      "record": "v=DMARC1; p=none; rua=mailto:c7224ed9003d4c02be8ed46242d125ee@dmarc-reports.cloudflare.net,mailto:rua@dmarc.brevo.com",
+      "policy": "none"
+    },
+    "mx": {
+      "pass": false,
+      "records": []
+    },
+    "returnPath": {
+      "pass": false,
+      "record": null
+    }
+  }
+}

@@ -148,40 +148,44 @@ function showDocumentationMenu() {
   console.log(`
 📚 Documentation & Guides:
 
-  1️⃣  Open Implementation Guide
-  2️⃣  Open Authentication Guide
-  3️⃣  Open Best Practices Guide
-  4️⃣  Open FAQ
-  5️⃣  Open Implementation Checklist
-  6️⃣  Open Brevo Verification Guide
-  7️⃣  Open Post-Implementation Testing Guide
-  8️⃣  Back to Main Menu
+  1️⃣  Email Deliverability Guide
+  2️⃣  Email Authentication Technical Reference
+  3️⃣  Email Implementation Checklist
+  4️⃣  Email Best Practices
+  5️⃣  Email Deliverability FAQ & Troubleshooting
+  6️⃣  Firebase Setup Guide
+  7️⃣  Documentation Index (Overview)
+  8️⃣  Legacy Guides
+  9️⃣  Back to Main Menu
 `);
 
-  rl.question('Select an option (1-8): ', (answer) => {
+  rl.question('Select an option (1-9): ', (answer) => {
     switch (answer) {
       case '1':
-        openDocument('email-implementation-guide.md');
+        openDocument('docs/EMAIL-DELIVERABILITY-GUIDE.md');
         break;
       case '2':
-        openDocument('email-authentication-guide.md');
+        openDocument('docs/EMAIL-AUTHENTICATION-TECHNICAL.md');
         break;
       case '3':
-        openDocument('email-deliverability-best-practices.md');
+        openDocument('docs/EMAIL-IMPLEMENTATION-CHECKLIST-V2.md');
         break;
       case '4':
-        openDocument('email-deliverability-faq.md');
+        openDocument('docs/EMAIL-BEST-PRACTICES.md');
         break;
       case '5':
-        openDocument('EMAIL-IMPLEMENTATION-CHECKLIST.md');
+        openDocument('docs/EMAIL-DELIVERABILITY-FAQ.md');
         break;
       case '6':
-        openDocument('brevo-verification-guide.md');
+        openDocument('docs/setup/FIREBASE-SETUP.md');
         break;
       case '7':
-        openDocument('post-implementation-testing.md');
+        openDocument('docs/EMAIL-DOCUMENTATION-INDEX.md');
         break;
       case '8':
+        showLegacyGuidesMenu();
+        break;
+      case '9':
         showMainMenu();
         break;
       default:
@@ -197,8 +201,8 @@ function showAboutInfo() {
 ℹ️ About This Toolkit:
 
   📌 Email Deliverability Toolkit for Eli's Be Mitzvah Website
-  📌 Version: 2.0
-  📌 Created: May 6, 2025
+  📌 Version: 2.1
+  📌 Created: May 7, 2025
   
   This toolkit helps ensure all emails related to Eli's Be Mitzvah
   reach your guests' inboxes and avoid spam folders.
@@ -374,6 +378,54 @@ ${content}
   rl.question('\nPress Enter to return to the Documentation menu...', () => {
     console.clear();
     showDocumentationMenu();
+  });
+}
+
+// Legacy Guides menu
+function showLegacyGuidesMenu() {
+  console.log(`
+📜 Legacy Documentation:
+
+  1️⃣  Original Implementation Guide
+  2️⃣  Original Authentication Guide
+  3️⃣  Original Best Practices Guide
+  4️⃣  Original FAQ
+  5️⃣  Original Implementation Checklist
+  6️⃣  Brevo Verification Guide
+  7️⃣  Post-Implementation Testing Guide
+  8️⃣  Back to Documentation Menu
+`);
+
+  rl.question('Select an option (1-8): ', (answer) => {
+    switch (answer) {
+      case '1':
+        openDocument('docs/archive/email-implementation-guide.md');
+        break;
+      case '2':
+        openDocument('docs/archive/email-authentication-guide.md');
+        break;
+      case '3':
+        openDocument('docs/archive/email-deliverability-best-practices.md');
+        break;
+      case '4':
+        openDocument('docs/archive/email-deliverability-faq.md');
+        break;
+      case '5':
+        openDocument('docs/archive/EMAIL-IMPLEMENTATION-CHECKLIST.md');
+        break;
+      case '6':
+        openDocument('docs/archive/brevo-verification-guide.md');
+        break;
+      case '7':
+        openDocument('docs/archive/post-implementation-testing.md');
+        break;
+      case '8':
+        showDocumentationMenu();
+        break;
+      default:
+        console.log('\n❌ Invalid option. Please try again.');
+        showLegacyGuidesMenu();
+    }
   });
 }
 

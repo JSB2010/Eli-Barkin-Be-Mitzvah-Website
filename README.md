@@ -148,6 +148,8 @@ ADMIN_EMAIL=admin-notification-email
 
 ## Firebase Setup
 
+For detailed Firebase setup instructions, please refer to the [Firebase Setup Guide](./docs/setup/FIREBASE-SETUP.md).
+
 ### Project Setup
 
 1. Create a new Firebase project at [firebase.google.com](https://firebase.google.com)
@@ -224,6 +226,22 @@ The system uses Brevo (formerly Sendinblue) to send email notifications:
 2. Generate an API key from the Brevo dashboard
 3. Set the API key as a Firebase secret
 4. Customize email templates in `firebase_functions_v2/brevo-email-templates.js`
+
+### Email Deliverability Documentation
+
+The email deliverability documentation has been organized in the `/docs` directory. Key resources include:
+
+- [Email Documentation Index](./docs/EMAIL-DOCUMENTATION-INDEX.md) - Central hub for all guides
+- [Email Deliverability Guide](./docs/EMAIL-DELIVERABILITY-GUIDE.md) - Complete implementation guide
+- [Email Authentication Technical Reference](./docs/EMAIL-AUTHENTICATION-TECHNICAL.md) - Technical details
+- [Email Best Practices](./docs/EMAIL-BEST-PRACTICES.md) - Content and sending guidelines
+- [Email Implementation Checklist](./docs/EMAIL-IMPLEMENTATION-CHECKLIST-V2.md) - Step-by-step process
+
+An interactive toolkit provides guided access to these resources:
+
+```bash
+node email-toolkit.js
+```
 
 ## Deployment
 
