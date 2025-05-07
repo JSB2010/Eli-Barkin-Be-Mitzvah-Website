@@ -1,6 +1,6 @@
 # Frequently Asked Questions About Email Deliverability
 
-This document answers common questions about email deliverability for Eli's Bar Mitzvah website and provides guidance for troubleshooting issues.
+This document answers common questions about email deliverability for Eli's Be Mitzvah website and provides guidance for troubleshooting issues.
 
 ## General Questions
 
@@ -60,7 +60,7 @@ Check your DNS management interface and verify the records match exactly what's 
 ## Best Practices
 
 ### Q: How often should we be sending emails to our guests?
-**A:** Limit mass emails to important updates only. For Eli's Bar Mitzvah, good occasions include:
+**A:** Limit mass emails to important updates only. For Eli's Be Mitzvah, good occasions include:
 - Initial invitation
 - Important updates about venue/timing
 - Week-before reminders

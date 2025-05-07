@@ -1,6 +1,6 @@
-# Email Deliverability Toolkit for Eli's Bar Mitzvah Website
+# Email Deliverability Toolkit for Eli's Be Mitzvah Website
 
-This toolkit provides comprehensive solutions for ensuring emails from Eli's Bar Mitzvah website reach your guests' inboxes rather than spam folders.
+This toolkit provides comprehensive solutions for ensuring emails from Eli's Be Mitzvah website reach your guests' inboxes rather than spam folders.
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -12,7 +12,7 @@ This toolkit provides comprehensive solutions for ensuring emails from Eli's Bar
 
 ## Overview
 
-Email deliverability is essential for ensuring guests receive important information about Eli's Bar Mitzvah. This toolkit includes:
+Email deliverability is essential for ensuring guests receive important information about Eli's Be Mitzvah. This toolkit includes:
 
 - Technical configuration guides for domain authentication
 - Best practices for email content and sending

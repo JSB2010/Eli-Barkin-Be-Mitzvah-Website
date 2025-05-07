@@ -1,7 +1,7 @@
 {
   "name": "email-deliverability-tests",
   "version": "1.0.0",
-  "description": "Email deliverability testing tools for Eli's Bar Mitzvah website",
+  "description": "Email deliverability testing tools for Eli's Be Mitzvah website",
   "main": "email-deliverability-test.js",
   "scripts": {
     "test": "node email-deliverability-test.js",

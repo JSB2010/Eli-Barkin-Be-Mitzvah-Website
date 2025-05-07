@@ -1,6 +1,6 @@
-# Email Authentication Setup for Eli's Bar Mitzvah Website
+# Email Authentication Setup for Eli's Be Mitzvah Website
 
-This directory contains a complete toolkit to ensure emails from Eli's Bar Mitzvah website avoid spam folders and reach your guests' inboxes. By implementing email authentication and following deliverability best practices, you'll significantly improve the chance that important communications are seen by everyone.
+This directory contains a complete toolkit to ensure emails from Eli's Be Mitzvah website avoid spam folders and reach your guests' inboxes. By implementing email authentication and following deliverability best practices, you'll significantly improve the chance that important communications are seen by everyone.
 
 ## Getting Started
 

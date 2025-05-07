@@ -1,6 +1,6 @@
 # Firebase Functions v2 Migration
 
-This directory contains the Firebase Functions v2 implementation for the Eli Barkin Bar Mitzvah website.
+This directory contains the Firebase Functions v2 implementation for the Eli Barkin Be Mitzvah website.
 
 ## Migration Status
 

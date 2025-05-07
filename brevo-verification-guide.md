@@ -71,7 +71,7 @@ After verifying domain ownership, you'll need to set up DKIM:
 1. Still in the "Senders & IPs" section, click on the "Senders" tab
 2. Click "+ Add a New Sender"
 3. Fill in the sender details:
-   - Name: Eli's Bar Mitzvah
+   - Name: Eli's Be Mitzvah
    - Email: rsvps@elibarkin.com
    - Company: Barkin Family
    - Address: 1245 S Gaylord St, Denver, CO 80210

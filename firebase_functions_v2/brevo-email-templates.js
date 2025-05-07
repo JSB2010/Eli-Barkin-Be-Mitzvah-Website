@@ -84,7 +84,7 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
       <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
-      <title>Thank You for Your RSVP to Eli's Bar Mitzvah</title>
+      <title>Thank You for Your RSVP to Eli's Be Mitzvah</title>
       <style type="text/css">
         /* iOS blue links */
         a[x-apple-data-detectors] {color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}
@@ -94,14 +94,14 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
     </head>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;" id="body">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
+        <img src="https://elibarkin.com/logo.PNG" alt="Eli's Be Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
         <h1 style="color: #0d47a1; margin-bottom: 5px; font-size: 24px;">Thank You for Your RSVP</h1>
         <p style="color: #666; font-size: 16px;">We've received your response</p>
       </div>
 
       <div style="background-color: ${isAttending ? '#e8f5e9' : '#ffebee'}; border-left: 4px solid ${isAttending ? '#4caf50' : '#f44336'}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
         <h2 style="margin-top: 0; color: ${isAttending ? '#2e7d32' : '#c62828'}; font-size: 18px;">
-          ${firstName}, you ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Bar Mitzvah
+          ${firstName}, you ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Be Mitzvah
         </h2>
       </div>
 
@@ -134,7 +134,7 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
           <p>This email was sent to {{params.email}} from rsvps@elibarkin.com</p>
           <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
           <p>If you have questions, please contact us at <a href="mailto:jacobsamuelbarkin@gmail.com" style="color: #0d47a1;">jacobsamuelbarkin@gmail.com</a></p>
-          <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Bar Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
+          <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Be Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
           <p>1245 S Gaylord St, Denver, CO 80210</p>
         </div>
       </div>
@@ -281,7 +281,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
       <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
-      <title>Your RSVP to Eli's Bar Mitzvah Has Been Updated</title>
+      <title>Your RSVP to Eli's Be Mitzvah Has Been Updated</title>
       <style type="text/css">
         /* iOS blue links */
         a[x-apple-data-detectors] {color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}
@@ -291,7 +291,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
     </head>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;" id="body">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
+        <img src="https://elibarkin.com/logo.PNG" alt="Eli's Be Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
         <h1 style="color: #0d47a1; margin-bottom: 5px; font-size: 24px;">Your RSVP Has Been Updated</h1>
         <p style="color: #666; font-size: 16px;">We've received your updated response</p>
       </div>
@@ -300,7 +300,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
 
       <div style="background-color: ${isAttending ? '#e8f5e9' : '#ffebee'}; border-left: 4px solid ${isAttending ? '#4caf50' : '#f44336'}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
         <h2 style="margin-top: 0; color: ${isAttending ? '#2e7d32' : '#c62828'}; font-size: 18px;">
-          ${firstName}, you ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Bar Mitzvah
+          ${firstName}, you ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Be Mitzvah
         </h2>
       </div>
 
@@ -333,7 +333,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
           <p>This email was sent to {{params.email}} from rsvps@elibarkin.com</p>
           <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
           <p>If you have questions, please contact us at <a href="mailto:jacobsamuelbarkin@gmail.com" style="color: #0d47a1;">jacobsamuelbarkin@gmail.com</a></p>
-          <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Bar Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
+          <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Be Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
           <p>1245 S Gaylord St, Denver, CO 80210</p>
         </div>
       </div>

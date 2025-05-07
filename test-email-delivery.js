@@ -22,7 +22,7 @@ const readline = require('readline');
 // Configuration
 const DOMAIN = 'elibarkin.com';
 const SENDER_EMAIL = `rsvps@${DOMAIN}`;
-const SENDER_NAME = "Eli's Bar Mitzvah";
+const SENDER_NAME = "Eli's Be Mitzvah";
 
 // Add test email addresses here - ideally use addresses from different providers
 // Format: { email: 'address@example.com', name: 'Test Name', provider: 'Gmail' }
@@ -128,7 +128,7 @@ function createBasicAuthEmail(recipient) {
         </div>
         
         <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
-          <p>This is an automated test email for Eli's Bar Mitzvah website.</p>
+          <p>This is an automated test email for Eli's Be Mitzvah website.</p>
           
           <div style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
             <p>This email was sent to ${recipient.email} from ${SENDER_EMAIL}</p>
@@ -151,7 +151,7 @@ function createRsvpConfirmationEmail(recipient) {
   return {
     sender: { name: SENDER_NAME, email: SENDER_EMAIL },
     to: [{ email: recipient.email, name: recipient.name }],
-    subject: `Test: RSVP Confirmation for Eli's Bar Mitzvah`,
+    subject: `Test: RSVP Confirmation for Eli's Be Mitzvah`,
     htmlContent: `
       <!DOCTYPE html>
       <html>
@@ -172,7 +172,7 @@ function createRsvpConfirmationEmail(recipient) {
 
         <div style="background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
           <h2 style="margin-top: 0; color: #2e7d32; font-size: 18px;">
-            ${recipient.name}, you will be attending Eli's Bar Mitzvah
+            ${recipient.name}, you will be attending Eli's Be Mitzvah
           </h2>
         </div>
 
@@ -197,14 +197,14 @@ function createRsvpConfirmationEmail(recipient) {
         </div>
 
         <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
-          <p>This is a <strong>TEST EMAIL</strong> for Eli's Bar Mitzvah email deliverability verification.</p>
+          <p>This is a <strong>TEST EMAIL</strong> for Eli's Be Mitzvah email deliverability verification.</p>
           <p>August 23, 2025 | Denver, Colorado</p>
           
           <div style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
             <p>This email was sent to ${recipient.email} from ${SENDER_EMAIL}</p>
             <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
             <p>If you have questions, please contact us at <a href="mailto:jacobsamuelbarkin@gmail.com" style="color: #0d47a1;">jacobsamuelbarkin@gmail.com</a></p>
-            <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Bar Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
+            <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Be Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
             <p>1245 S Gaylord St, Denver, CO 80210</p>
           </div>
         </div>
@@ -224,7 +224,7 @@ function createOutOfTownEmail(recipient) {
   return {
     sender: { name: SENDER_NAME, email: SENDER_EMAIL },
     to: [{ email: recipient.email, name: recipient.name }],
-    subject: `Test: Eli's Bar Mitzvah - Out-of-Town Guest Information`,
+    subject: `Test: Eli's Be Mitzvah - Out-of-Town Guest Information`,
     htmlContent: `
       <!DOCTYPE html>
       <html>
@@ -303,7 +303,7 @@ function createOutOfTownEmail(recipient) {
 
         <p>Dear ${recipient.name},</p>
 
-        <p>Thank you for your RSVP to Eli's Bar Mitzvah! We're excited that you'll be joining us for this special occasion.</p>
+        <p>Thank you for your RSVP to Eli's Be Mitzvah! We're excited that you'll be joining us for this special occasion.</p>
 
         <p>As an out-of-town guest, we've planned some additional events to make your trip to Denver even more special. Below is information about these events based on your RSVP preferences:</p>
 
@@ -322,7 +322,7 @@ function createOutOfTownEmail(recipient) {
               2030 W 30th Ave, Denver, CO 80211
             </div>
           </div>
-          <p>Join us for a casual dinner the night before the Bar Mitzvah. This will be a great opportunity to meet family and friends in a relaxed setting before the main event.</p>
+          <p>Join us for a casual dinner the night before the Be Mitzvah. This will be a great opportunity to meet family and friends in a relaxed setting before the main event.</p>
         </div>
 
         <div class="event-card">
@@ -346,14 +346,14 @@ function createOutOfTownEmail(recipient) {
         </div>
 
         <div class="footer">
-          <p>This is a test email for Eli's Bar Mitzvah website.</p>
+          <p>This is a test email for Eli's Be Mitzvah website.</p>
           <p>May 17, 2025 | Denver, Colorado</p>
           
           <div style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
             <p>This email was sent to ${recipient.email} from ${SENDER_EMAIL}</p>
             <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
             <p>If you have questions, please contact us at <a href="mailto:jacobsamuelbarkin@gmail.com" style="color: #0d47a1;">jacobsamuelbarkin@gmail.com</a></p>
-            <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Bar Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
+            <p>You can <a href="mailto:jacobsamuelbarkin@gmail.com?subject=Unsubscribe from Eli's Be Mitzvah" style="color: #0d47a1;">unsubscribe</a> from these emails at any time.</p>
             <p>1245 S Gaylord St, Denver, CO 80210</p>
           </div>
         </div>

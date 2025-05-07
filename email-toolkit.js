@@ -27,7 +27,7 @@ console.log(`
   ┌───────────────────────────────────────────────┐
   │                                               │
   │  🚀 Email Deliverability Toolkit for          │
-  │     Eli's Bar Mitzvah Website                 │
+  │     Eli's Be Mitzvah Website                 │
   │                                               │
   └───────────────────────────────────────────────┘
 `);
@@ -196,11 +196,11 @@ function showAboutInfo() {
   console.log(`
 ℹ️ About This Toolkit:
 
-  📌 Email Deliverability Toolkit for Eli's Bar Mitzvah Website
+  📌 Email Deliverability Toolkit for Eli's Be Mitzvah Website
   📌 Version: 2.0
   📌 Created: May 6, 2025
   
-  This toolkit helps ensure all emails related to Eli's Bar Mitzvah
+  This toolkit helps ensure all emails related to Eli's Be Mitzvah
   reach your guests' inboxes and avoid spam folders.
   
   It includes tools for:

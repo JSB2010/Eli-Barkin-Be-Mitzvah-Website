@@ -110,7 +110,7 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
         </div>
 
         <div style="font-size: 14px; color: #666; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <p>This is an automated notification from the Eli Barkin Bar Mitzvah website.</p>
+          <p>This is an automated notification from the Eli Barkin Be Mitzvah website.</p>
         </div>
       </div>
     `;
@@ -119,7 +119,7 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
-    sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
+    sendSmtpEmail.sender = { name: "Eli's Be Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
     sendSmtpEmail.to = [{ email: adminEmailValue }];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
     sendSmtpEmail.headers = {

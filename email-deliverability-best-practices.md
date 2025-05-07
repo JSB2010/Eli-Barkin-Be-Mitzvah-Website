@@ -27,8 +27,8 @@ Before sending any bulk emails:
 Avoid spam-triggering patterns in subject lines:
 
 ✅ **Good Examples**:
-- "Eli's Bar Mitzvah - RSVP Confirmation"
-- "Your RSVP Details for Eli's Bar Mitzvah"
+- "Eli's Be Mitzvah - RSVP Confirmation"
+- "Your RSVP Details for Eli's Be Mitzvah"
 - "Important Information for Out-of-Town Guests"
 
 ❌ **Avoid**:

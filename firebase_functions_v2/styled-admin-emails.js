@@ -145,7 +145,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       </head>
       <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
+          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Be Mitzvah Logo" style="max-width: 200px; margin-bottom: 20px;">
           <h1 style="color: #0d47a1; margin-bottom: 5px; font-size: 24px;">${subject}</h1>
           <p style="color: #666; font-size: 16px;">${submittedDate}</p>
         </div>
@@ -154,7 +154,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
         {{CONTENT}}
 
         <div style="margin-top: 40px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #e0e0e0; padding-top: 20px;">
-          <p>This is an automated notification from the Eli Barkin Bar Mitzvah website.</p>
+          <p>This is an automated notification from the Eli Barkin Be Mitzvah website.</p>
           <p>May 17, 2024 | Denver, Colorado</p>
           <a href="https://elibarkin.com/rsvp-dashboard.html" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">View RSVP Dashboard</a>
         </div>
@@ -167,7 +167,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       const newRsvpContent = `
         <div style="background-color: ${isAttending ? '#e8f5e9' : '#ffebee'}; border-left: 4px solid ${isAttending ? '#4caf50' : '#f44336'}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
           <h2 style="margin-top: 0; color: ${isAttending ? '#2e7d32' : '#c62828'}; font-size: 18px;">
-            ${rsvpData.name} ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Bar Mitzvah
+            ${rsvpData.name} ${isAttending ? 'will be attending' : 'will not be attending'} Eli's Be Mitzvah
           </h2>
         </div>
 
@@ -319,7 +319,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
 
     // Send the email
     const mailOptions = {
-      from: '"Eli\'s Bar Mitzvah" <rsvps@elibarkin.com>',
+      from: '"Eli\'s Be Mitzvah" <rsvps@elibarkin.com>',
       to: adminEmailValue,
       subject: subject,
       html: htmlContent,

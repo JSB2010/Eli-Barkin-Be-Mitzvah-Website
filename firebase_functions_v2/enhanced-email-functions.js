@@ -52,10 +52,10 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
     const sendSmtpEmail = {
       sender: {
         email: 'rsvps@elibarkin.com',
-        name: "Eli's Bar Mitzvah"
+        name: "Eli's Be Mitzvah"
       },
       to: [{ email: rsvpData.email, name: rsvpData.name }],
-      subject: 'Thank You for Your RSVP to Eli\'s Bar Mitzvah',
+      subject: 'Thank You for Your RSVP to Eli\'s Be Mitzvah',
       htmlContent: htmlContent,
       replyTo: { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" },
       headers: {
@@ -177,10 +177,10 @@ exports.sendStyledRsvpUpdateConfirmationV2 = onDocumentUpdated({
     const sendSmtpEmail = {
       sender: {
         email: 'rsvps@elibarkin.com',
-        name: "Eli's Bar Mitzvah"
+        name: "Eli's Be Mitzvah"
       },
       to: [{ email: afterData.email, name: afterData.name }],
-      subject: 'Your RSVP to Eli\'s Bar Mitzvah Has Been Updated',
+      subject: 'Your RSVP to Eli\'s Be Mitzvah Has Been Updated',
       htmlContent: htmlContent,
       replyTo: { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" },
       headers: {

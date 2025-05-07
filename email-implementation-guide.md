@@ -1,6 +1,6 @@
 # Implementing Email Deliverability Improvements
 
-This document provides step-by-step instructions for implementing all the email deliverability recommendations to ensure your Eli's Bar Mitzvah emails reach the intended recipients.
+This document provides step-by-step instructions for implementing all the email deliverability recommendations to ensure your Eli's Be Mitzvah emails reach the intended recipients.
 
 ## Implementation Checklist
 

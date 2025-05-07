@@ -70,8 +70,8 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
 
     // Prepare email content
     const subject = isCreate
-      ? `Eli's Bar Mitzvah - Out-of-Town Guest Information`
-      : `Eli's Bar Mitzvah - Updated Out-of-Town Event Information`;
+      ? `Eli's Be Mitzvah - Out-of-Town Guest Information`
+      : `Eli's Be Mitzvah - Updated Out-of-Town Event Information`;
 
     // Get the guest's first name
     const firstName = rsvpData.name.split(' ')[0];
@@ -99,7 +99,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
         <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
         <meta name="color-scheme" content="light">
         <meta name="supported-color-schemes" content="light">
-        <title>Eli's Bar Mitzvah - Out-of-Town Guest Information</title>
+        <title>Eli's Be Mitzvah - Out-of-Town Guest Information</title>
         <style>
           /* iOS blue links */
           a[x-apple-data-detectors] {color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important;}
@@ -207,7 +207,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
       </head>
       <body>
         <div class="header">
-          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Bar Mitzvah Logo">
+          <img src="https://elibarkin.com/logo.PNG" alt="Eli's Be Mitzvah Logo">
           <h1>Out-of-Town Guest Information</h1>
           <p>Special events for our out-of-town guests</p>
         </div>
@@ -215,8 +215,8 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
         <p>Dear ${firstName},</p>
 
         <p>${isCreate
-          ? `Thank you for your RSVP to Eli's Bar Mitzvah! We're excited that you'll be joining us for this special occasion.`
-          : `Thank you for updating your RSVP for Eli's Bar Mitzvah! We've updated your preferences for our out-of-town guest events.`
+          ? `Thank you for your RSVP to Eli's Be Mitzvah! We're excited that you'll be joining us for this special occasion.`
+          : `Thank you for updating your RSVP for Eli's Be Mitzvah! We've updated your preferences for our out-of-town guest events.`
         }</p>
 
         <p>As an out-of-town guest, we've planned some additional events to make your trip to Denver even more special. Below is information about these events based on your RSVP preferences:</p>
@@ -237,7 +237,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
             </div>
           </div>
           ${attendingFridayDinner ? `
-          <p>Join us for a casual dinner the night before the Bar Mitzvah. This will be a great opportunity to meet family and friends in a relaxed setting before the main event.</p>
+          <p>Join us for a casual dinner the night before the Be Mitzvah. This will be a great opportunity to meet family and friends in a relaxed setting before the main event.</p>
           ` : `
           <p>We understand you won't be joining us for the Friday night dinner. If your plans change, please let us know!</p>
           `}
@@ -272,7 +272,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
         <p>Warm regards,<br>The Barkin Family</p>
 
         <div class="footer">
-          <p>This email was sent regarding your RSVP to Eli Barkin's Bar Mitzvah.</p>
+          <p>This email was sent regarding your RSVP to Eli Barkin's Be Mitzvah.</p>
           <p>May 17, 2025 | Denver, Colorado</p>
           <a href="https://elibarkin.com" class="button">Visit Event Website</a>
           <p style="margin-top: 20px; font-size: 12px; color: #999;">
@@ -289,7 +289,7 @@ exports.sendOutOfTownGuestEmailV2 = onDocumentWritten({
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
-    sendSmtpEmail.sender = { name: "Eli's Bar Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
+    sendSmtpEmail.sender = { name: "Eli's Be Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
     sendSmtpEmail.to = [{ email: rsvpData.email, name: rsvpData.name }];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
     sendSmtpEmail.headers = {

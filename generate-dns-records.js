@@ -4,7 +4,7 @@
  * DNS Record Generator for Email Authentication
  * 
  * This script generates the necessary DNS records for proper email authentication
- * for Eli's Bar Mitzvah website. It creates DNS records for:
+ * for Eli's Be Mitzvah website. It creates DNS records for:
  * - SPF (Sender Policy Framework)
  * - DMARC (Domain-based Message Authentication, Reporting & Conformance)
  * - Return-Path (Bounce handling)

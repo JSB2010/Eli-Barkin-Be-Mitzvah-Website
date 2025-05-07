@@ -1,6 +1,6 @@
 # Email Deliverability Implementation Checklist
 
-This checklist will help you track your progress in implementing all the recommended email deliverability improvements for Eli's Bar Mitzvah website.
+This checklist will help you track your progress in implementing all the recommended email deliverability improvements for Eli's Be Mitzvah website.
 
 ## ✅ Completed Items
 
