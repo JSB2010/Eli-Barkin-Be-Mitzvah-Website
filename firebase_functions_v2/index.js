@@ -7,8 +7,9 @@ const { removeDuplicateGuestsV2 } = require('./remove-duplicates');
 const { manualSyncSheetChangesV2 } = require('./sync-sheet-changes');
 const { sendStyledRsvpConfirmationV2, sendStyledRsvpUpdateConfirmationV2 } = require('./enhanced-email-functions');
 const { sendStyledAdminNotificationV2 } = require('./styled-admin-emails');
-const { sendOutOfTownGuestEmailV2 } = require('./out-of-town-emails');
-const { sendOutOfTownEventNotificationV2 } = require('./out-of-town-notifications');
+// Out-of-town guest functionality has been removed
+// const { sendOutOfTownGuestEmailV2 } = require('./out-of-town-emails');
+// const { sendOutOfTownEventNotificationV2 } = require('./out-of-town-notifications');
 const { updateMasterSheetV2, manualUpdateMasterSheetV2 } = require('./update-master-sheet');
 const { syncSheetChangesV2 } = require('./sync-sheet-scheduled');
 const { importGuestListV2 } = require('./import-guest-list');
@@ -88,8 +89,9 @@ exports.manualSyncSheetChangesV2 = manualSyncSheetChangesV2;
 exports.sendStyledRsvpConfirmationV2 = sendStyledRsvpConfirmationV2;
 exports.sendStyledRsvpUpdateConfirmationV2 = sendStyledRsvpUpdateConfirmationV2;
 exports.sendStyledAdminNotificationV2 = sendStyledAdminNotificationV2;
-exports.sendOutOfTownGuestEmailV2 = sendOutOfTownGuestEmailV2;
-exports.sendOutOfTownEventNotificationV2 = sendOutOfTownEventNotificationV2;
+// Out-of-town guest functionality has been removed
+// exports.sendOutOfTownGuestEmailV2 = sendOutOfTownGuestEmailV2;
+// exports.sendOutOfTownEventNotificationV2 = sendOutOfTownEventNotificationV2;
 exports.updateMasterSheetV2 = updateMasterSheetV2;
 exports.manualUpdateMasterSheetV2 = manualUpdateMasterSheetV2;
 exports.syncSheetChangesV2 = syncSheetChangesV2;

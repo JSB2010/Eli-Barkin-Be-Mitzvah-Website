@@ -885,15 +885,10 @@ const RSVPSystem = {
                         valueB = b.actualGuestCount || 0;
                         break;
                     case 'location':
-                        // Determine if guests are out-of-town (not from Colorado)
-                        const isOutOfTownA = a.address && a.address.state &&
-                                            a.address.state.toUpperCase() !== 'CO' &&
-                                            a.address.state.toUpperCase() !== 'COLORADO';
-                        const isOutOfTownB = b.address && b.address.state &&
-                                            b.address.state.toUpperCase() !== 'CO' &&
-                                            b.address.state.toUpperCase() !== 'COLORADO';
-                        valueA = isOutOfTownA ? 1 : 0;
-                        valueB = isOutOfTownB ? 1 : 0;
+                        // Out-of-town guest functionality has been removed
+                        // All guests are considered local
+                        valueA = 0;
+                        valueB = 0;
                         break;
                     default:
                         valueA = a[this.state.guestSortColumn] || '';
@@ -1105,15 +1100,11 @@ const RSVPSystem = {
                 }
             }
 
-            // Determine if guest is out-of-town (not from Colorado)
-            const isOutOfTown = guest.address && guest.address.state &&
-                                guest.address.state.toUpperCase() !== 'CO' &&
-                                guest.address.state.toUpperCase() !== 'COLORADO';
+            // Out-of-town guest functionality has been removed
+            const isOutOfTown = false;
 
-            // Create location badge
-            const locationBadge = isOutOfTown ?
-                `<span class="location-badge out-of-town"><i class="fas fa-plane"></i> Out-of-Town</span>` :
-                `<span class="location-badge local"><i class="fas fa-home"></i> Local</span>`;
+            // Create location badge (always local now)
+            const locationBadge = `<span class="location-badge local"><i class="fas fa-home"></i> Local</span>`;
 
             row.innerHTML = `
                 <td>${guest.name || ''}</td>
@@ -1430,82 +1421,14 @@ const RSVPSystem = {
             }
         }
 
-        // Out-of-town events chart
+        // Out-of-town events chart - functionality has been removed
         if (outOfTownEventsChartCanvas) {
-            console.log('Creating out-of-town events chart');
+            console.log('Out-of-town guest functionality has been removed');
 
-            // Calculate out-of-town event stats from both submissions and guest list
-            const attendingSubmissions = this.state.submissions.filter(s => s.attending === 'yes');
-            const attendingGuests = this.state.guests.filter(g => g.hasResponded && g.response === 'attending');
-
-            // Count out-of-town guests
+            // Set all counts to 0
             let outOfTownCount = 0;
             let fridayDinnerCount = 0;
             let sundayBrunchCount = 0;
-
-            // First check submissions
-            attendingSubmissions.forEach(submission => {
-                // Check if guest is out-of-town based on state
-                const isOutOfTown = submission.isOutOfTown ||
-                                   (submission.address && submission.address.state &&
-                                    submission.address.state.toUpperCase() !== 'CO' &&
-                                    submission.address.state.toUpperCase() !== 'COLORADO');
-
-                if (isOutOfTown) {
-                    // Count total out-of-town guests
-                    const guestCount = submission.guestCount || 1;
-                    outOfTownCount += guestCount;
-
-                    // Count event attendance
-                    if (submission.fridayDinner === 'yes') {
-                        fridayDinnerCount += guestCount;
-                    }
-
-                    if (submission.sundayBrunch === 'yes') {
-                        sundayBrunchCount += guestCount;
-                    }
-                }
-            });
-
-            // Then check guest list for any additional out-of-town guests
-            attendingGuests.forEach(guest => {
-                const isOutOfTown = guest.address &&
-                                   guest.address.state &&
-                                   guest.address.state.toUpperCase() !== 'CO' &&
-                                   guest.address.state.toUpperCase() !== 'COLORADO';
-
-                // Only count if not already counted in submissions
-                // This is a simplification - ideally we'd match by name/email
-                if (isOutOfTown) {
-                    const guestCount = guest.actualGuestCount || 1;
-
-                    // Check if this guest is already counted in submissions
-                    const alreadyCounted = attendingSubmissions.some(s =>
-                        s.name === guest.name || s.email === guest.email);
-
-                    if (!alreadyCounted) {
-                        outOfTownCount += guestCount;
-
-                        // For these guests, we don't know about Friday/Sunday events
-                        // so we make a best guess based on attendance rate of other out-of-town guests
-                        if (outOfTownCount > 0 && fridayDinnerCount > 0) {
-                            const fridayRate = fridayDinnerCount / outOfTownCount;
-                            if (Math.random() < fridayRate) {
-                                fridayDinnerCount += guestCount;
-                            }
-                        }
-
-                        if (outOfTownCount > 0 && sundayBrunchCount > 0) {
-                            const sundayRate = sundayBrunchCount / outOfTownCount;
-                            if (Math.random() < sundayRate) {
-                                sundayBrunchCount += guestCount;
-                            }
-                        }
-                    }
-                }
-            });
-
-            console.log(`Out-of-town stats: ${outOfTownCount} guests, ${fridayDinnerCount} for Friday dinner, ${sundayBrunchCount} for Sunday brunch`);
 
             // Update the out-of-town stats in the UI
             const outOfTownCountElem = document.getElementById('out-of-town-count');
@@ -1516,13 +1439,13 @@ const RSVPSystem = {
             if (fridayDinnerCountElem) fridayDinnerCountElem.textContent = fridayDinnerCount;
             if (sundayBrunchCountElem) sundayBrunchCountElem.textContent = sundayBrunchCount;
 
-            // Create the chart
+            // Create the chart with zero values
             window.outOfTownEventsChart = new Chart(outOfTownEventsChartCanvas, {
                 type: 'bar',
                 data: {
                     labels: ['Out-of-Town Guests', 'Friday Dinner', 'Sunday Brunch'],
                     datasets: [{
-                        data: [outOfTownCount, fridayDinnerCount, sundayBrunchCount],
+                        data: [0, 0, 0],
                         backgroundColor: ['#1e88e5', '#f97316', '#10b981'],
                         borderWidth: 1
                     }]
@@ -2341,8 +2264,8 @@ const RSVPSystem = {
         const adultGuests = submission.adultGuests || [];
         const childGuests = submission.childGuests || [];
 
-        // Determine if guest is out-of-town (not from Colorado)
-        const isOutOfTown = submission.isOutOfTown || false;
+        // Out-of-town guest functionality has been removed
+        const isOutOfTown = false;
 
         // Create the content
         const content = `
@@ -2397,37 +2320,7 @@ const RSVPSystem = {
                             ${this.renderGuestList(childGuests)}
                         </div>
                     </div>
-                    ${isOutOfTown && submission.attending === 'yes' ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Location:</span>
-                        <span class="detail-value">
-                            <span class="location-badge out-of-town"><i class="fas fa-plane"></i> Out-of-Town Guest</span>
-                        </span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Out-of-Town Events:</span>
-                        <div class="detail-value">
-                            <div class="out-of-town-events">
-                                <div class="event-item">
-                                    <span class="event-name">Friday Night Dinner at Linger:</span>
-                                    <span class="event-response ${submission.fridayDinner === 'yes' ? 'attending' : 'not-attending'}">
-                                        ${submission.fridayDinner === 'yes' ?
-                                            '<i class="fas fa-check-circle"></i> Attending' :
-                                            '<i class="fas fa-times-circle"></i> Not Attending'}
-                                    </span>
-                                </div>
-                                <div class="event-item">
-                                    <span class="event-name">Sunday Brunch at Eli's Home:</span>
-                                    <span class="event-response ${submission.sundayBrunch === 'yes' ? 'attending' : 'not-attending'}">
-                                        ${submission.sundayBrunch === 'yes' ?
-                                            '<i class="fas fa-check-circle"></i> Attending' :
-                                            '<i class="fas fa-times-circle"></i> Not Attending'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
+                    <!-- Out-of-town guest functionality has been removed -->
                 </div>
             </div>
         `;
@@ -2509,14 +2402,8 @@ const RSVPSystem = {
             submissionDate.toLocaleDateString() + ' ' + submissionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
             'Not submitted';
 
-        // Determine if guest is out-of-town (not from Colorado)
-        const isOutOfTown = guest.address && guest.address.state &&
-                            guest.address.state.toUpperCase() !== 'CO' &&
-                            guest.address.state.toUpperCase() !== 'COLORADO';
-
-        // Get out-of-town event responses
-        const fridayDinner = guest.fridayDinner === 'yes' ? 'Yes' : 'No';
-        const sundayBrunch = guest.sundayBrunch === 'yes' ? 'Yes' : 'No';
+        // Out-of-town guest functionality has been removed
+        const isOutOfTown = false;
 
         // Create the content
         const content = `
@@ -2592,31 +2479,7 @@ const RSVPSystem = {
                         <span class="detail-label">Submission Date:</span>
                         <span class="detail-value">${formattedDate}</span>
                     </div>
-                    ${isOutOfTown && guest.hasResponded && guest.response === 'attending' ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Out-of-Town Events:</span>
-                        <div class="detail-value">
-                            <div class="out-of-town-events">
-                                <div class="event-item">
-                                    <span class="event-name">Friday Night Dinner at Linger:</span>
-                                    <span class="event-response ${guest.fridayDinner === 'yes' ? 'attending' : 'not-attending'}">
-                                        ${guest.fridayDinner === 'yes' ?
-                                            '<i class="fas fa-check-circle"></i> Attending' :
-                                            '<i class="fas fa-times-circle"></i> Not Attending'}
-                                    </span>
-                                </div>
-                                <div class="event-item">
-                                    <span class="event-name">Sunday Brunch at Eli's Home:</span>
-                                    <span class="event-response ${guest.sundayBrunch === 'yes' ? 'attending' : 'not-attending'}">
-                                        ${guest.sundayBrunch === 'yes' ?
-                                            '<i class="fas fa-check-circle"></i> Attending' :
-                                            '<i class="fas fa-times-circle"></i> Not Attending'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
+                    <!-- Out-of-town guest functionality has been removed -->
                     ` : ''}
                 </div>
             </div>

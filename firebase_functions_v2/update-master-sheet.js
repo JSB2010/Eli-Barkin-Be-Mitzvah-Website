@@ -310,13 +310,10 @@ async function updateMasterSheet(submissions) {
             new Date(submission.submittedAt.toDate()).toLocaleString() :
             new Date().toLocaleString();
 
-          // Determine if this is an out-of-town guest
+          // Out-of-town guest functionality has been removed
+          // We always set isOutOfTown to false
           let isOutOfTown = false;
-          if (stateIndex >= 0 && rows[rowIndex-2][stateIndex]) {
-            const state = rows[rowIndex-2][stateIndex].trim().toUpperCase();
-            isOutOfTown = state !== 'CO' && state !== 'COLORADO';
-            console.log(`Guest state: ${state}, isOutOfTown: ${isOutOfTown}`);
-          }
+          console.log(`Out-of-town guest functionality has been removed, isOutOfTown: ${isOutOfTown}`);
 
           // Prepare the update data for RSVP columns
           const updateData = {};
@@ -434,61 +431,58 @@ async function updateMasterSheet(submissions) {
             updateData[`${sheetName}!${String.fromCharCode(65 + submittedAtIndex)}${rowIndex}`] = [[submittedDate]];
           }
 
-          // Only update out-of-town event columns if this is an out-of-town guest
-          if (isOutOfTown) {
-            // Set Dinner at Linger checkbox
-            if (dinnerAtLingerIndex >= 0) {
-              // Create a checkbox instead of just text
-              await sheets.spreadsheets.batchUpdate({
-                spreadsheetId: masterSheetId,
-                resource: {
-                  requests: [{
-                    repeatCell: {
-                      range: {
-                        sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
-                        startRowIndex: rowIndex - 1,
-                        endRowIndex: rowIndex,
-                        startColumnIndex: dinnerAtLingerIndex,
-                        endColumnIndex: dinnerAtLingerIndex + 1
-                      },
-                      cell: {
-                        userEnteredValue: {
-                          boolValue: submission.fridayDinner === 'yes'
-                        }
-                      },
-                      fields: 'userEnteredValue'
-                    }
-                  }]
-                }
-              });
-            }
+          // Out-of-town guest functionality has been removed
+          // We still set the values to 'no' for compatibility
+          if (dinnerAtLingerIndex >= 0) {
+            // Create a checkbox with value false
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: masterSheetId,
+              resource: {
+                requests: [{
+                  repeatCell: {
+                    range: {
+                      sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                      startRowIndex: rowIndex - 1,
+                      endRowIndex: rowIndex,
+                      startColumnIndex: dinnerAtLingerIndex,
+                      endColumnIndex: dinnerAtLingerIndex + 1
+                    },
+                    cell: {
+                      userEnteredValue: {
+                        boolValue: false
+                      }
+                    },
+                    fields: 'userEnteredValue'
+                  }
+                }]
+              }
+            });
+          }
 
-            // Set Sunday Brunch checkbox
-            if (sundayBrunchIndex >= 0) {
-              // Create a checkbox instead of just text
-              await sheets.spreadsheets.batchUpdate({
-                spreadsheetId: masterSheetId,
-                resource: {
-                  requests: [{
-                    repeatCell: {
-                      range: {
-                        sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
-                        startRowIndex: rowIndex - 1,
-                        endRowIndex: rowIndex,
-                        startColumnIndex: sundayBrunchIndex,
-                        endColumnIndex: sundayBrunchIndex + 1
-                      },
-                      cell: {
-                        userEnteredValue: {
-                          boolValue: submission.sundayBrunch === 'yes'
-                        }
-                      },
-                      fields: 'userEnteredValue'
-                    }
-                  }]
-                }
-              });
-            }
+          if (sundayBrunchIndex >= 0) {
+            // Create a checkbox with value false
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: masterSheetId,
+              resource: {
+                requests: [{
+                  repeatCell: {
+                    range: {
+                      sheetId: sheetsResponse.data.sheets[0].properties.sheetId,
+                      startRowIndex: rowIndex - 1,
+                      endRowIndex: rowIndex,
+                      startColumnIndex: sundayBrunchIndex,
+                      endColumnIndex: sundayBrunchIndex + 1
+                    },
+                    cell: {
+                      userEnteredValue: {
+                        boolValue: false
+                      }
+                    },
+                    fields: 'userEnteredValue'
+                  }
+                }]
+              }
+            });
           }
 
           // Batch update all cells

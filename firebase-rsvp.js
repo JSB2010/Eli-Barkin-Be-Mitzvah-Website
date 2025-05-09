@@ -135,29 +135,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // submittedAt will be set differently for new vs update
             };
 
-            // Check if out-of-town events section is visible
-            const outOfTownEventsSection = document.getElementById('outOfTownEventsSection');
-            const isOutOfTownGuest = outOfTownEventsSection &&
-                                    window.getComputedStyle(outOfTownEventsSection).display !== 'none';
-
-            // If this is an out-of-town guest and they're attending, collect additional event responses
-            if (isOutOfTownGuest && formData.attending === 'yes') {
-                // Get Friday dinner response
-                const fridayDinnerYes = document.getElementById('fridayDinnerYes');
-                formData.fridayDinner = fridayDinnerYes && fridayDinnerYes.checked ? 'yes' : 'no';
-
-                // Get Sunday brunch response
-                const sundayBrunchYes = document.getElementById('sundayBrunchYes');
-                formData.sundayBrunch = sundayBrunchYes && sundayBrunchYes.checked ? 'yes' : 'no';
-
-                // Flag this as an out-of-town guest
-                formData.isOutOfTown = true;
-            } else {
-                // Set default values for non-out-of-town guests
-                formData.fridayDinner = 'no';
-                formData.sundayBrunch = 'no';
-                formData.isOutOfTown = false;
-            }
+            // Set default values for all guests (no out-of-town functionality)
+            formData.fridayDinner = 'no';
+            formData.sundayBrunch = 'no';
+            formData.isOutOfTown = false;
 
             // Check if attending
             if (formData.attending === 'yes') {
@@ -449,23 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             const guestText = totalGuests === 1 ? 'guest' : 'guests';
 
                             confirmationDetails.innerHTML = `We have you down for <strong>${totalGuests} ${guestText}</strong> ${isUpdate ? '(updated)' : ''}.`;
-
-                            // Add information about additional events for out-of-town guests
-                            if (formData.isOutOfTown) {
-                                confirmationDetails.innerHTML += '<br><br><strong>Additional Events:</strong>';
-
-                                if (formData.fridayDinner === 'yes') {
-                                    confirmationDetails.innerHTML += '<br>• You will be attending the <strong>Friday Night Dinner</strong> at Linger.';
-                                } else {
-                                    confirmationDetails.innerHTML += '<br>• You will not be attending the Friday Night Dinner.';
-                                }
-
-                                if (formData.sundayBrunch === 'yes') {
-                                    confirmationDetails.innerHTML += '<br>• You will be attending the <strong>Sunday Brunch</strong> at Eli\'s home.';
-                                } else {
-                                    confirmationDetails.innerHTML += '<br>• You will not be attending the Sunday Brunch.';
-                                }
-                            }
 
                             // Add submission/update timestamp
                             const timestamp = formData.updatedAt || formData.submittedAt; // Use update time if available
