@@ -19,17 +19,39 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
   const eventTime = '4:00 PM';
   const eventLocation = 'Coors Field, 2001 Blake St, Denver, CO 80205';
 
-  // Format additional guests as a list
+  // Format adult and child guests as separate lists
   let guestListHtml = '';
-  if (isAttending && rsvpData.additionalGuests && rsvpData.additionalGuests.length > 0) {
-    guestListHtml = `
-      <div style="margin: 15px 0;">
-        <p style="margin-bottom: 5px; font-weight: bold;">Additional Guests:</p>
-        <ul style="margin: 0; padding-left: 20px;">
-          ${rsvpData.additionalGuests.map(guest => `<li>${guest}</li>`).join('')}
-        </ul>
-      </div>
-    `;
+  if (isAttending) {
+    // Adult guests section
+    const adultGuests = rsvpData.adultGuests || [];
+    let adultGuestsHtml = '';
+    if (adultGuests.length > 0) {
+      adultGuestsHtml = `
+        <div style="margin: 15px 0;">
+          <p style="margin-bottom: 5px; font-weight: bold;">Adult Guests:</p>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${adultGuests.map(guest => `<li>${guest}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Child guests section
+    const childGuests = rsvpData.childGuests || [];
+    let childGuestsHtml = '';
+    if (childGuests.length > 0) {
+      childGuestsHtml = `
+        <div style="margin: 15px 0;">
+          <p style="margin-bottom: 5px; font-weight: bold;">Child Guests:</p>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${childGuests.map(guest => `<li>${guest}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Combine both sections
+    guestListHtml = adultGuestsHtml + childGuestsHtml;
   }
 
   // Determine if this is an out-of-town guest
@@ -129,7 +151,7 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
         <p>The Barkin Family</p>
         <p>August 23, 2025 | Denver, Colorado</p>
         <a href="https://elibarkin.com" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">Visit Event Website</a>
-        
+
         <div style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
           <p>This email was sent to {{params.email}} from rsvps@elibarkin.com</p>
           <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
@@ -163,17 +185,39 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
   const eventTime = '4:00 PM';
   const eventLocation = 'Coors Field, 2001 Blake St, Denver, CO 80205';
 
-  // Format additional guests as a list
+  // Format adult and child guests as separate lists
   let guestListHtml = '';
-  if (isAttending && afterData.additionalGuests && afterData.additionalGuests.length > 0) {
-    guestListHtml = `
-      <div style="margin: 15px 0;">
-        <p style="margin-bottom: 5px; font-weight: bold;">Additional Guests:</p>
-        <ul style="margin: 0; padding-left: 20px;">
-          ${afterData.additionalGuests.map(guest => `<li>${guest}</li>`).join('')}
-        </ul>
-      </div>
-    `;
+  if (isAttending) {
+    // Adult guests section
+    const adultGuests = afterData.adultGuests || [];
+    let adultGuestsHtml = '';
+    if (adultGuests.length > 0) {
+      adultGuestsHtml = `
+        <div style="margin: 15px 0;">
+          <p style="margin-bottom: 5px; font-weight: bold;">Adult Guests:</p>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${adultGuests.map(guest => `<li>${guest}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Child guests section
+    const childGuests = afterData.childGuests || [];
+    let childGuestsHtml = '';
+    if (childGuests.length > 0) {
+      childGuestsHtml = `
+        <div style="margin: 15px 0;">
+          <p style="margin-bottom: 5px; font-weight: bold;">Child Guests:</p>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${childGuests.map(guest => `<li>${guest}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Combine both sections
+    guestListHtml = adultGuestsHtml + childGuestsHtml;
   }
 
   // Determine if this is an out-of-town guest
@@ -328,7 +372,7 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
         <p>The Barkin Family</p>
         <p>August 23, 2025 | Denver, Colorado</p>
         <a href="https://elibarkin.com" style="display: inline-block; background-color: #0d47a1; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px; font-weight: bold;">Visit Event Website</a>
-        
+
         <div style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
           <p>This email was sent to {{params.email}} from rsvps@elibarkin.com</p>
           <p>To update your preferences or RSVP status, <a href="https://elibarkin.com/rsvp.html" style="color: #0d47a1;">visit our RSVP page</a></p>
