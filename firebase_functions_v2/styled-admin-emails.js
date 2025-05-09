@@ -78,11 +78,21 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       new Date(rsvpData.submittedAt.toDate()).toLocaleString() :
       new Date().toLocaleString();
 
-    // Format additional guests
-    const additionalGuests = rsvpData.additionalGuests || [];
-    const additionalGuestsHtml = additionalGuests.length > 0 ?
+    // Format adult and child guests
+    const adultGuests = rsvpData.adultGuests || [];
+    const childGuests = rsvpData.childGuests || [];
+
+    // Create HTML for adult guests
+    const adultGuestsHtml = adultGuests.length > 0 ?
       `<ul style="margin: 5px 0 15px; padding-left: 20px;">
-        ${additionalGuests.map(guest => `<li style="margin-bottom: 5px;">${guest}</li>`).join('')}
+        ${adultGuests.map(guest => `<li style="margin-bottom: 5px;">${guest}</li>`).join('')}
+      </ul>` :
+      '<p style="margin: 5px 0 15px;">None</p>';
+
+    // Create HTML for child guests
+    const childGuestsHtml = childGuests.length > 0 ?
+      `<ul style="margin: 5px 0 15px; padding-left: 20px;">
+        ${childGuests.map(guest => `<li style="margin-bottom: 5px;">${guest}</li>`).join('')}
       </ul>` :
       '<p style="margin: 5px 0 15px;">None</p>';
 
@@ -101,11 +111,18 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
         changes.push(`<li>Guest Count: ${previousData.guestCount || 1} → ${rsvpData.guestCount || 1}</li>`);
       }
 
-      // Check for changes in additional guests
-      const prevGuests = previousData.additionalGuests || [];
-      const newGuests = rsvpData.additionalGuests || [];
-      if (JSON.stringify(prevGuests) !== JSON.stringify(newGuests)) {
-        changes.push(`<li>Additional Guests: Changed</li>`);
+      // Check for changes in adult guests
+      const prevAdultGuests = previousData.adultGuests || [];
+      const newAdultGuests = rsvpData.adultGuests || [];
+      if (JSON.stringify(prevAdultGuests) !== JSON.stringify(newAdultGuests)) {
+        changes.push(`<li>Adult Guests: Changed</li>`);
+      }
+
+      // Check for changes in child guests
+      const prevChildGuests = previousData.childGuests || [];
+      const newChildGuests = rsvpData.childGuests || [];
+      if (JSON.stringify(prevChildGuests) !== JSON.stringify(newChildGuests)) {
+        changes.push(`<li>Child Guests: Changed</li>`);
       }
 
       // Check for changes in out-of-town event attendance
@@ -205,8 +222,13 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
           </div>
 
           <div style="display: flex; margin-bottom: 10px;">
-            <div style="width: 150px; font-weight: bold;">Additional Guests:</div>
-            <div style="flex: 1;">${additionalGuestsHtml}</div>
+            <div style="width: 150px; font-weight: bold;">Adult Guests:</div>
+            <div style="flex: 1;">${adultGuestsHtml}</div>
+          </div>
+
+          <div style="display: flex; margin-bottom: 10px;">
+            <div style="width: 150px; font-weight: bold;">Child Guests:</div>
+            <div style="flex: 1;">${childGuestsHtml}</div>
           </div>
           ` : ''}
 
@@ -283,8 +305,13 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
           </div>
 
           <div style="display: flex; margin-bottom: 10px;">
-            <div style="width: 150px; font-weight: bold;">Additional Guests:</div>
-            <div style="flex: 1;">${additionalGuestsHtml}</div>
+            <div style="width: 150px; font-weight: bold;">Adult Guests:</div>
+            <div style="flex: 1;">${adultGuestsHtml}</div>
+          </div>
+
+          <div style="display: flex; margin-bottom: 10px;">
+            <div style="width: 150px; font-weight: bold;">Child Guests:</div>
+            <div style="flex: 1;">${childGuestsHtml}</div>
           </div>
           ` : ''}
 
@@ -317,10 +344,10 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       htmlContent = baseTemplate.replace('{{CONTENT}}', updatedRsvpContent);
     }
 
-    // Send the email
+    // Send the email to both recipients
     const mailOptions = {
       from: '"Eli\'s Be Mitzvah" <rsvps@elibarkin.com>',
-      to: adminEmailValue,
+      to: [adminEmailValue, 'ebarkin30@kentdenver.org'],
       subject: subject,
       html: htmlContent,
       headers: {
@@ -333,7 +360,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
     // Log the email
     await admin.firestore().collection('emailLogs').add({
       type: 'admin-notification',
-      recipient: adminEmailValue,
+      recipients: [adminEmailValue, 'ebarkin30@kentdenver.org'],
       subject: subject,
       rsvpId: rsvpId,
       guestName: rsvpData.name,
