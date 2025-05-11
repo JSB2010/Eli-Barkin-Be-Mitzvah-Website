@@ -1086,12 +1086,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('[updateGuestFields] Both counts were 0 while attending, defaulted adult count to 1.');
         }
 
-        // Special case: If there are children but no adults, we still need to create at least one adult field
-        // for the primary contact, but we don't want to increment the total guest count
+        // Special case: If there are children but no adults, we don't need to show any adult fields
+        // This is a change from previous behavior where we showed one adult field
         let displayAdultCount = adultCount;
         if (adultCount === 0 && childCount > 0) {
-            displayAdultCount = 1; // Show one adult field even if adultCount is 0
-            console.log('[updateGuestFields] 0 adults with children, showing 1 adult field for primary contact.');
+            displayAdultCount = 0; // Don't show any adult fields if adultCount is 0
+            console.log('[updateGuestFields] 0 adults with children, not showing any adult fields.');
         }
 
         updateAdultGuestFields(displayAdultCount); // Use displayAdultCount for UI
@@ -1105,8 +1105,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get the adults section and show/hide
         const adultGuestSection = adultGuestsContainer?.closest('.guest-section');
         if (adultGuestSection) {
-            // Always show adult section if there are children (for primary contact)
-            adultGuestSection.style.display = (displayAdultCount > 0 || childCount > 0) ? 'block' : 'none';
+            // Only show adult section if there are actual adults (not for children)
+            adultGuestSection.style.display = displayAdultCount > 0 ? 'block' : 'none';
         }
 
         // Show/hide the entire guest info container if both counts are 0
@@ -1118,8 +1118,30 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`[updateGuestFields] Updated fields - adultCount: ${adultCount}, displayAdultCount: ${displayAdultCount}, childCount: ${childCount}`);
     }
     function updateAdultGuestFields(adultCount) {
-
         adultGuestsContainer.innerHTML = ''; // Clear existing fields first
+
+        // Special case: If adultCount is 0 and childCount > 0, we don't need to show any adult fields
+        const childCount = parseInt(childCountInput.value) || 0;
+        const realAdultCount = parseInt(adultCountInput.value) || 0;
+
+        // If real adult count is 0 and we have children, don't show any adult fields
+        if (realAdultCount === 0 && childCount > 0) {
+            console.log('[updateAdultGuestFields] Adult count is 0 with children, not showing any adult fields');
+            // Hide the adult guest section completely
+            const adultGuestSection = adultGuestsContainer?.closest('.guest-section');
+            if (adultGuestSection) {
+                adultGuestSection.style.display = 'none';
+            }
+            return; // Exit early, don't create any adult fields
+        }
+
+        // Show the adult guest section if we're creating fields
+        const adultGuestSection = adultGuestsContainer?.closest('.guest-section');
+        if (adultGuestSection) {
+            adultGuestSection.style.display = 'block';
+        }
+
+        // Create fields for each adult
         for (let i = 0; i < adultCount; i++) {
             const guestField = document.createElement('div');
             guestField.className = 'guest-field';
