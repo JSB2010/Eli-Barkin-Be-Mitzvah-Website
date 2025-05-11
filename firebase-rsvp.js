@@ -219,17 +219,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Ensure at least one adult if attending
                  if (adultCount === 0 && childCount > 0) {
-                     // If only children are marked, assume the primary contact is the adult
-                     // BUT don't increment the total guest count - just mark one of the children as an adult
-                     formData.adultCount = 1;
+                     // If only children are marked, don't add any adults
+                     // Keep adultCount as 0 and only count children
+                     formData.adultCount = 0;
                      formData.childCount = childCount;
-                     // Ensure the primary name is captured as the adult
-                     formData.adultGuests = [form.name.value]; // Use the main name input
+                     // Don't use the invitation name as an adult
+                     formData.adultGuests = []; // Empty array - no adults
                  } else if (adultCount === 0 && childCount === 0) {
                      // If both are 0 but attending is yes, default to 1 adult
+                     // but don't automatically use the invitation name
                      formData.adultCount = 1;
                      formData.childCount = 0;
-                     formData.adultGuests = [form.name.value];
+                     // Create an empty array for adult guests - they'll need to fill in the name
+                     formData.adultGuests = [];
                  } else {
                     formData.adultCount = adultCount;
                     formData.childCount = childCount;
