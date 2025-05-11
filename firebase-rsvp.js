@@ -393,6 +393,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.additionalGuests = [];
             }
 
+            // FINAL CORRECTION STEP: Ensure formData is correct if directAdultCount was 0
+            // This is to override any miscalculations that might have happened above if directAdultCount was 0.
+            if (directAdultCount === 0 && directChildCount > 0) {
+                if (formData.adultCount !== 0 || (formData.adultGuests && formData.adultGuests.length > 0)) {
+                    console.warn(
+                        'FINAL CORRECTION: formData was inconsistent for 0 adults, >0 children. Overriding. Was:',
+                        JSON.stringify({ 
+                            ac: formData.adultCount, 
+                            ag: formData.adultGuests, 
+                            gc: formData.guestCount 
+                        })
+                    );
+                    formData.adultCount = 0;
+                    formData.adultGuests = [];
+                    formData.guestCount = directChildCount; // Guest count is just children
+                    // Ensure additionalGuests reflects only children
+                    if (Array.isArray(formData.childGuests)) {
+                        formData.additionalGuests = [...formData.childGuests];
+                    } else {
+                        // If childGuests wasn't populated correctly, try to get them from form
+                        formData.childGuests = [];
+                        for (let i = 1; i <= directChildCount; i++) {
+                            const childNameField = form[`childName${i}`];
+                            if (childNameField && childNameField.value.trim()) {
+                                formData.childGuests.push(childNameField.value.trim());
+                            } else {
+                                formData.childGuests.push(`Child ${i}`); // Placeholder if empty
+                            }
+                        }
+                        formData.additionalGuests = [...formData.childGuests];
+                    }
+                    console.log(
+                        'FINAL CORRECTION: formData is now:',
+                        JSON.stringify({ 
+                            ac: formData.adultCount, 
+                            ag: formData.adultGuests, 
+                            cg: formData.childGuests,
+                            gc: formData.guestCount, 
+                            addg: formData.additionalGuests 
+                        })
+                    );
+                } else {
+                    // Even if adultCount was 0, ensure guestCount and additionalGuests are correct for this specific scenario
+                    formData.guestCount = directChildCount;
+                    if (Array.isArray(formData.childGuests)) {
+                        formData.additionalGuests = [...formData.childGuests];
+                    } else {
+                         formData.additionalGuests = []; // Should have been populated earlier
+                    }
+                }
+            }
+
             // Check if Firestore is available
             if (!db) {
                 console.error('Firestore database is not available');
