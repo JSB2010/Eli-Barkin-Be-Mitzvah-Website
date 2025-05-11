@@ -366,9 +366,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sanitizedFormData = sanitizeFormData(formData);
                 console.log('Sanitized form data for update:', sanitizedFormData);
 
+                // Convert to plain object with no undefined values
+                const plainObject = {};
+
+                // Manually copy each property, ensuring no undefined values
+                Object.keys(sanitizedFormData).forEach(key => {
+                    // Skip undefined values
+                    if (sanitizedFormData[key] !== undefined) {
+                        // Handle special case for Firestore Timestamp
+                        if (sanitizedFormData[key] &&
+                            typeof sanitizedFormData[key] === 'object' &&
+                            sanitizedFormData[key].constructor &&
+                            sanitizedFormData[key].constructor.name === 'Timestamp') {
+                            plainObject[key] = sanitizedFormData[key];
+                        }
+                        // Handle arrays
+                        else if (Array.isArray(sanitizedFormData[key])) {
+                            plainObject[key] = sanitizedFormData[key].map(item =>
+                                item === undefined ? null : item
+                            );
+                        }
+                        // Handle objects
+                        else if (typeof sanitizedFormData[key] === 'object' && sanitizedFormData[key] !== null) {
+                            const nestedObj = {};
+                            Object.keys(sanitizedFormData[key]).forEach(nestedKey => {
+                                if (sanitizedFormData[key][nestedKey] !== undefined) {
+                                    nestedObj[nestedKey] = sanitizedFormData[key][nestedKey];
+                                }
+                            });
+                            plainObject[key] = nestedObj;
+                        }
+                        // Handle primitives
+                        else {
+                            plainObject[key] = sanitizedFormData[key];
+                        }
+                    }
+                });
+
+                // Ensure critical fields are present
+                plainObject.name = plainObject.name || '';
+                plainObject.email = plainObject.email || '';
+                plainObject.phone = plainObject.phone || '';
+                plainObject.attending = plainObject.attending || 'no';
+                plainObject.adultCount = plainObject.adultCount || 0;
+                plainObject.childCount = plainObject.childCount || 0;
+                plainObject.guestCount = plainObject.guestCount || 0;
+                plainObject.adultGuests = plainObject.adultGuests || [];
+                plainObject.childGuests = plainObject.childGuests || [];
+                plainObject.additionalGuests = plainObject.additionalGuests || [];
+                plainObject.submittedAt = plainObject.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
+                plainObject.updatedAt = plainObject.updatedAt || firebase.firestore.Timestamp.fromDate(new Date());
+                plainObject.isUpdate = true;
+
+                console.log('Final plain object for update with no undefined values:', plainObject);
+
                 // Use the submissionId stored in the form's data attribute
                 const docRef = db.collection('sheetRsvps').doc(submissionId);
-                savePromise = docRef.update(sanitizedFormData)
+                savePromise = docRef.update(plainObject)
                     .catch(error => {
                         console.error(`Error updating document ${submissionId}:`, error);
                         // Add more context to the error
@@ -429,7 +483,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sanitizedFormData = sanitizeFormData(clonedFormData);
                 console.log('Sanitized form data:', sanitizedFormData);
 
-                savePromise = db.collection('sheetRsvps').add(sanitizedFormData)
+                // Convert to plain object with no undefined values
+                const plainObject = {};
+
+                // Manually copy each property, ensuring no undefined values
+                Object.keys(sanitizedFormData).forEach(key => {
+                    // Skip undefined values
+                    if (sanitizedFormData[key] !== undefined) {
+                        // Handle special case for Firestore Timestamp
+                        if (sanitizedFormData[key] &&
+                            typeof sanitizedFormData[key] === 'object' &&
+                            sanitizedFormData[key].constructor &&
+                            sanitizedFormData[key].constructor.name === 'Timestamp') {
+                            plainObject[key] = sanitizedFormData[key];
+                        }
+                        // Handle arrays
+                        else if (Array.isArray(sanitizedFormData[key])) {
+                            plainObject[key] = sanitizedFormData[key].map(item =>
+                                item === undefined ? null : item
+                            );
+                        }
+                        // Handle objects
+                        else if (typeof sanitizedFormData[key] === 'object' && sanitizedFormData[key] !== null) {
+                            const nestedObj = {};
+                            Object.keys(sanitizedFormData[key]).forEach(nestedKey => {
+                                if (sanitizedFormData[key][nestedKey] !== undefined) {
+                                    nestedObj[nestedKey] = sanitizedFormData[key][nestedKey];
+                                }
+                            });
+                            plainObject[key] = nestedObj;
+                        }
+                        // Handle primitives
+                        else {
+                            plainObject[key] = sanitizedFormData[key];
+                        }
+                    }
+                });
+
+                // Ensure critical fields are present
+                plainObject.name = plainObject.name || '';
+                plainObject.email = plainObject.email || '';
+                plainObject.phone = plainObject.phone || '';
+                plainObject.attending = plainObject.attending || 'no';
+                plainObject.adultCount = plainObject.adultCount || 0;
+                plainObject.childCount = plainObject.childCount || 0;
+                plainObject.guestCount = plainObject.guestCount || 0;
+                plainObject.adultGuests = plainObject.adultGuests || [];
+                plainObject.childGuests = plainObject.childGuests || [];
+                plainObject.additionalGuests = plainObject.additionalGuests || [];
+                plainObject.submittedAt = plainObject.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
+                plainObject.isUpdate = plainObject.isUpdate || false;
+
+                console.log('Final plain object with no undefined values:', plainObject);
+
+                // Use the plain object for Firestore
+                savePromise = db.collection('sheetRsvps').add(plainObject)
                     .catch(error => {
                         console.error('Error creating new RSVP:', error);
                         // Add more context to the error
@@ -446,9 +554,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Chain the guest list update regardless of new/update
             savePromise = savePromise.then(() => {
                 console.log('RSVP saved/updated successfully in sheetRsvps. Updating guestList entry...');
-                // Also update the guest list entry - use sanitized data to prevent errors
-                const sanitizedData = sanitizeFormData(formData);
-                return updateGuestList(formData.name, sanitizedData); // Pass sanitized formData
+
+                // Create a clean object for the guest list update
+                const guestListData = {
+                    name: formData.name || '',
+                    email: formData.email || '',
+                    phone: formData.phone || '',
+                    attending: formData.attending || 'no',
+                    adultCount: formData.adultCount || 0,
+                    childCount: formData.childCount || 0,
+                    guestCount: formData.guestCount || 0,
+                    adultGuests: Array.isArray(formData.adultGuests) ? formData.adultGuests.filter(g => g !== undefined) : [],
+                    childGuests: Array.isArray(formData.childGuests) ? formData.childGuests.filter(g => g !== undefined) : [],
+                    additionalGuests: Array.isArray(formData.additionalGuests) ? formData.additionalGuests.filter(g => g !== undefined) : [],
+                    submittedAt: formData.submittedAt || firebase.firestore.Timestamp.fromDate(new Date()),
+                    updatedAt: formData.updatedAt || firebase.firestore.Timestamp.fromDate(new Date()),
+                    isUpdate: formData.isUpdate || false,
+                    fridayDinner: formData.fridayDinner || 'no',
+                    sundayBrunch: formData.sundayBrunch || 'no',
+                    isOutOfTown: formData.isOutOfTown || false
+                };
+
+                console.log('Clean guest list data:', guestListData);
+                return updateGuestList(formData.name, guestListData); // Pass clean data
             });
 
             // --- Guest List Update Function ---
@@ -465,8 +593,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (!snapshot.empty) {
                                 const guestDocRef = snapshot.docs[0].ref;
                                 console.log(`[updateGuestList] Found guestList entry (ID: ${guestDocRef.id}). Updating...`);
-                                // Update the guest's response details
-                                return guestDocRef.update({
+                                // Create a clean update object with no undefined values
+                                const updateData = {
                                     hasResponded: true,
                                     response: rsvpData.attending === 'yes' ? 'attending' : 'declined',
                                     // Use counts directly from rsvpData
@@ -474,10 +602,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                     adultCount: rsvpData.adultCount || 0,
                                     childCount: rsvpData.childCount || 0,
                                     // Store guest names arrays
-                                    adultGuests: rsvpData.adultGuests || [],
-                                    childGuests: rsvpData.childGuests || [],
+                                    adultGuests: Array.isArray(rsvpData.adultGuests) ? rsvpData.adultGuests.filter(g => g !== undefined) : [],
+                                    childGuests: Array.isArray(rsvpData.childGuests) ? rsvpData.childGuests.filter(g => g !== undefined) : [],
                                     // Keep additionalGuests for compatibility if needed elsewhere
-                                    additionalGuests: rsvpData.additionalGuests || [],
+                                    additionalGuests: Array.isArray(rsvpData.additionalGuests) ? rsvpData.additionalGuests.filter(g => g !== undefined) : [],
                                     email: rsvpData.email || '',
                                     phone: rsvpData.phone || '',
                                     // Store out-of-town event responses
@@ -485,8 +613,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                     fridayDinner: rsvpData.fridayDinner || 'no',
                                     sundayBrunch: rsvpData.sundayBrunch || 'no',
                                     // Use the appropriate timestamp (submittedAt for new, updatedAt for updates)
-                                    lastResponseTimestamp: rsvpData.updatedAt || rsvpData.submittedAt
-                                });
+                                    lastResponseTimestamp: rsvpData.updatedAt || rsvpData.submittedAt || firebase.firestore.Timestamp.fromDate(new Date())
+                                };
+
+                                // Log the update data
+                                console.log(`[updateGuestList] Update data for ${guestName}:`, updateData);
+
+                                // Perform the update with clean data
+                                return guestDocRef.update(updateData);
                             } else {
                                 console.warn(`[updateGuestList] Guest not found in guestList for name: ${guestName}. Cannot update guestList entry.`);
                                 return Promise.resolve(); // Resolve silently if guest not found
