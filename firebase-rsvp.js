@@ -487,41 +487,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (formData.adultCount === 0 && formData.childCount > 0) {
                     console.log('SPECIAL CASE: Using direct Firebase API for 0 adults with children');
 
-                    // Create a minimal valid document with only the essential fields
-                    // Use a direct object literal with no references to formData to avoid any undefined values
-                    const childNames = [];
-
-                    // Collect child names directly from the form
-                    for (let i = 1; i <= formData.childCount; i++) {
-                        const childNameField = form[`childName${i}`];
-                        if (childNameField && childNameField.value.trim()) {
-                            childNames.push(childNameField.value.trim());
-                        } else {
-                            childNames.push(`Child ${i}`);
-                        }
-                    }
-
-                    console.log('Child names collected:', childNames);
-
-                    // Use the Firebase API directly with a hardcoded object
-                    // This bypasses any potential issues with undefined values
-                    savePromise = firebase.firestore().collection('sheetRsvps').add({
-                        name: form.name.value,
-                        email: form.email.value || '',
-                        phone: form.phone.value || '',
-                        attending: 'yes',
-                        adultCount: 0,
-                        childCount: childNames.length,
-                        guestCount: childNames.length,
-                        adultGuests: [],
-                        childGuests: childNames,
-                        additionalGuests: childNames,
-                        submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-                        isUpdate: false,
-                        fridayDinner: 'no',
-                        sundayBrunch: 'no',
-                        isOutOfTown: false
-                    });
+                    // Use a completely different approach with a direct database write
+                    savePromise = submitZeroAdultsRSVP(form, formData.childCount);
                 } else {
                     // Convert to plain object with no undefined values
                     const plainObject = {};
@@ -924,4 +891,86 @@ document.addEventListener('DOMContentLoaded', function() {
             link.classList.remove('active');
         }
     });
+
+    // Special function to handle the case of 0 adults with children
+    // This uses a completely different approach to avoid any issues with undefined values
+    function submitZeroAdultsRSVP(form, childCount) {
+        console.log('Using special submitZeroAdultsRSVP function');
+
+        try {
+            // Collect child names directly from the form
+            const childNames = [];
+            for (let i = 1; i <= childCount; i++) {
+                const childNameField = form[`childName${i}`];
+                if (childNameField && childNameField.value.trim()) {
+                    childNames.push(childNameField.value.trim());
+                } else {
+                    childNames.push(`Child ${i}`);
+                }
+            }
+
+            console.log('Child names collected:', childNames);
+
+            // Create a clean document with only the essential fields
+            // This avoids any issues with undefined values
+            const document = {
+                name: form.name.value,
+                email: form.email.value || '',
+                phone: form.phone.value || '',
+                attending: 'yes',
+                adultCount: 0,
+                childCount: childNames.length,
+                guestCount: childNames.length,
+                adultGuests: [],
+                childGuests: childNames,
+                additionalGuests: childNames,
+                submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+                isUpdate: false,
+                fridayDinner: 'no',
+                sundayBrunch: 'no',
+                isOutOfTown: false
+            };
+
+            console.log('Clean document for zero adults submission:', document);
+
+            // Use a direct Firebase API call to add the document
+            return firebase.firestore().collection('sheetRsvps').add(document)
+                .then(docRef => {
+                    console.log('Successfully created zero adults RSVP with ID:', docRef.id);
+                    return docRef;
+                })
+                .catch(error => {
+                    console.error('Error in zero adults RSVP submission:', error);
+
+                    // If there's an error, try an even more minimal approach
+                    if (error.message && error.message.includes('undefined')) {
+                        console.log('Attempting fallback with minimal document');
+
+                        // Create an absolute minimal document
+                        const minimalDoc = {
+                            name: form.name.value || 'Unknown',
+                            attending: 'yes',
+                            childCount: childNames.length,
+                            childGuests: childNames,
+                            submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
+                        };
+
+                        return firebase.firestore().collection('sheetRsvps').add(minimalDoc)
+                            .then(docRef => {
+                                console.log('Successfully created minimal zero adults RSVP with ID:', docRef.id);
+                                return docRef;
+                            })
+                            .catch(innerError => {
+                                console.error('Error in minimal zero adults RSVP submission:', innerError);
+                                throw innerError;
+                            });
+                    }
+
+                    throw error;
+                });
+        } catch (error) {
+            console.error('Exception in submitZeroAdultsRSVP:', error);
+            return Promise.reject(error);
+        }
+    }
 });

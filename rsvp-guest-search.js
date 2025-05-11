@@ -518,11 +518,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Try to create a fallback submission even if we had an error
-            if (typeof guestDoc !== 'undefined' && guestDoc && guestData && guestData.hasResponded) {
+            // Make sure we have valid guest data before attempting to create a fallback
+            if (guestData && guestData.hasResponded) {
                 console.warn('[checkExistingSubmission] Attempting emergency fallback submission creation after error');
                 try {
+                    // Create a unique ID for the emergency fallback
+                    const fallbackId = `emergency-fallback-${guestData.id || new Date().getTime()}`;
+
                     const emergencyFallback = {
-                        id: `emergency-fallback-${guestDoc.id}`,
+                        id: fallbackId,
                         name: guestData.name,
                         email: guestData.email || '',
                         phone: guestData.phone || '',
@@ -572,13 +576,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Found a match by name (case-insensitive)
                 const currentTimestamp = data.submittedAt; // Assume it's a Firestore Timestamp or null/undefined
 
-                // Check if this match is later than the current latestMatch
-                const isLater = !latestMatch || (currentTimestamp && currentTimestamp.toMillis() > (latestTimestamp?.toMillis() ?? -Infinity));
+                try {
+                    // Safely check if this match is later than the current latestMatch
+                    let isLater = false;
 
-                if (isLater) {
-                    latestMatch = { ...data, id: doc.id }; // Clone data and add ID
-                    latestTimestamp = currentTimestamp;
-                    console.log(`[findLatestSubmission] Found potential match (ID: ${doc.id}, Time: ${currentTimestamp?.toDate()})`);
+                    if (!latestMatch) {
+                        // If we don't have a match yet, this is the latest
+                        isLater = true;
+                    } else if (currentTimestamp && typeof currentTimestamp.toMillis === 'function') {
+                        // If we have a valid Firestore timestamp, compare using toMillis
+                        const currentMillis = currentTimestamp.toMillis();
+                        const latestMillis = latestTimestamp && typeof latestTimestamp.toMillis === 'function' ?
+                            latestTimestamp.toMillis() : -Infinity;
+                        isLater = currentMillis > latestMillis;
+                    } else if (currentTimestamp && currentTimestamp instanceof Date) {
+                        // If it's a JavaScript Date object
+                        const currentMillis = currentTimestamp.getTime();
+                        const latestMillis = latestTimestamp instanceof Date ?
+                            latestTimestamp.getTime() : -Infinity;
+                        isLater = currentMillis > latestMillis;
+                    } else {
+                        // If we can't compare timestamps, just use the first match
+                        isLater = !latestMatch;
+                    }
+
+                    if (isLater) {
+                        latestMatch = { ...data, id: doc.id }; // Clone data and add ID
+                        latestTimestamp = currentTimestamp;
+
+                        // Safely log the timestamp
+                        let timeString = "unknown time";
+                        if (currentTimestamp && typeof currentTimestamp.toDate === 'function') {
+                            try {
+                                timeString = currentTimestamp.toDate().toString();
+                            } catch (e) {
+                                timeString = "invalid timestamp";
+                            }
+                        } else if (currentTimestamp instanceof Date) {
+                            timeString = currentTimestamp.toString();
+                        } else if (currentTimestamp) {
+                            timeString = "non-standard timestamp format";
+                        }
+
+                        console.log(`[findLatestSubmission] Found potential match (ID: ${doc.id}, Time: ${timeString})`);
+                    }
+                } catch (error) {
+                    console.error(`[findLatestSubmission] Error comparing timestamps:`, error);
+                    // If we encounter an error, still consider this a match if we don't have one yet
+                    if (!latestMatch) {
+                        latestMatch = { ...data, id: doc.id };
+                        latestTimestamp = null; // Reset timestamp since we can't compare
+                        console.log(`[findLatestSubmission] Using match despite timestamp error (ID: ${doc.id})`);
+                    }
                 }
             }
         });
