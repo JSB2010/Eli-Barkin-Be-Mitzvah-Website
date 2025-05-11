@@ -1,6 +1,6 @@
 // RSVP Form Submission Handler
 // Version tracking
-const RSVP_FORM_SUBMISSION_VERSION = "1.0";
+const RSVP_FORM_SUBMISSION_VERSION = "1.1";
 console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
 
 // Wait for the DOM to be fully loaded
@@ -56,10 +56,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!('guestCount' in sanitized) || sanitized.guestCount === undefined || sanitized.guestCount === null) {
-                sanitized.guestCount = parseInt(sanitized.adultCount) + parseInt(sanitized.childCount);
+                // Special case: if adultCount is 0 and childCount > 0, guestCount should be childCount
+                if (sanitized.adultCount === 0 && sanitized.childCount > 0) {
+                    sanitized.guestCount = parseInt(sanitized.childCount);
+                } else {
+                    sanitized.guestCount = parseInt(sanitized.adultCount) + parseInt(sanitized.childCount);
+                }
             }
 
             if (!('adultGuests' in sanitized) || sanitized.adultGuests === undefined || sanitized.adultGuests === null) {
+                sanitized.adultGuests = [];
+            } else if (sanitized.adultCount === 0) {
+                // If adultCount is 0, ensure adultGuests is an empty array
                 sanitized.adultGuests = [];
             }
 
@@ -69,6 +77,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!('additionalGuests' in sanitized) || sanitized.additionalGuests === undefined || sanitized.additionalGuests === null) {
                 sanitized.additionalGuests = [];
+            } else if (sanitized.adultCount === 0 && sanitized.childCount > 0) {
+                // If adultCount is 0 and childCount > 0, additionalGuests should be the same as childGuests
+                sanitized.additionalGuests = Array.isArray(sanitized.childGuests) ? [...sanitized.childGuests] : [];
             }
 
             return sanitized;
@@ -576,9 +587,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     adultCount: formData.adultCount || 0,
                     childCount: formData.childCount || 0,
                     guestCount: formData.guestCount || 0,
-                    adultGuests: Array.isArray(formData.adultGuests) ? formData.adultGuests.filter(g => g !== undefined) : [],
+                    // If adultCount is 0, ensure adultGuests is an empty array
+                    adultGuests: (formData.adultCount === 0) ? [] :
+                        (Array.isArray(formData.adultGuests) ? formData.adultGuests.filter(g => g !== undefined) : []),
                     childGuests: Array.isArray(formData.childGuests) ? formData.childGuests.filter(g => g !== undefined) : [],
-                    additionalGuests: Array.isArray(formData.additionalGuests) ? formData.additionalGuests.filter(g => g !== undefined) : [],
+                    // If adultCount is 0 and childCount > 0, additionalGuests should be the same as childGuests
+                    additionalGuests: (formData.adultCount === 0 && formData.childCount > 0) ?
+                        (Array.isArray(formData.childGuests) ? formData.childGuests.filter(g => g !== undefined) : []) :
+                        (Array.isArray(formData.additionalGuests) ? formData.additionalGuests.filter(g => g !== undefined) : []),
                     submittedAt: formData.submittedAt || firebase.firestore.Timestamp.fromDate(new Date()),
                     updatedAt: formData.updatedAt || firebase.firestore.Timestamp.fromDate(new Date()),
                     isUpdate: formData.isUpdate || false,
@@ -614,10 +630,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                     adultCount: rsvpData.adultCount || 0,
                                     childCount: rsvpData.childCount || 0,
                                     // Store guest names arrays
-                                    adultGuests: Array.isArray(rsvpData.adultGuests) ? rsvpData.adultGuests.filter(g => g !== undefined) : [],
+                                    // If adultCount is 0, ensure adultGuests is an empty array
+                                    adultGuests: (rsvpData.adultCount === 0) ? [] :
+                                        (Array.isArray(rsvpData.adultGuests) ? rsvpData.adultGuests.filter(g => g !== undefined) : []),
                                     childGuests: Array.isArray(rsvpData.childGuests) ? rsvpData.childGuests.filter(g => g !== undefined) : [],
                                     // Keep additionalGuests for compatibility if needed elsewhere
-                                    additionalGuests: Array.isArray(rsvpData.additionalGuests) ? rsvpData.additionalGuests.filter(g => g !== undefined) : [],
+                                    // If adultCount is 0 and childCount > 0, additionalGuests should be the same as childGuests
+                                    additionalGuests: (rsvpData.adultCount === 0 && rsvpData.childCount > 0) ?
+                                        (Array.isArray(rsvpData.childGuests) ? rsvpData.childGuests.filter(g => g !== undefined) : []) :
+                                        (Array.isArray(rsvpData.additionalGuests) ? rsvpData.additionalGuests.filter(g => g !== undefined) : []),
                                     email: rsvpData.email || '',
                                     phone: rsvpData.phone || '',
                                     // Store out-of-town event responses

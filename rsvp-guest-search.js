@@ -1,6 +1,6 @@
 // RSVP Guest Search and Form Handling
 // Version tracking
-const RSVP_FORM_VERSION = "1.0";
+const RSVP_FORM_VERSION = "1.1";
 console.log(`%cRSVP Form Version: ${RSVP_FORM_VERSION}`, "color: #0d47a1; font-size: 14px; font-weight: bold; background-color: #e3f2fd; padding: 5px 10px; border-radius: 4px;");
 
 document.addEventListener('DOMContentLoaded', function() {
