@@ -641,7 +641,12 @@ document.addEventListener('DOMContentLoaded', function() {
         submission.attending = submission.attending ?? 'yes';
         submission.adultGuests = submission.adultGuests ?? [];
         submission.childGuests = submission.childGuests ?? [];
-        submission.adultCount = submission.adultCount ?? (submission.adultGuests.length || (submission.attending === 'yes' ? 1 : 0));
+        // Don't default to 1 adult if there are only children
+        if (submission.childCount > 0 && submission.adultCount === 0) {
+            submission.adultCount = 0; // Keep it at 0 if explicitly set that way
+        } else {
+            submission.adultCount = submission.adultCount ?? (submission.adultGuests.length || (submission.attending === 'yes' ? 1 : 0));
+        }
         submission.childCount = submission.childCount ?? (submission.childGuests.length || 0);
         submission.email = submission.email ?? '';
         submission.phone = submission.phone ?? '';
@@ -1041,14 +1046,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
 
-                // Check if primary guest field is filled
+                // Don't automatically fill the primary guest field with the invitation name
+                // This was causing issues with 0 adults submissions
                 const allAdultInputs = adultGuestsContainer.querySelectorAll('input');
 
-                allAdultInputs.forEach((input, i) => {
-                    if (!input.value && i === 0 && submission.name) {
-                        input.value = submission.name; // Ensure primary guest is filled
-                    }
-                });
+                // Only log the state, don't auto-fill with invitation name
+                if (allAdultInputs.length > 0) {
+                    console.log('[prefillForm] Adult input fields state:',
+                        Array.from(allAdultInputs).map(input => input.value ? 'filled' : 'empty'));
+                }
 
                 console.log('[prefillForm] Finished filling guest names.');
             }, 500); // Increased delay to 500ms for more reliable DOM updates
@@ -1078,12 +1084,19 @@ document.addEventListener('DOMContentLoaded', function() {
         let adultCount = parseInt(adultCountInput.value) || 0;
         const childCount = parseInt(childCountInput.value) || 0;
 
-        // If attending is 'yes' (implied if this function runs when attendingSection is visible), ensure at least one adult if both counts are 0
+        // If attending is 'yes' and both adult and child counts are 0, default to 1 adult
+        // But if there are children and no adults, respect the 0 adult count
         const attendingSection = document.getElementById('attendingSection');
-        if (attendingSection && attendingSection.style.display !== 'none' && adultCount === 0 && childCount === 0) {
-            adultCountInput.value = 1;
-            adultCount = 1;
-            console.log('[updateGuestFields] Both counts were 0 while attending, defaulted adult count to 1.');
+        if (attendingSection && attendingSection.style.display !== 'none') {
+            if (adultCount === 0 && childCount === 0) {
+                // Only default to 1 adult if there are no children
+                adultCountInput.value = 1;
+                adultCount = 1;
+                console.log('[updateGuestFields] Both counts were 0 while attending, defaulted adult count to 1.');
+            } else if (adultCount === 0 && childCount > 0) {
+                // If there are children but no adults, keep adult count at 0
+                console.log('[updateGuestFields] 0 adults with children, keeping adult count at 0.');
+            }
         }
 
         // Special case: If there are children but no adults, we don't need to show any adult fields
@@ -1221,9 +1234,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (attendingYesRadio.checked) {
             attendingSection.style.display = 'block';
             // Ensure guest counts are reasonable if switching to yes
-            if (parseInt(adultCountInput.value) === 0 && parseInt(childCountInput.value) === 0) {
-                 adultCountInput.value = 1; // Default to 1 adult
+            // Only default to 1 adult if both adult and child counts are 0
+            const adultCount = parseInt(adultCountInput.value) || 0;
+            const childCount = parseInt(childCountInput.value) || 0;
+
+            if (adultCount === 0 && childCount === 0) {
+                 adultCountInput.value = 1; // Default to 1 adult only if no children
+                 console.log('[handleAttendingChange] Both counts were 0, defaulted to 1 adult');
+            } else if (adultCount === 0 && childCount > 0) {
+                 // If there are children but no adults, keep adult count at 0
+                 console.log('[handleAttendingChange] 0 adults with children, keeping adult count at 0');
             }
+
             updateGuestFields(); // Update fields based on current counts
         } else {
             attendingSection.style.display = 'none';
