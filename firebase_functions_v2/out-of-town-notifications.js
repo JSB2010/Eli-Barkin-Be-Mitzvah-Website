@@ -120,7 +120,11 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
     sendSmtpEmail.sender = { name: "Eli's Be Mitzvah", email: "rsvps@elibarkin.com" }; // Changed from noreply to rsvps
-    sendSmtpEmail.to = [{ email: adminEmailValue }];
+    sendSmtpEmail.to = [
+      { email: adminEmailValue },
+      { email: "ebarkin30@kentdenver.org" },
+      { email: "adambarkin@gmail.com" }
+    ];
     sendSmtpEmail.replyTo = { email: "jacobsamuelbarkin@gmail.com", name: "Jacob Barkin" };
     sendSmtpEmail.headers = {
       "X-Entity-Ref-ID": `admin-out-of-town-notification-${rsvpId}`
@@ -135,7 +139,7 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
       // Log the notification
       await admin.firestore().collection('emailLogs').add({
         type: 'out-of-town-notification',
-        recipient: adminEmailValue,
+        recipients: [adminEmailValue, 'ebarkin30@kentdenver.org', 'adambarkin@gmail.com'],
         subject: subject,
         rsvpId: rsvpId,
         guestName: rsvpData.name,
@@ -152,7 +156,7 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
       // Log the failed email attempt
       await admin.firestore().collection('emailLogs').add({
         type: 'out-of-town-notification-failed',
-        recipient: adminEmailValue,
+        recipients: [adminEmailValue, 'ebarkin30@kentdenver.org', 'adambarkin@gmail.com'],
         subject: subject,
         rsvpId: rsvpId,
         guestName: rsvpData.name,

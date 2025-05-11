@@ -344,10 +344,10 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
       htmlContent = baseTemplate.replace('{{CONTENT}}', updatedRsvpContent);
     }
 
-    // Send the email to both recipients
+    // Send the email to all recipients
     const mailOptions = {
       from: '"Eli\'s Be Mitzvah" <rsvps@elibarkin.com>',
-      to: [adminEmailValue, 'ebarkin30@kentdenver.org'],
+      to: [adminEmailValue, 'ebarkin30@kentdenver.org', 'adambarkin@gmail.com'],
       subject: subject,
       html: htmlContent,
       headers: {
@@ -360,7 +360,7 @@ exports.sendStyledAdminNotificationV2 = onDocumentWritten({
     // Log the email
     await admin.firestore().collection('emailLogs').add({
       type: 'admin-notification',
-      recipients: [adminEmailValue, 'ebarkin30@kentdenver.org'],
+      recipients: [adminEmailValue, 'ebarkin30@kentdenver.org', 'adambarkin@gmail.com'],
       subject: subject,
       rsvpId: rsvpId,
       guestName: rsvpData.name,
