@@ -1,6 +1,6 @@
 // RSVP Guest Search and Form Handling
 // Version tracking
-const RSVP_FORM_VERSION = "1.3";
+const RSVP_FORM_VERSION = "1.4";
 console.log(`%cRSVP Form Version: ${RSVP_FORM_VERSION}`, "color: #0d47a1; font-size: 14px; font-weight: bold; background-color: #e3f2fd; padding: 5px 10px; border-radius: 4px;");
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1191,9 +1191,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Let the user enter the name manually
 
             // Special case for update mode with fallback submission
-            if (i === 0 && window.existingSubmission?.name) {
-                // This ensures the primary guest name is always filled
+            // Only fill the name if we actually have adults (adultCount > 0)
+            // This prevents filling the name when there are 0 adults
+            if (i === 0 && window.existingSubmission?.name && parseInt(adultCountInput.value) > 0) {
+                // This ensures the primary guest name is always filled, but only if we have adults
                 input.value = window.existingSubmission.name;
+                console.log('[updateAdultGuestFields] Filled first adult name with invitation name:', window.existingSubmission.name);
             }
 
             guestField.appendChild(label);
