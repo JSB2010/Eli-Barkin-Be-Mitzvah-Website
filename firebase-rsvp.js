@@ -3,62 +3,72 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to sanitize form data before sending to Firestore
     // This ensures there are no undefined values that could cause errors
     function sanitizeFormData(data) {
-        // Create a new object to avoid modifying the original
-        const sanitized = {};
+        // Handle null or undefined input
+        if (data === null || data === undefined) {
+            return null;
+        }
 
-        // Process each property in the data object
-        for (const key in data) {
-            if (Object.prototype.hasOwnProperty.call(data, key)) {
-                const value = data[key];
+        // Handle special case for Firestore Timestamp objects
+        if (data && typeof data === 'object' && data.constructor &&
+            data.constructor.name === 'Timestamp' && typeof data.toDate === 'function') {
+            return data; // Return Timestamp objects as-is
+        }
 
-                // Handle different types of values
-                if (value === undefined) {
-                    // Replace undefined with null for Firestore
-                    sanitized[key] = null;
-                } else if (Array.isArray(value)) {
-                    // For arrays, sanitize each element
-                    sanitized[key] = value.map(item =>
-                        item === undefined ? null : item
-                    );
-                } else if (value === null) {
-                    // Keep null values as they are
-                    sanitized[key] = null;
-                } else if (typeof value === 'object' && value !== null) {
-                    // For nested objects, recursively sanitize
-                    sanitized[key] = sanitizeFormData(value);
-                } else {
-                    // For primitive values, keep as is
-                    sanitized[key] = value;
+        // Handle arrays
+        if (Array.isArray(data)) {
+            return data.map(item => item === undefined ? null : sanitizeFormData(item));
+        }
+
+        // Handle objects (but not null)
+        if (typeof data === 'object' && data !== null) {
+            // Create a new object to avoid modifying the original
+            const sanitized = {};
+
+            // Process each property in the data object
+            for (const key in data) {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    const value = data[key];
+
+                    // Skip properties with undefined values
+                    if (value !== undefined) {
+                        sanitized[key] = sanitizeFormData(value);
+                    } else {
+                        // Replace undefined with null for Firestore
+                        sanitized[key] = null;
+                    }
                 }
             }
+
+            // Ensure critical fields are never undefined or missing
+            if (!('adultCount' in sanitized) || sanitized.adultCount === undefined || sanitized.adultCount === null) {
+                sanitized.adultCount = 0;
+            }
+
+            if (!('childCount' in sanitized) || sanitized.childCount === undefined || sanitized.childCount === null) {
+                sanitized.childCount = 0;
+            }
+
+            if (!('guestCount' in sanitized) || sanitized.guestCount === undefined || sanitized.guestCount === null) {
+                sanitized.guestCount = parseInt(sanitized.adultCount) + parseInt(sanitized.childCount);
+            }
+
+            if (!('adultGuests' in sanitized) || sanitized.adultGuests === undefined || sanitized.adultGuests === null) {
+                sanitized.adultGuests = [];
+            }
+
+            if (!('childGuests' in sanitized) || sanitized.childGuests === undefined || sanitized.childGuests === null) {
+                sanitized.childGuests = [];
+            }
+
+            if (!('additionalGuests' in sanitized) || sanitized.additionalGuests === undefined || sanitized.additionalGuests === null) {
+                sanitized.additionalGuests = [];
+            }
+
+            return sanitized;
         }
 
-        // Ensure critical fields are never undefined or missing
-        if (!('adultCount' in sanitized) || sanitized.adultCount === undefined) {
-            sanitized.adultCount = 0;
-        }
-
-        if (!('childCount' in sanitized) || sanitized.childCount === undefined) {
-            sanitized.childCount = 0;
-        }
-
-        if (!('guestCount' in sanitized) || sanitized.guestCount === undefined) {
-            sanitized.guestCount = sanitized.adultCount + sanitized.childCount;
-        }
-
-        if (!('adultGuests' in sanitized) || sanitized.adultGuests === undefined) {
-            sanitized.adultGuests = [];
-        }
-
-        if (!('childGuests' in sanitized) || sanitized.childGuests === undefined) {
-            sanitized.childGuests = [];
-        }
-
-        if (!('additionalGuests' in sanitized) || sanitized.additionalGuests === undefined) {
-            sanitized.additionalGuests = [];
-        }
-
-        return sanitized;
+        // For primitive values, return as is
+        return data;
     }
 
     // Function to clear error messages
@@ -251,6 +261,37 @@ document.addEventListener('DOMContentLoaded', function() {
                  if (adultCount === 0 && childCount > 0) {
                      // In this case, we're treating one child as an adult, so the total is just childCount
                      formData.guestCount = childCount;
+
+                     // IMPORTANT: Make sure we're not sending any undefined values
+                     // This is a special case that needs extra attention
+                     console.log('Special case: 0 adults with children. Setting explicit values.');
+
+                     // Ensure all required fields are explicitly set
+                     formData.adultCount = 1; // We're treating one child as an adult in the UI
+                     formData.childCount = childCount;
+                     formData.guestCount = childCount; // But the total count is just the children
+
+                     // Make sure guest arrays are properly initialized
+                     if (!formData.adultGuests || !Array.isArray(formData.adultGuests)) {
+                         formData.adultGuests = [form.name.value]; // Use the main name as the adult
+                     }
+
+                     if (!formData.childGuests || !Array.isArray(formData.childGuests)) {
+                         formData.childGuests = [];
+                         // Collect child names
+                         for (let i = 1; i <= childCount; i++) {
+                             const childNameField = form[`childName${i}`];
+                             if (childNameField) {
+                                 formData.childGuests.push(childNameField.value.trim() || 'Child ' + i);
+                             } else {
+                                 formData.childGuests.push('Child ' + i);
+                             }
+                         }
+                     }
+
+                     // Double-check additionalGuests
+                     formData.additionalGuests = formData.childGuests.map(name => name); // All children are additional guests
+
                  } else {
                      // Normal case - sum of adults and children
                      formData.guestCount = formData.adultCount + formData.childCount;
@@ -258,13 +299,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
                 // For backward compatibility (if needed by other systems)
-                formData.additionalGuests = [];
-                // Add adults beyond the first one
-                if (formData.adultGuests.length > 1) {
-                    formData.additionalGuests = formData.additionalGuests.concat(formData.adultGuests.slice(1));
+                // Only set additionalGuests if it wasn't already set in the special case
+                if (!(adultCount === 0 && childCount > 0)) {
+                    formData.additionalGuests = [];
+                    // Add adults beyond the first one
+                    if (formData.adultGuests.length > 1) {
+                        formData.additionalGuests = formData.additionalGuests.concat(formData.adultGuests.slice(1));
+                    }
+                    // Add all children
+                    formData.additionalGuests = formData.additionalGuests.concat(formData.childGuests);
                 }
-                // Add all children
-                formData.additionalGuests = formData.additionalGuests.concat(formData.childGuests);
 
             } else {
                 // Not attending
@@ -359,8 +403,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.submittedAt = firebase.firestore.Timestamp.fromDate(new Date()); // Set initial submission time
                 formData.isUpdate = false; // Explicit flag
 
+                // Deep clone the form data to avoid reference issues
+                const clonedFormData = JSON.parse(JSON.stringify(formData));
+
+                // Log the original form data to identify any undefined values
+                console.log('Original form data (stringified):', JSON.stringify(formData));
+
+                // Check for undefined values in the original data
+                for (const key in formData) {
+                    if (formData[key] === undefined) {
+                        console.warn(`Found undefined value for key: ${key}`);
+                    }
+
+                    // Check arrays for undefined values
+                    if (Array.isArray(formData[key])) {
+                        formData[key].forEach((item, index) => {
+                            if (item === undefined) {
+                                console.warn(`Found undefined value in array ${key} at index ${index}`);
+                            }
+                        });
+                    }
+                }
+
                 // Sanitize form data to ensure no undefined values
-                const sanitizedFormData = sanitizeFormData(formData);
+                const sanitizedFormData = sanitizeFormData(clonedFormData);
                 console.log('Sanitized form data:', sanitizedFormData);
 
                 savePromise = db.collection('sheetRsvps').add(sanitizedFormData)
