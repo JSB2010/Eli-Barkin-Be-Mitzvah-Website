@@ -1,6 +1,6 @@
 // RSVP Form Submission Handler
 // Version tracking
-const RSVP_FORM_SUBMISSION_VERSION = "1.2";
+const RSVP_FORM_SUBMISSION_VERSION = "1.3";
 console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
 
 // Wait for the DOM to be fully loaded
@@ -498,11 +498,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Sanitized form data:', sanitizedFormData);
 
                 // SPECIAL CASE: If we have 0 adults and some children, use a completely different approach
-                if (formData.adultCount === 0 && formData.childCount > 0) {
+                // Check both the form data and the actual form input value to be sure
+                const adultCountFromForm = parseInt(form.adultCount?.value) || 0;
+                const childCountFromForm = parseInt(form.childCount?.value) || 0;
+
+                if ((formData.adultCount === 0 || adultCountFromForm === 0) &&
+                    (formData.childCount > 0 || childCountFromForm > 0)) {
                     console.log('SPECIAL CASE: Using direct Firebase API for 0 adults with children');
+                    console.log(`Form values: adultCount=${adultCountFromForm}, childCount=${childCountFromForm}`);
+                    console.log(`formData values: adultCount=${formData.adultCount}, childCount=${formData.childCount}`);
+
+                    // Force adultCount to 0 and clear adultGuests
+                    formData.adultCount = 0;
+                    formData.adultGuests = [];
+
+                    // Use the higher of the two child counts to be safe
+                    const effectiveChildCount = Math.max(formData.childCount, childCountFromForm);
 
                     // Use a completely different approach with a direct database write
-                    savePromise = submitZeroAdultsRSVP(form, formData.childCount);
+                    savePromise = submitZeroAdultsRSVP(form, effectiveChildCount);
                 } else {
                     // Convert to plain object with no undefined values
                     const plainObject = {};
@@ -925,6 +939,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // This uses a completely different approach to avoid any issues with undefined values
     function submitZeroAdultsRSVP(form, childCount) {
         console.log('Using special submitZeroAdultsRSVP function');
+        console.log('Child count:', childCount);
+        console.log('Form name:', form.name.value);
+
+        // Double-check the form's adultCount value
+        const adultCountFromForm = parseInt(form.adultCount?.value) || 0;
+        console.log('Form adultCount value:', adultCountFromForm);
+
+        // If adultCount is not 0, log a warning but proceed with 0 adults
+        if (adultCountFromForm !== 0) {
+            console.warn('WARNING: submitZeroAdultsRSVP called but form adultCount is not 0. Forcing to 0.');
+            // Force the form value to 0 to ensure consistency
+            if (form.adultCount) form.adultCount.value = 0;
+        }
 
         try {
             // Collect child names directly from the form
@@ -933,8 +960,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const childNameField = form[`childName${i}`];
                 if (childNameField && childNameField.value.trim()) {
                     childNames.push(childNameField.value.trim());
+                    console.log(`Child ${i} name:`, childNameField.value.trim());
                 } else {
                     childNames.push(`Child ${i}`);
+                    console.log(`Child ${i} name not found, using default: Child ${i}`);
                 }
             }
 

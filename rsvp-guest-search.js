@@ -1,6 +1,6 @@
 // RSVP Guest Search and Form Handling
 // Version tracking
-const RSVP_FORM_VERSION = "1.2";
+const RSVP_FORM_VERSION = "1.3";
 console.log(`%cRSVP Form Version: ${RSVP_FORM_VERSION}`, "color: #0d47a1; font-size: 14px; font-weight: bold; background-color: #e3f2fd; padding: 5px 10px; border-radius: 4px;");
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -309,13 +309,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 switchToNewMode();
                 // Ensure attending section is visible and counts are default for new submissions
                 document.getElementById('attendingSection').style.display = 'block';
-
-                // Don't set adultCount to 1 by default - let updateGuestFields handle it
-                // This was causing issues with 0 adults submissions
-                adultCountInput.value = 0;
+                adultCountInput.value = 1;
                 childCountInput.value = 0;
-
-                // updateGuestFields will set adultCount to 1 if both are 0
                 updateGuestFields(); // Create fields for default counts
             }
 
@@ -843,13 +838,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('phone').value = '';
         document.getElementById('attendingYes').checked = true; // Default to Yes
         document.getElementById('attendingNo').checked = false;
-
-        // Don't set adultCount to 1 by default - let updateGuestFields handle it
-        // This was causing issues with 0 adults submissions
-        document.getElementById('adultCount').value = 0;
+        document.getElementById('adultCount').value = 1;
         document.getElementById('childCount').value = 0;
-
-        // updateGuestFields will set adultCount to 1 if both are 0
         // updateGuestFields will clear name inputs
 
         console.log('[switchToNewMode] UI switched to new mode.');
@@ -982,16 +972,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Parse guest counts for attending guests
         if (isAttending) {
             // Use counts directly from submission if available, otherwise infer/default
-            let adultCount = typeof submission.adultCount === 'number' ? submission.adultCount : (submission.adultGuests?.length || 0);
+            let adultCount = typeof submission.adultCount === 'number' ? submission.adultCount : (submission.adultGuests?.length || 1);
             let childCount = typeof submission.childCount === 'number' ? submission.childCount : (submission.childGuests?.length || 0);
 
-            // Only ensure at least one adult if both adult and child counts are 0
-            // If there are children but no adults, respect the 0 adult count
+            // Ensure at least one adult if attending
             if (adultCount === 0 && childCount === 0) {
-                adultCount = 1; // Default to 1 adult only if no children
-            } else if (adultCount === 0 && childCount > 0) {
-                // If there are children but no adults, keep adult count at 0
-                console.log('[prefillForm] 0 adults with children, keeping adult count at 0');
+                adultCount = 1;
             }
 
             console.log(`[prefillForm] Setting counts - Adults: ${adultCount}, Children: ${childCount}`);
