@@ -1,5 +1,66 @@
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Function to sanitize form data before sending to Firestore
+    // This ensures there are no undefined values that could cause errors
+    function sanitizeFormData(data) {
+        // Create a new object to avoid modifying the original
+        const sanitized = {};
+
+        // Process each property in the data object
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                const value = data[key];
+
+                // Handle different types of values
+                if (value === undefined) {
+                    // Replace undefined with null for Firestore
+                    sanitized[key] = null;
+                } else if (Array.isArray(value)) {
+                    // For arrays, sanitize each element
+                    sanitized[key] = value.map(item =>
+                        item === undefined ? null : item
+                    );
+                } else if (value === null) {
+                    // Keep null values as they are
+                    sanitized[key] = null;
+                } else if (typeof value === 'object' && value !== null) {
+                    // For nested objects, recursively sanitize
+                    sanitized[key] = sanitizeFormData(value);
+                } else {
+                    // For primitive values, keep as is
+                    sanitized[key] = value;
+                }
+            }
+        }
+
+        // Ensure critical fields are never undefined or missing
+        if (!('adultCount' in sanitized) || sanitized.adultCount === undefined) {
+            sanitized.adultCount = 0;
+        }
+
+        if (!('childCount' in sanitized) || sanitized.childCount === undefined) {
+            sanitized.childCount = 0;
+        }
+
+        if (!('guestCount' in sanitized) || sanitized.guestCount === undefined) {
+            sanitized.guestCount = sanitized.adultCount + sanitized.childCount;
+        }
+
+        if (!('adultGuests' in sanitized) || sanitized.adultGuests === undefined) {
+            sanitized.adultGuests = [];
+        }
+
+        if (!('childGuests' in sanitized) || sanitized.childGuests === undefined) {
+            sanitized.childGuests = [];
+        }
+
+        if (!('additionalGuests' in sanitized) || sanitized.additionalGuests === undefined) {
+            sanitized.additionalGuests = [];
+        }
+
+        return sanitized;
+    }
+
     // Function to clear error messages
     function clearErrorMessage() {
         const errorMessageElement = document.getElementById('errorMessage');
@@ -257,9 +318,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 formData.isUpdate = true; // Explicit flag
 
+                // Sanitize form data to ensure no undefined values
+                const sanitizedFormData = sanitizeFormData(formData);
+                console.log('Sanitized form data for update:', sanitizedFormData);
+
                 // Use the submissionId stored in the form's data attribute
                 const docRef = db.collection('sheetRsvps').doc(submissionId);
-                savePromise = docRef.update(formData)
+                savePromise = docRef.update(sanitizedFormData)
                     .catch(error => {
                         console.error(`Error updating document ${submissionId}:`, error);
                         // Add more context to the error
@@ -294,7 +359,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.submittedAt = firebase.firestore.Timestamp.fromDate(new Date()); // Set initial submission time
                 formData.isUpdate = false; // Explicit flag
 
-                savePromise = db.collection('sheetRsvps').add(formData)
+                // Sanitize form data to ensure no undefined values
+                const sanitizedFormData = sanitizeFormData(formData);
+                console.log('Sanitized form data:', sanitizedFormData);
+
+                savePromise = db.collection('sheetRsvps').add(sanitizedFormData)
                     .catch(error => {
                         console.error('Error creating new RSVP:', error);
                         // Add more context to the error
@@ -311,8 +380,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Chain the guest list update regardless of new/update
             savePromise = savePromise.then(() => {
                 console.log('RSVP saved/updated successfully in sheetRsvps. Updating guestList entry...');
-                // Also update the guest list entry
-                return updateGuestList(formData.name, formData); // Pass full formData
+                // Also update the guest list entry - use sanitized data to prevent errors
+                const sanitizedData = sanitizeFormData(formData);
+                return updateGuestList(formData.name, sanitizedData); // Pass sanitized formData
             });
 
             // --- Guest List Update Function ---
