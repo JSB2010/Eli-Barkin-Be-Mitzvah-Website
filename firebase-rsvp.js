@@ -274,13 +274,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     input.value = '';
                     console.log(`Cleared adult input field: ${input.id}`);
                 });
+                // Ensure adultGuestsOverride is set if it exists, or initialize it
+                window.adultGuestsOverride = []; 
+                console.log('CRITICAL FIX: Ensured adultGuestsOverride is an empty array for 0 adults case.');
             }
 
             // Check if attending
             if (formData.attending === 'yes') {
                 // Get adult and child counts
-                const adultCount = parseInt(form.adultCount?.value) || 0; // Default to 0 if not attending
-                const childCount = parseInt(form.childCount?.value) || 0;
+                // Use the direct counts we established earlier for consistency
+                const adultCount = directAdultCount;
+                const childCount = directChildCount;
 
                 // Ensure at least one adult if attending
                  if (adultCount === 0 && childCount > 0) {
@@ -290,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      formData.childCount = childCount;
                      // Don't use the invitation name as an adult
                      formData.adultGuests = []; // Empty array - no adults
+                     console.log('INFO: Processing as 0 adults, >0 children. adultGuests forced empty.');
                  } else if (adultCount === 0 && childCount === 0) {
                      // If both are 0 but attending is yes, default to 1 adult
                      // but don't automatically use the invitation name
