@@ -217,12 +217,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const db = firebase.firestore();
 
             // STEP 1: Get the guest document from guestList
-            const guestDoc = await db.collection('guestList').doc(guestId).get();
+            let guestDoc;
+            try {
+                guestDoc = await db.collection('guestList').doc(guestId).get();
 
-            if (!guestDoc.exists) {
-                console.error('[selectGuest] ERROR: Guest not found in guestList with ID:', guestId);
-                showErrorMessage('Guest Not Found', 'Could not find the selected guest in our list. Please try searching again or contact us if the problem persists.');
+                if (!guestDoc.exists) {
+                    console.error('[selectGuest] ERROR: Guest not found in guestList with ID:', guestId);
+                    showErrorMessage('Guest Not Found', 'Could not find the selected guest in our list. Please try searching again or contact us if the problem persists.');
+                    resetSubmissionState();
+                    // Remove loading indicator
+                    if (document.body.contains(loadingIndicator)) {
+                        document.body.removeChild(loadingIndicator);
+                    }
+                    return false;
+                }
+            } catch (guestDocError) {
+                console.error('[selectGuest] Error fetching guest document:', guestDocError);
+                showErrorMessage('Database Error', 'There was a problem accessing the guest list. Please try again in a few moments or contact us if the problem persists.');
                 resetSubmissionState();
+                // Remove loading indicator
+                if (document.body.contains(loadingIndicator)) {
+                    document.body.removeChild(loadingIndicator);
+                }
                 return false;
             }
 
@@ -246,8 +262,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // STEP 2: Check for an existing RSVP submission in sheetRsvps
             console.log('[selectGuest] Checking for existing submission for:', selectedGuest.name);
-            const foundSubmission = await checkExistingSubmission(selectedGuest.name);
-            console.log('[selectGuest] checkExistingSubmission result:', foundSubmission);
+            let foundSubmission;
+            try {
+                foundSubmission = await checkExistingSubmission(selectedGuest.name);
+                console.log('[selectGuest] checkExistingSubmission result:', foundSubmission);
+            } catch (submissionError) {
+                console.error('[selectGuest] Error checking for existing submission:', submissionError);
+                // Don't fail completely, just proceed with new submission mode
+                console.log('[selectGuest] Proceeding with new submission mode due to error checking existing submission');
+                foundSubmission = null;
+            }
 
             // STEP 3: Configure UI based on whether a submission was found
             additionalFields.style.display = 'block';
@@ -256,7 +280,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (foundSubmission) {
                 // Existing submission found - Switch to update mode
                 console.log('[selectGuest] Existing submission found. Switching to update mode.');
-                processExistingSubmission(foundSubmission); // This sets window.existingSubmission and prefills
+                try {
+                    processExistingSubmission(foundSubmission); // This sets window.existingSubmission and prefills
+                } catch (processError) {
+                    console.error('[selectGuest] Error processing existing submission:', processError);
+                    // Fall back to new mode if processing fails
+                    switchToNewMode();
+                    document.getElementById('attendingSection').style.display = 'block';
+                    adultCountInput.value = 1;
+                    childCountInput.value = 0;
+                    updateGuestFields(); // Create fields for default counts
+                }
             } else {
                 // No existing submission - Switch to new mode
                 console.log('[selectGuest] No existing submission found. Switching to new mode.');
@@ -272,15 +306,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const attendingYesRadio = document.getElementById('attendingYes');
             const attendingNoRadio = document.getElementById('attendingNo');
             const attendingSection = document.getElementById('attendingSection');
-            if (attendingYesRadio.checked) {
-                attendingSection.style.display = 'block';
-            } else if (attendingNoRadio.checked) {
-                attendingSection.style.display = 'none';
+            if (attendingYesRadio && attendingNoRadio && attendingSection) {
+                if (attendingYesRadio.checked) {
+                    attendingSection.style.display = 'block';
+                } else if (attendingNoRadio.checked) {
+                    attendingSection.style.display = 'none';
+                }
+            } else {
+                console.warn('[selectGuest] Missing radio buttons or attending section elements');
             }
 
             console.log('[selectGuest] Completed successfully for:', selectedGuest.name);
             // Remove loading indicator
-            document.body.removeChild(loadingIndicator);
+            if (document.body.contains(loadingIndicator)) {
+                document.body.removeChild(loadingIndicator);
+            }
             return true; // Indicate success
 
         } catch (error) {
@@ -289,7 +329,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.body.contains(loadingIndicator)) {
                 document.body.removeChild(loadingIndicator);
             }
-            showErrorMessage('Error Loading Guest', `An unexpected error occurred while loading guest information: ${error.message}. Please try again.`);
+
+            // Provide more specific error messages based on error type
+            let errorTitle = 'Error Loading Guest';
+            let errorDetails = 'An unexpected error occurred while loading guest information. Please try again.';
+
+            if (error.code === 'permission-denied') {
+                errorTitle = 'Permission Error';
+                errorDetails = 'You do not have permission to access this guest information. Please try again or contact the administrator.';
+            } else if (error.code === 'not-found') {
+                errorTitle = 'Guest Not Found';
+                errorDetails = 'The guest information could not be found. Please try searching again.';
+            } else if (error.code === 'unavailable' || error.message?.includes('network')) {
+                errorTitle = 'Network Error';
+                errorDetails = 'There was a problem with the network connection. Please check your internet connection and try again.';
+            } else if (error.message) {
+                errorDetails = `Error details: ${error.message}`;
+            }
+
+            showErrorMessage(errorTitle, errorDetails);
             resetSubmissionState(); // Ensure clean state on error
             return false; // Indicate failure
         }
@@ -300,13 +358,10 @@ document.addEventListener('DOMContentLoaded', function() {
     async function checkExistingSubmission(guestName) {
         console.log('[checkExistingSubmission] Started for guest name:', guestName);
 
-
         if (!guestName) {
             console.warn('[checkExistingSubmission] No guest name provided.');
             return null;
         }
-
-
 
         try {
             const db = firebase.firestore();
@@ -322,50 +377,33 @@ document.addEventListener('DOMContentLoaded', function() {
             // This is a workaround for permission issues with sheetRsvps collection
             console.log('[checkExistingSubmission] Checking guestList for response status...');
 
-            try {
-                await db.collection('guestList')
-                    .where('name', '==', guestName)
-                    .limit(1)
-                    .get();
-                // First attempt is just to check connectivity
-            } catch (guestListError) {
-                console.error('[checkExistingSubmission] Error querying guestList:', guestListError);
-            }
-
-            // Retry the query with proper error handling
             let guestListQuery;
+            let guestDoc = null;
+            let guestData = null;
+
             try {
                 guestListQuery = await db.collection('guestList')
                     .where('name', '==', guestName)
                     .limit(1)
                     .get();
-            } catch (error) {
-                console.error(`Failed to query guestList: ${error.message}`);
+
+                if (!guestListQuery.empty) {
+                    guestDoc = guestListQuery.docs[0];
+                    guestData = guestDoc.data();
+                    console.log(`[checkExistingSubmission] Found guest in guestList: ${guestData.name} (ID: ${guestDoc.id})`);
+
+                    if (!guestData.hasResponded) {
+                        console.log('[checkExistingSubmission] Guest found in guestList but hasResponded=false. Checking sheetRsvps anyway...');
+                    } else {
+                        console.log('[checkExistingSubmission] Guest has previously responded according to guestList. Checking for submission details...');
+                    }
+                } else {
+                    console.log('[checkExistingSubmission] Guest not found in guestList collection');
+                }
+            } catch (guestListError) {
+                console.error('[checkExistingSubmission] Error querying guestList:', guestListError);
                 // Continue with the process even if this fails
                 guestListQuery = { empty: true, docs: [] };
-            }
-
-            let guestDoc = null;
-            let guestData = null;
-
-            if (!guestListQuery.empty) {
-                guestDoc = guestListQuery.docs[0];
-                guestData = guestDoc.data();
-                console.log(`[checkExistingSubmission] Found guest in guestList: ${guestData.name} (ID: ${guestDoc.id})`);
-
-                // IMPORTANT: We used to return null here if hasResponded was false,
-                // but that caused issues when the collections were out of sync.
-                // Now we ALWAYS check sheetRsvps regardless of the hasResponded flag.
-
-                if (!guestData.hasResponded) {
-                    console.log('[checkExistingSubmission] Guest found in guestList but hasResponded=false. Checking sheetRsvps anyway...');
-
-                } else {
-                    console.log('[checkExistingSubmission] Guest has previously responded according to guestList. Checking for submission details...');
-
-                }
-            } else {
-                console.log('[checkExistingSubmission] Guest not found in guestList collection');
             }
 
             // Try to query the sheetRsvps collection directly
@@ -373,7 +411,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('[checkExistingSubmission] Querying sheetRsvps for potential matches...');
                 let querySnapshot;
                 try {
-                    querySnapshot = await db.collection('sheetRsvps').get();
+                    // Use a more targeted query if possible to reduce data transfer
+                    querySnapshot = await db.collection('sheetRsvps')
+                        .where('name', '==', guestName)
+                        .get();
+
+                    // If no exact match, try to get all documents (fallback)
+                    if (querySnapshot.empty) {
+                        console.log('[checkExistingSubmission] No exact match found, querying all sheetRsvps...');
+                        querySnapshot = await db.collection('sheetRsvps').get();
+                    }
+
                     console.log(`[checkExistingSubmission] Successfully queried sheetRsvps. Found ${querySnapshot.size} documents.`);
                 } catch (sheetError) {
                     console.error(`[checkExistingSubmission] Error querying sheetRsvps: ${sheetError.message}`);
@@ -415,15 +463,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.warn('[checkExistingSubmission] Permission denied for sheetRsvps. Using fallback method...');
 
                     // If we found the guest in guestList, create a basic submission object
-                    // We used to only do this if hasResponded was true, but now we do it regardless
                     if (guestDoc && guestData) {
                         console.log('[checkExistingSubmission] Creating fallback submission from guestList data');
                         console.warn(`[checkExistingSubmission] Permission denied for sheetRsvps. Creating fallback submission for ${guestName}`);
-
-                        // If hasResponded is false, we'll create a basic submission anyway
-                        if (!guestData.hasResponded) {
-                            console.log(`[checkExistingSubmission] Creating fallback even though hasResponded=false`);
-                        }
 
                         // Create a basic submission object from guestList data
                         const fallbackSubmission = {
@@ -435,12 +477,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             attending: guestData.hasResponded ? (guestData.response === 'attending' ? 'yes' : 'no') : 'yes',
                             adultGuests: guestData.adultGuests || [],
                             childGuests: guestData.childGuests || [],
+                            // Important fix: If we have 0 adults and some children, don't add an extra adult
                             adultCount: guestData.adultCount || (guestData.hasResponded ? 0 : 1), // Default to 1 adult if not responded
                             childCount: guestData.childCount || 0,
                             submittedAt: guestData.lastResponseTimestamp || firebase.firestore.Timestamp.now(),
                             isFallback: true, // Mark this as a fallback submission
                             isNewFallback: !guestData.hasResponded // Flag if this is a new fallback (hasResponded was false)
                         };
+
+                        // Fix for the guest count calculation
+                        if (fallbackSubmission.adultCount === 0 && fallbackSubmission.childCount > 0) {
+                            // If we have 0 adults and some children, don't add an extra adult to the guest count
+                            fallbackSubmission.guestCount = fallbackSubmission.childCount;
+                        } else {
+                            fallbackSubmission.guestCount = fallbackSubmission.adultCount + fallbackSubmission.childCount;
+                        }
 
                         normalizeSubmissionData(fallbackSubmission);
                         console.log(`[checkExistingSubmission] Created fallback submission for ${guestName} (ID: ${fallbackSubmission.id})`);
@@ -462,11 +513,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Don't show permission errors to the user, just handle them gracefully
             if (error.code !== 'permission-denied') {
-                showErrorMessage('Error Checking RSVP', `Failed to check for existing RSVP: ${error.message}. Please try again.`);
+                // Don't show error message here - let the calling function handle it
+                console.error(`[checkExistingSubmission] Error details: ${error.message}`);
             }
 
             // Try to create a fallback submission even if we had an error
-            if (guestDoc && guestData && guestData.hasResponded) {
+            if (typeof guestDoc !== 'undefined' && guestDoc && guestData && guestData.hasResponded) {
                 console.warn('[checkExistingSubmission] Attempting emergency fallback submission creation after error');
                 try {
                     const emergencyFallback = {
@@ -483,15 +535,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         isFallback: true,
                         isEmergencyFallback: true
                     };
+
+                    // Fix for the guest count calculation
+                    if (emergencyFallback.adultCount === 0 && emergencyFallback.childCount > 0) {
+                        // If we have 0 adults and some children, don't add an extra adult to the guest count
+                        emergencyFallback.guestCount = emergencyFallback.childCount;
+                    } else {
+                        emergencyFallback.guestCount = emergencyFallback.adultCount + emergencyFallback.childCount;
+                    }
+
                     normalizeSubmissionData(emergencyFallback);
-                    logDebug('SUCCESS', `Created emergency fallback submission (ID: ${emergencyFallback.id})`);
+                    console.log(`[checkExistingSubmission] Created emergency fallback submission (ID: ${emergencyFallback.id})`);
                     return emergencyFallback;
                 } catch (fallbackError) {
-                    logDebug('ERROR', `Failed to create emergency fallback: ${fallbackError.message}`);
+                    console.error(`[checkExistingSubmission] Failed to create emergency fallback: ${fallbackError.message}`);
                 }
             }
 
-            return null; // Return null on error
+            // Throw the error to be handled by the caller
+            throw error;
         }
     }
 
@@ -534,6 +596,15 @@ document.addEventListener('DOMContentLoaded', function() {
         submission.childCount = submission.childCount ?? (submission.childGuests.length || 0);
         submission.email = submission.email ?? '';
         submission.phone = submission.phone ?? '';
+
+        // Fix for guest count calculation
+        if (submission.adultCount === 0 && submission.childCount > 0) {
+            // If we have 0 adults and some children, don't add an extra adult to the guest count
+            submission.guestCount = submission.childCount;
+        } else {
+            submission.guestCount = submission.adultCount + submission.childCount;
+        }
+
         // Ensure timestamps are properly handled
         if (submission.submittedAt && typeof submission.submittedAt.toDate !== 'function') {
             console.warn('[normalizeSubmissionData] submittedAt is not a Firestore timestamp, converting...');
@@ -544,6 +615,8 @@ document.addEventListener('DOMContentLoaded', function() {
         submission.fridayDinner = submission.fridayDinner ?? 'no';
         submission.sundayBrunch = submission.sundayBrunch ?? 'no';
         submission.isOutOfTown = submission.isOutOfTown ?? false;
+
+        console.log(`[normalizeSubmissionData] Normalized submission for ${submission.name}: adultCount=${submission.adultCount}, childCount=${submission.childCount}, guestCount=${submission.guestCount}`);
     }
 
     // Out-of-town guest functionality has been removed
@@ -958,29 +1031,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // If attending is 'yes' (implied if this function runs when attendingSection is visible), ensure at least one adult if both counts are 0
         const attendingSection = document.getElementById('attendingSection');
-        if (attendingSection.style.display !== 'none' && adultCount === 0 && childCount === 0) {
+        if (attendingSection && attendingSection.style.display !== 'none' && adultCount === 0 && childCount === 0) {
             adultCountInput.value = 1;
             adultCount = 1;
             console.log('[updateGuestFields] Both counts were 0 while attending, defaulted adult count to 1.');
         }
 
-        updateAdultGuestFields(adultCount);
+        // Special case: If there are children but no adults, we still need to create at least one adult field
+        // for the primary contact, but we don't want to increment the total guest count
+        let displayAdultCount = adultCount;
+        if (adultCount === 0 && childCount > 0) {
+            displayAdultCount = 1; // Show one adult field even if adultCount is 0
+            console.log('[updateGuestFields] 0 adults with children, showing 1 adult field for primary contact.');
+        }
+
+        updateAdultGuestFields(displayAdultCount); // Use displayAdultCount for UI
         updateChildGuestFields(childCount);
 
         // Show/hide sections based on counts
-        childGuestSection.style.display = childCount > 0 ? 'block' : 'none';
+        if (childGuestSection) {
+            childGuestSection.style.display = childCount > 0 ? 'block' : 'none';
+        }
 
         // Get the adults section and show/hide
-        const adultGuestSection = adultGuestsContainer.closest('.guest-section');
+        const adultGuestSection = adultGuestsContainer?.closest('.guest-section');
         if (adultGuestSection) {
-            adultGuestSection.style.display = adultCount > 0 ? 'block' : 'none';
+            // Always show adult section if there are children (for primary contact)
+            adultGuestSection.style.display = (displayAdultCount > 0 || childCount > 0) ? 'block' : 'none';
         }
 
         // Show/hide the entire guest info container if both counts are 0
         const guestsContainer = document.getElementById('guestsContainer');
         if (guestsContainer) {
-             guestsContainer.style.display = (adultCount > 0 || childCount > 0) ? 'block' : 'none';
+             guestsContainer.style.display = (displayAdultCount > 0 || childCount > 0) ? 'block' : 'none';
         }
+
+        console.log(`[updateGuestFields] Updated fields - adultCount: ${adultCount}, displayAdultCount: ${displayAdultCount}, childCount: ${childCount}`);
     }
     function updateAdultGuestFields(adultCount) {
 

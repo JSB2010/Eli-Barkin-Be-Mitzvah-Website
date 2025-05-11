@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Ensure at least one adult if attending
                  if (adultCount === 0 && childCount > 0) {
                      // If only children are marked, assume the primary contact is the adult
+                     // BUT don't increment the total guest count - just mark one of the children as an adult
                      formData.adultCount = 1;
                      formData.childCount = childCount;
                      // Ensure the primary name is captured as the adult
@@ -184,7 +185,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                  }
-                 formData.guestCount = formData.adultCount + formData.childCount;
+                 // Calculate guest count correctly - if we have 0 adults and some children,
+                 // we don't want to double-count by adding an adult
+                 if (adultCount === 0 && childCount > 0) {
+                     // In this case, we're treating one child as an adult, so the total is just childCount
+                     formData.guestCount = childCount;
+                 } else {
+                     // Normal case - sum of adults and children
+                     formData.guestCount = formData.adultCount + formData.childCount;
+                 }
 
 
                 // For backward compatibility (if needed by other systems)
@@ -360,9 +369,24 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- End Guest List Update Function ---
 
 
+            // Set a timeout to prevent the form from getting stuck
+            const submissionTimeout = setTimeout(() => {
+                console.error('RSVP submission timed out after 30 seconds');
+                showErrorMessage(
+                    'Submission Timeout',
+                    'Your RSVP submission is taking longer than expected. Please try again or contact us if the problem persists.',
+                    true
+                );
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+            }, 30000); // 30 second timeout
+
             // Handle success and failure of the savePromise chain
             savePromise
                 .then(() => {
+                    // Clear the timeout since submission was successful
+                    clearTimeout(submissionTimeout);
+
                     console.log('RSVP and GuestList update process completed successfully.');
                     // Save the guest name in a cookie for future visits
                     // Set cookie to expire in 1 year
@@ -431,6 +455,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             confirmationDetails.innerHTML = `We have you down for <strong>${totalGuests} ${guestText}</strong> ${isUpdate ? '(updated)' : ''}.`;
 
+                            // Add details about adult and child counts for clarity
+                            if (formData.adultCount === 0 && formData.childCount > 0) {
+                                confirmationDetails.innerHTML += `<br>This includes <strong>${formData.childCount} ${formData.childCount === 1 ? 'child' : 'children'}</strong>.`;
+                            } else if (formData.adultCount > 0 && formData.childCount > 0) {
+                                confirmationDetails.innerHTML += `<br>This includes <strong>${formData.adultCount} ${formData.adultCount === 1 ? 'adult' : 'adults'}</strong> and <strong>${formData.childCount} ${formData.childCount === 1 ? 'child' : 'children'}</strong>.`;
+                            }
+
                             // Add submission/update timestamp
                             const timestamp = formData.updatedAt || formData.submittedAt; // Use update time if available
                             const dateStr = timestamp.toDate().toLocaleDateString('en-US', {
@@ -495,10 +526,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Remove update-mode class from form container
                     const formContainer = document.querySelector('.form-container');
                     if (formContainer) formContainer.classList.remove('update-mode');
-
-
                 })
                 .catch(error => {
+                    // Clear the timeout since we're handling the error
+                    clearTimeout(submissionTimeout);
+
                     // Log detailed error information
                     console.error('RSVP Submission/Update Error:', error);
 
@@ -549,6 +581,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Show error message to user
                     showErrorMessage(errorTitle, errorDetails, canRetry);
 
+                    // Log additional information about the form data for debugging
+                    console.log('Form data at time of error:', {
+                        name: formData.name,
+                        attending: formData.attending,
+                        adultCount: formData.adultCount,
+                        childCount: formData.childCount,
+                        guestCount: formData.guestCount,
+                        isUpdate: isUpdate,
+                        submissionId: submissionId
+                    });
                 })
                 .finally(() => {
                     // Restore button state regardless of success or failure
