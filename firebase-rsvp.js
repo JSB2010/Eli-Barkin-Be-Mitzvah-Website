@@ -1,5 +1,12 @@
+// RSVP Form Submission Handler
+// Version tracking
+const RSVP_FORM_SUBMISSION_VERSION = "1.0";
+console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
+
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Log version again when DOM is fully loaded
+    console.log(`RSVP Form Submission v${RSVP_FORM_SUBMISSION_VERSION} initialized`);
     // Function to sanitize form data before sending to Firestore
     // This ensures there are no undefined values that could cause errors
     function sanitizeFormData(data) {
