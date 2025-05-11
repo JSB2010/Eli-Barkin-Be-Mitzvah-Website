@@ -456,17 +456,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Determine if this is an update or a new submission
             const formMode = form.getAttribute('data-mode');
-            const submissionId = form.getAttribute('data-submission-id'); // Get ID from form attribute
-            const isUpdate = formMode === 'update' && submissionId; // Check both mode and ID presence
+            const submissionId = form.getAttribute('data-submission-id'); 
+            const isUpdate = formMode === 'update' && submissionId; 
             const isFallbackSubmission = window.existingSubmission?.isFallback === true;
 
-            // Log submission details for debugging
             console.log('Form submission details:', {
                 isUpdate,
                 formMode,
                 submissionId,
-                formDataName: formData.name,
-                windowExistingSubmission: window.existingSubmission, // Log state from other script
+                formDataName: formData.name, 
+                directAdultCountFromForm: directAdultCount, 
+                directChildCountFromForm: directChildCount, 
+                windowExistingSubmission: window.existingSubmission, 
                 isFallbackSubmission
             });
 
@@ -578,111 +579,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 savePromise = Promise.resolve();
             } else {
                 // Create new RSVP
-                console.log('Creating new RSVP for:', formData.name);
-                formData.submittedAt = firebase.firestore.Timestamp.fromDate(new Date()); // Set initial submission time
-                formData.isUpdate = false; // Explicit flag
+                console.log('Creating new RSVP for:', form.name.value); // Log raw form name
+                
+                const baseDetailsFromForm = {
+                    name: form.name.value,
+                    email: form.email.value,
+                    phone: form.phone.value,
+                    attending: form.attending.value, 
+                    // Use defaults from formData as they are generally safe
+                    fridayDinner: formData.fridayDinner || 'no',
+                    sundayBrunch: formData.sundayBrunch || 'no',
+                    isOutOfTown: formData.isOutOfTown || false,
+                };
 
-                // Deep clone the form data to avoid reference issues
-                const clonedFormData = JSON.parse(JSON.stringify(formData));
+                console.log('Base details for new RSVP:', baseDetailsFromForm);
+                console.log(`Direct counts for routing: Adults: ${directAdultCount}, Children: ${directChildCount}`);
 
-                // Log the original form data to identify any undefined values
-                console.log('Original form data (stringified):', JSON.stringify(formData));
-
-                // Check for undefined values in the original data
-                for (const key in formData) {
-                    if (formData[key] === undefined) {
-                        console.warn(`Found undefined value for key: ${key}`);
-                    }
-
-                    // Check arrays for undefined values
-                    if (Array.isArray(formData[key])) {
-                        formData[key].forEach((item, index) => {
-                            if (item === undefined) {
-                                console.warn(`Found undefined value in array ${key} at index ${index}`);
-                            }
-                        });
-                    }
-                }
-
-                // Sanitize form data to ensure no undefined values
-                const sanitizedFormData = sanitizeFormData(clonedFormData);
-                console.log('Sanitized form data:', sanitizedFormData);
-
-                // SPECIAL CASE: If we have 0 adults and some children, use a completely different approach
-                // Check both the form data and the actual form input value to be sure
-                const adultCountFromForm = parseInt(form.adultCount?.value) || 0;
-                const childCountFromForm = parseInt(form.childCount?.value) || 0;
-
-                if ((formData.adultCount === 0 || adultCountFromForm === 0) &&
-                    (formData.childCount > 0 || childCountFromForm > 0)) {
-                    console.log('SPECIAL CASE: Using direct Firebase API for 0 adults with children');
-                    console.log(`Form values: adultCount=${adultCountFromForm}, childCount=${childCountFromForm}`);
-                    console.log(`formData values: adultCount=${formData.adultCount}, childCount=${formData.childCount}`);
-
-                    // Force adultCount to 0 and clear adultGuests
-                    formData.adultCount = 0;
-                    formData.adultGuests = [];
-
-                    // Use the higher of the two child counts to be safe
-                    const effectiveChildCount = Math.max(formData.childCount, childCountFromForm);
-
-                    // Use a completely different approach with a direct database write
-                    savePromise = submitZeroAdultsRSVP(form, effectiveChildCount);
+                if (directAdultCount === 0 && directChildCount > 0) {
+                    console.log('INFO: Routing to submitZeroAdultsRSVP based on directAdultCount/directChildCount.');
+                    savePromise = submitZeroAdultsRSVP(form, directChildCount, baseDetailsFromForm); 
                 } else {
-                    // Convert to plain object with no undefined values
-                    const plainObject = {};
+                    console.log('INFO: Routing to standard new RSVP submission logic.');
+                    // For standard new RSVPs, we use the main formData object,
+                    // which should have been corrected by the FINAL CORRECTION STEP if necessary
+                    // for scenarios other than 0-adults (or if that step was missed).
+                    formData.submittedAt = formData.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
+                    formData.isUpdate = false;
 
-                    // Manually copy each property, ensuring no undefined values
+                    // It's crucial that formData is correct here due to prior processing steps.
+                    // The FINAL CORRECTION STEP is the last line of defense for formData's integrity.
+                    console.log('formData before standard new RSVP sanitization:', JSON.stringify(formData));
+
+                    const clonedFormData = JSON.parse(JSON.stringify(formData)); // Clone before sanitize
+                    const sanitizedFormData = sanitizeFormData(clonedFormData);
+                    console.log('Sanitized form data for standard new RSVP:', sanitizedFormData);
+
+                    const plainObject = {};
                     Object.keys(sanitizedFormData).forEach(key => {
-                        // Skip undefined values
                         if (sanitizedFormData[key] !== undefined) {
-                            // Handle special case for Firestore Timestamp
-                            if (sanitizedFormData[key] &&
-                                typeof sanitizedFormData[key] === 'object' &&
-                                sanitizedFormData[key].constructor &&
-                                sanitizedFormData[key].constructor.name === 'Timestamp') {
-                                plainObject[key] = sanitizedFormData[key];
-                            }
-                            // Handle arrays
-                            else if (Array.isArray(sanitizedFormData[key])) {
-                                plainObject[key] = sanitizedFormData[key].map(item =>
-                                    item === undefined ? null : item
-                                );
-                            }
-                            // Handle objects
-                            else if (typeof sanitizedFormData[key] === 'object' && sanitizedFormData[key] !== null) {
-                                const nestedObj = {};
-                                Object.keys(sanitizedFormData[key]).forEach(nestedKey => {
-                                    if (sanitizedFormData[key][nestedKey] !== undefined) {
-                                        nestedObj[nestedKey] = sanitizedFormData[key][nestedKey];
-                                    }
-                                });
-                                plainObject[key] = nestedObj;
-                            }
-                            // Handle primitives
-                            else {
-                                plainObject[key] = sanitizedFormData[key];
-                            }
+                            plainObject[key] = sanitizedFormData[key];
                         }
                     });
 
-                    // Ensure critical fields are present
-                    plainObject.name = plainObject.name || '';
-                    plainObject.email = plainObject.email || '';
-                    plainObject.phone = plainObject.phone || '';
-                    plainObject.attending = plainObject.attending || 'no';
-                    plainObject.adultCount = plainObject.adultCount || 0;
-                    plainObject.childCount = plainObject.childCount || 0;
-                    plainObject.guestCount = plainObject.guestCount || 0;
-                    plainObject.adultGuests = plainObject.adultGuests || [];
+                    // Ensure critical fields for standard submission
+                    plainObject.name = plainObject.name || baseDetailsFromForm.name || '';
+                    plainObject.email = plainObject.email || baseDetailsFromForm.email || '';
+                    plainObject.phone = plainObject.phone || baseDetailsFromForm.phone || '';
+                    plainObject.attending = plainObject.attending || baseDetailsFromForm.attending || 'no';
+                    plainObject.adultCount = plainObject.adultCount !== undefined ? plainObject.adultCount : 1; // Default to 1 adult if not 0-adults case
+                    plainObject.childCount = plainObject.childCount !== undefined ? plainObject.childCount : 0;
+                    plainObject.guestCount = plainObject.guestCount !== undefined ? plainObject.guestCount : (plainObject.adultCount + plainObject.childCount);
+                    plainObject.adultGuests = plainObject.adultGuests || (plainObject.adultCount > 0 ? [baseDetailsFromForm.name] : []); // Default primary guest if adults > 0
                     plainObject.childGuests = plainObject.childGuests || [];
                     plainObject.additionalGuests = plainObject.additionalGuests || [];
                     plainObject.submittedAt = plainObject.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
                     plainObject.isUpdate = plainObject.isUpdate || false;
+                    plainObject.fridayDinner = plainObject.fridayDinner || baseDetailsFromForm.fridayDinner;
+                    plainObject.sundayBrunch = plainObject.sundayBrunch || baseDetailsFromForm.sundayBrunch;
+                    plainObject.isOutOfTown = plainObject.isOutOfTown !== undefined ? plainObject.isOutOfTown : baseDetailsFromForm.isOutOfTown;
+                    plainObject.submissionSource = 'standard_new_rsvp_logic_v2';
 
-                    console.log('Final plain object with no undefined values:', plainObject);
-
-                    // Use the plain object for Firestore
+                    console.log('Final plain object for standard new RSVP:', plainObject);
                     savePromise = db.collection('sheetRsvps').add(plainObject);
                 }
 
@@ -1048,124 +1005,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Special function to handle the case of 0 adults with children
     // This uses a completely different approach to avoid any issues with undefined values
-    function submitZeroAdultsRSVP(form, childCount) {
-        console.log('Using special submitZeroAdultsRSVP function');
-        console.log('Child count:', childCount);
-        console.log('Form name:', form.name.value);
+    // --- Helper function to submit RSVP with 0 adults and some children ---
+    async function submitZeroAdultsRSVP(form, childCount, baseDetails) { 
+        const rsvpData = {
+            name: baseDetails.name,
+            email: baseDetails.email,
+            phone: baseDetails.phone,
+            attending: baseDetails.attending === 'yes' ? 'yes' : 'no',
+            adultCount: 0, 
+            childCount: childCount,
+            guestCount: childCount, 
+            adultGuests: [], 
+            childGuests: [],
+            additionalGuests: [], 
+            fridayDinner: baseDetails.fridayDinner || 'no',
+            sundayBrunch: baseDetails.sundayBrunch || 'no',
+            isOutOfTown: baseDetails.isOutOfTown || false,
+            submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+            isUpdate: false,
+            submissionSource: 'submitZeroAdultsRSVP_v4' 
+        };
 
-        // Double-check the form's adultCount value
-        const adultCountFromForm = parseInt(form.adultCount?.value) || 0;
-        console.log('Form adultCount value:', adultCountFromForm);
-
-        // If adultCount is not 0, log a warning but proceed with 0 adults
-        if (adultCountFromForm !== 0) {
-            console.warn('WARNING: submitZeroAdultsRSVP called but form adultCount is not 0. Forcing to 0.');
-            // Force the form value to 0 to ensure consistency
-            if (form.adultCount) form.adultCount.value = 0;
+        for (let i = 1; i <= childCount; i++) {
+            const childNameField = form[`childName${i}`];
+            rsvpData.childGuests.push(childNameField && childNameField.value ? childNameField.value.trim() : `Child ${i}`);
         }
+        rsvpData.additionalGuests = [...rsvpData.childGuests];
 
-        try {
-            // Collect child names directly from the form
-            const childNames = [];
-            for (let i = 1; i <= childCount; i++) {
-                const childNameField = form[`childName${i}`];
-                if (childNameField && childNameField.value.trim()) {
-                    childNames.push(childNameField.value.trim());
-                    console.log(`Child ${i} name:`, childNameField.value.trim());
-                } else {
-                    childNames.push(`Child ${i}`);
-                    console.log(`Child ${i} name not found, using default: Child ${i}`);
-                }
-            }
-
-            console.log('Child names collected:', childNames);
-
-            // EMERGENCY FIX: Force clear all adult guest fields
-            // This is a last-resort fix to ensure no adult guests are submitted when adultCount is 0
-            for (let i = 1; i <= 10; i++) { // Assume max 10 adults
-                const adultField = form[`adultName${i}`];
-                if (adultField) {
-                    adultField.value = '';
-                    console.log(`🚨 EMERGENCY FIX in submitZeroAdultsRSVP: Cleared adult field: adultName${i}`);
-                }
-            }
-
-            // Create a clean document with only the essential fields
-            // This avoids any issues with undefined values
-            const document = {
-                name: form.name.value,
-                email: form.email.value || '',
-                phone: form.phone.value || '',
-                attending: 'yes',
-                adultCount: 0, // Explicitly set to 0
-                childCount: childNames.length,
-                guestCount: childNames.length,
-                adultGuests: [], // Empty array - no adults
-                childGuests: childNames,
-                additionalGuests: childNames,
-                submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-                isUpdate: false,
-                fridayDinner: 'no',
-                sundayBrunch: 'no',
-                isOutOfTown: false
-            };
-
-            // EMERGENCY FIX: Triple-check that adultGuests is empty
-            if (Array.isArray(document.adultGuests) && document.adultGuests.length > 0) {
-                console.log('🚨 EMERGENCY FIX: Found non-empty adultGuests in submitZeroAdultsRSVP. Forcing to empty array.');
-                document.adultGuests = [];
-            }
-
-            console.log('Clean document for zero adults submission:', document);
-
-            // Use a direct Firebase API call to add the document
-            return firebase.firestore().collection('sheetRsvps').add(document)
-                .then(docRef => {
-                    console.log('Successfully created zero adults RSVP with ID:', docRef.id);
-                    return docRef;
-                })
-                .catch(error => {
-                    console.error('Error in zero adults RSVP submission:', error);
-
-                    // If there's an error, try an even more minimal approach
-                    if (error.message && error.message.includes('undefined')) {
-                        console.log('Attempting fallback with minimal document');
-
-                        // Create an absolute minimal document
-                        const minimalDoc = {
-                            name: form.name.value || 'Unknown',
-                            attending: 'yes',
-                            adultCount: 0, // Explicitly set to 0
-                            childCount: childNames.length,
-                            guestCount: childNames.length,
-                            adultGuests: [], // Empty array - no adults
-                            childGuests: childNames,
-                            additionalGuests: childNames,
-                            submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
-                        };
-
-                        // EMERGENCY FIX: Triple-check that adultGuests is empty in minimal doc
-                        if (Array.isArray(minimalDoc.adultGuests) && minimalDoc.adultGuests.length > 0) {
-                            console.log('🚨 EMERGENCY FIX: Found non-empty adultGuests in minimal doc. Forcing to empty array.');
-                            minimalDoc.adultGuests = [];
-                        }
-
-                        return firebase.firestore().collection('sheetRsvps').add(minimalDoc)
-                            .then(docRef => {
-                                console.log('Successfully created minimal zero adults RSVP with ID:', docRef.id);
-                                return docRef;
-                            })
-                            .catch(innerError => {
-                                console.error('Error in minimal zero adults RSVP submission:', innerError);
-                                throw innerError;
-                            });
-                    }
-
-                    throw error;
-                });
-        } catch (error) {
-            console.error('Exception in submitZeroAdultsRSVP:', error);
-            return Promise.reject(error);
-        }
+        console.log('[submitZeroAdultsRSVP_v4] Submitting data:', rsvpData);
+        return db.collection('sheetRsvps').add(rsvpData);
     }
+
 });
+//# sourceMappingURL=firebase-rsvp.js.map
