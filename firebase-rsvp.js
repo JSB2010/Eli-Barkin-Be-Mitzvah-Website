@@ -483,72 +483,114 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sanitizedFormData = sanitizeFormData(clonedFormData);
                 console.log('Sanitized form data:', sanitizedFormData);
 
-                // Convert to plain object with no undefined values
-                const plainObject = {};
+                // SPECIAL CASE: If we have 0 adults and some children, use a completely different approach
+                if (formData.adultCount === 0 && formData.childCount > 0) {
+                    console.log('SPECIAL CASE: Using direct Firebase API for 0 adults with children');
 
-                // Manually copy each property, ensuring no undefined values
-                Object.keys(sanitizedFormData).forEach(key => {
-                    // Skip undefined values
-                    if (sanitizedFormData[key] !== undefined) {
-                        // Handle special case for Firestore Timestamp
-                        if (sanitizedFormData[key] &&
-                            typeof sanitizedFormData[key] === 'object' &&
-                            sanitizedFormData[key].constructor &&
-                            sanitizedFormData[key].constructor.name === 'Timestamp') {
-                            plainObject[key] = sanitizedFormData[key];
-                        }
-                        // Handle arrays
-                        else if (Array.isArray(sanitizedFormData[key])) {
-                            plainObject[key] = sanitizedFormData[key].map(item =>
-                                item === undefined ? null : item
-                            );
-                        }
-                        // Handle objects
-                        else if (typeof sanitizedFormData[key] === 'object' && sanitizedFormData[key] !== null) {
-                            const nestedObj = {};
-                            Object.keys(sanitizedFormData[key]).forEach(nestedKey => {
-                                if (sanitizedFormData[key][nestedKey] !== undefined) {
-                                    nestedObj[nestedKey] = sanitizedFormData[key][nestedKey];
-                                }
-                            });
-                            plainObject[key] = nestedObj;
-                        }
-                        // Handle primitives
-                        else {
-                            plainObject[key] = sanitizedFormData[key];
+                    // Create a minimal valid document with only the essential fields
+                    // Use a direct object literal with no references to formData to avoid any undefined values
+                    const childNames = [];
+
+                    // Collect child names directly from the form
+                    for (let i = 1; i <= formData.childCount; i++) {
+                        const childNameField = form[`childName${i}`];
+                        if (childNameField && childNameField.value.trim()) {
+                            childNames.push(childNameField.value.trim());
+                        } else {
+                            childNames.push(`Child ${i}`);
                         }
                     }
-                });
 
-                // Ensure critical fields are present
-                plainObject.name = plainObject.name || '';
-                plainObject.email = plainObject.email || '';
-                plainObject.phone = plainObject.phone || '';
-                plainObject.attending = plainObject.attending || 'no';
-                plainObject.adultCount = plainObject.adultCount || 0;
-                plainObject.childCount = plainObject.childCount || 0;
-                plainObject.guestCount = plainObject.guestCount || 0;
-                plainObject.adultGuests = plainObject.adultGuests || [];
-                plainObject.childGuests = plainObject.childGuests || [];
-                plainObject.additionalGuests = plainObject.additionalGuests || [];
-                plainObject.submittedAt = plainObject.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
-                plainObject.isUpdate = plainObject.isUpdate || false;
+                    console.log('Child names collected:', childNames);
 
-                console.log('Final plain object with no undefined values:', plainObject);
+                    // Use the Firebase API directly with a hardcoded object
+                    // This bypasses any potential issues with undefined values
+                    savePromise = firebase.firestore().collection('sheetRsvps').add({
+                        name: form.name.value,
+                        email: form.email.value || '',
+                        phone: form.phone.value || '',
+                        attending: 'yes',
+                        adultCount: 0,
+                        childCount: childNames.length,
+                        guestCount: childNames.length,
+                        adultGuests: [],
+                        childGuests: childNames,
+                        additionalGuests: childNames,
+                        submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+                        isUpdate: false,
+                        fridayDinner: 'no',
+                        sundayBrunch: 'no',
+                        isOutOfTown: false
+                    });
+                } else {
+                    // Convert to plain object with no undefined values
+                    const plainObject = {};
 
-                // Use the plain object for Firestore
-                savePromise = db.collection('sheetRsvps').add(plainObject)
-                    .catch(error => {
-                        console.error('Error creating new RSVP:', error);
-                        // Add more context to the error
-                        if (error.code === 'permission-denied') {
-                            console.warn('Permission denied for creating new RSVP. Falling back to guestList update only.');
-                            // If we can't create the document due to permissions, we'll just update the guestList
-                            return Promise.resolve();
-                        } else {
-                            throw new Error(`Failed to create RSVP: ${error.message}`);
+                    // Manually copy each property, ensuring no undefined values
+                    Object.keys(sanitizedFormData).forEach(key => {
+                        // Skip undefined values
+                        if (sanitizedFormData[key] !== undefined) {
+                            // Handle special case for Firestore Timestamp
+                            if (sanitizedFormData[key] &&
+                                typeof sanitizedFormData[key] === 'object' &&
+                                sanitizedFormData[key].constructor &&
+                                sanitizedFormData[key].constructor.name === 'Timestamp') {
+                                plainObject[key] = sanitizedFormData[key];
+                            }
+                            // Handle arrays
+                            else if (Array.isArray(sanitizedFormData[key])) {
+                                plainObject[key] = sanitizedFormData[key].map(item =>
+                                    item === undefined ? null : item
+                                );
+                            }
+                            // Handle objects
+                            else if (typeof sanitizedFormData[key] === 'object' && sanitizedFormData[key] !== null) {
+                                const nestedObj = {};
+                                Object.keys(sanitizedFormData[key]).forEach(nestedKey => {
+                                    if (sanitizedFormData[key][nestedKey] !== undefined) {
+                                        nestedObj[nestedKey] = sanitizedFormData[key][nestedKey];
+                                    }
+                                });
+                                plainObject[key] = nestedObj;
+                            }
+                            // Handle primitives
+                            else {
+                                plainObject[key] = sanitizedFormData[key];
+                            }
                         }
                     });
+
+                    // Ensure critical fields are present
+                    plainObject.name = plainObject.name || '';
+                    plainObject.email = plainObject.email || '';
+                    plainObject.phone = plainObject.phone || '';
+                    plainObject.attending = plainObject.attending || 'no';
+                    plainObject.adultCount = plainObject.adultCount || 0;
+                    plainObject.childCount = plainObject.childCount || 0;
+                    plainObject.guestCount = plainObject.guestCount || 0;
+                    plainObject.adultGuests = plainObject.adultGuests || [];
+                    plainObject.childGuests = plainObject.childGuests || [];
+                    plainObject.additionalGuests = plainObject.additionalGuests || [];
+                    plainObject.submittedAt = plainObject.submittedAt || firebase.firestore.Timestamp.fromDate(new Date());
+                    plainObject.isUpdate = plainObject.isUpdate || false;
+
+                    console.log('Final plain object with no undefined values:', plainObject);
+
+                    // Use the plain object for Firestore
+                    savePromise = db.collection('sheetRsvps').add(plainObject);
+                }
+
+                savePromise = savePromise.catch(error => {
+                    console.error('Error creating new RSVP:', error);
+                    // Add more context to the error
+                    if (error.code === 'permission-denied') {
+                        console.warn('Permission denied for creating new RSVP. Falling back to guestList update only.');
+                        // If we can't create the document due to permissions, we'll just update the guestList
+                        return Promise.resolve();
+                    } else {
+                        throw new Error(`Failed to create RSVP: ${error.message}`);
+                    }
+                });
             }
 
             // Chain the guest list update regardless of new/update
