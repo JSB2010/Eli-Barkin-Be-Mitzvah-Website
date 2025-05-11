@@ -211,16 +211,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle form submission (for Firebase)
         rsvpForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            console.log('[RSVP_SUBMIT_HANDLER_STARTED] Version: 2025-05-11_Attempt5'); // New top-level log
+
             const form = this;
 
+            // Log raw form values immediately
+            const rawAdultCount = form.adultCount?.value;
+            const rawChildCount = form.childCount?.value;
+            console.log(`[PRE-PARSE] rawAdultCount: "${rawAdultCount}", rawChildCount: "${rawChildCount}"`);
+
+            const directAdultCount = parseInt(rawAdultCount) || 0;
+            const directChildCount = parseInt(rawChildCount) || 0;
+            console.log(`[POST-PARSE] directAdultCount: ${directAdultCount} (type: ${typeof directAdultCount}), directChildCount: ${directChildCount} (type: ${typeof directChildCount})`);
+
             // EMERGENCY FIX: Force clear all adult guest fields if adultCount is 0
-            // This is a last-resort fix to ensure no adult guests are submitted when adultCount is 0
-            const adultCountValue = parseInt(form.adultCount?.value) || 0;
-            const childCountValue = parseInt(form.childCount?.value) || 0;
-
-            if (adultCountValue === 0 && childCountValue > 0) {
-                console.log('🚨 EMERGENCY FIX: adultCount is 0 with children. Forcing clear of all adult guest fields.');
-
+            const emergencyCondition = (directAdultCount === 0 && directChildCount > 0);
+            console.log(`[EMERGENCY_FIX_CONDITION_CHECK] (directAdultCount === 0 && directChildCount > 0) is ${emergencyCondition}`);
+            if (emergencyCondition) {
+                console.log('🚨 EMERGENCY FIX (using directCounts): adultCount is 0 with children. Forcing clear of all adult guest fields.');
                 // Clear all adult name fields in the form
                 for (let i = 1; i <= 10; i++) { // Assume max 10 adults
                     const adultField = form[`adultName${i}`];
@@ -229,9 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log(`🚨 EMERGENCY FIX: Cleared adult field: adultName${i}`);
                     }
                 }
-
-                // Also clear any hidden fields or variables that might contain adult guest data
-                window.adultGuestsOverride = []; // Create a special override
+                window.adultGuestsOverride = []; 
                 console.log('🚨 EMERGENCY FIX: Created empty adultGuestsOverride array');
             }
 
@@ -263,10 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // CRITICAL FIX: Check if we have 0 adults and some children
             // This is a direct check before any other processing
-            const directAdultCount = parseInt(form.adultCount?.value) || 0;
-            const directChildCount = parseInt(form.childCount?.value) || 0;
-
-            if (directAdultCount === 0 && directChildCount > 0) {
+            // const directAdultCount = parseInt(form.adultCount?.value) || 0; // Already defined above
+            // const directChildCount = parseInt(form.childCount?.value) || 0; // Already defined above
+            
+            const criticalCondition = (directAdultCount === 0 && directChildCount > 0);
+            console.log(`[CRITICAL_FIX_CONDITION_CHECK] (directAdultCount === 0 && directChildCount > 0) is ${criticalCondition}`);
+            if (criticalCondition) {
                 console.log('CRITICAL FIX: Detected 0 adults with children at form data collection stage');
                 // Force all adult-related fields to be empty/zero
                 // This ensures no invitation name is used as an adult guest
@@ -460,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isUpdate = formMode === 'update' && submissionId; 
             const isFallbackSubmission = window.existingSubmission?.isFallback === true;
 
+            console.log(`[PRE-ROUTING_NEW_UPDATE] directAdultCount: ${directAdultCount}, directChildCount: ${directChildCount}`); // Log before new/update decision
             console.log('Form submission details:', {
                 isUpdate,
                 formMode,
@@ -579,23 +588,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 savePromise = Promise.resolve();
             } else {
                 // Create new RSVP
-                console.log('Creating new RSVP for:', form.name.value); // Log raw form name
+                console.log('Creating new RSVP for:', form.name.value); 
                 
                 const baseDetailsFromForm = {
                     name: form.name.value,
                     email: form.email.value,
                     phone: form.phone.value,
                     attending: form.attending.value, 
-                    // Use defaults from formData as they are generally safe
                     fridayDinner: formData.fridayDinner || 'no',
                     sundayBrunch: formData.sundayBrunch || 'no',
                     isOutOfTown: formData.isOutOfTown || false,
                 };
 
                 console.log('Base details for new RSVP:', baseDetailsFromForm);
-                console.log(`Direct counts for routing: Adults: ${directAdultCount}, Children: ${directChildCount}`);
+                // console.log(`Direct counts for routing: Adults: ${directAdultCount}, Children: ${directChildCount}`); // Covered by new logs below
 
-                if (directAdultCount === 0 && directChildCount > 0) {
+                // [DEBUG ROUTING] Logs from previous attempt, enhanced here:
+                console.log('[DEBUG_ROUTING_BLOCK] About to check directAdultCount and directChildCount for new RSVP.');
+                console.log(`[DEBUG_ROUTING_BLOCK] directAdultCount: ${directAdultCount} (type: ${typeof directAdultCount})`);
+                console.log(`[DEBUG_ROUTING_BLOCK] directChildCount: ${directChildCount} (type: ${typeof directChildCount})`);
+                const zeroAdultRouteCondition = (directAdultCount === 0 && directChildCount > 0);
+                console.log(`[DEBUG_ROUTING_BLOCK] Condition (directAdultCount === 0 && directChildCount > 0): ${zeroAdultRouteCondition}`);
+
+
+                if (zeroAdultRouteCondition) {
                     console.log('INFO: Routing to submitZeroAdultsRSVP based on directAdultCount/directChildCount.');
                     savePromise = submitZeroAdultsRSVP(form, directChildCount, baseDetailsFromForm); 
                 } else {
