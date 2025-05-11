@@ -25,7 +25,8 @@ exports.getRsvpConfirmationTemplate = (rsvpData) => {
     // Adult guests section
     const adultGuests = rsvpData.adultGuests || [];
     let adultGuestsHtml = '';
-    if (adultGuests.length > 0) {
+    // Only show adult guests if there are any and adultCount > 0
+    if (adultGuests.length > 0 && (rsvpData.adultCount > 0)) {
       adultGuestsHtml = `
         <div style="margin: 15px 0;">
           <p style="margin-bottom: 5px; font-weight: bold;">Adult Guests:</p>
@@ -191,7 +192,8 @@ exports.getRsvpUpdateTemplate = (beforeData, afterData) => {
     // Adult guests section
     const adultGuests = afterData.adultGuests || [];
     let adultGuestsHtml = '';
-    if (adultGuests.length > 0) {
+    // Only show adult guests if there are any and adultCount > 0
+    if (adultGuests.length > 0 && (afterData.adultCount > 0)) {
       adultGuestsHtml = `
         <div style="margin: 15px 0;">
           <p style="margin-bottom: 5px; font-weight: bold;">Adult Guests:</p>

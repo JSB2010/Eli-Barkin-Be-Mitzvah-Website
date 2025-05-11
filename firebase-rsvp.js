@@ -259,22 +259,16 @@ document.addEventListener('DOMContentLoaded', function() {
                  // Calculate guest count correctly - if we have 0 adults and some children,
                  // we don't want to double-count by adding an adult
                  if (adultCount === 0 && childCount > 0) {
-                     // In this case, we're treating one child as an adult, so the total is just childCount
-                     formData.guestCount = childCount;
-
-                     // IMPORTANT: Make sure we're not sending any undefined values
-                     // This is a special case that needs extra attention
+                     // In this case, we're keeping adultCount as 0 and only counting children
                      console.log('Special case: 0 adults with children. Setting explicit values.');
 
                      // Ensure all required fields are explicitly set
-                     formData.adultCount = 1; // We're treating one child as an adult in the UI
+                     formData.adultCount = 0; // Keep adult count as 0
                      formData.childCount = childCount;
-                     formData.guestCount = childCount; // But the total count is just the children
+                     formData.guestCount = childCount; // Total count is just the children
 
                      // Make sure guest arrays are properly initialized
-                     if (!formData.adultGuests || !Array.isArray(formData.adultGuests)) {
-                         formData.adultGuests = [form.name.value]; // Use the main name as the adult
-                     }
+                     formData.adultGuests = []; // No adult guests
 
                      if (!formData.childGuests || !Array.isArray(formData.childGuests)) {
                          formData.childGuests = [];
@@ -289,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                          }
                      }
 
-                     // Double-check additionalGuests
+                     // Set additionalGuests to be the same as childGuests
                      formData.additionalGuests = formData.childGuests.map(name => name); // All children are additional guests
 
                  } else {
@@ -736,8 +730,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             // Add details about adult and child counts for clarity
                             if (formData.adultCount === 0 && formData.childCount > 0) {
+                                // Only show children if there are no adults
                                 confirmationDetails.innerHTML += `<br>This includes <strong>${formData.childCount} ${formData.childCount === 1 ? 'child' : 'children'}</strong>.`;
+                            } else if (formData.adultCount > 0 && formData.childCount === 0) {
+                                // Only show adults if there are no children
+                                confirmationDetails.innerHTML += `<br>This includes <strong>${formData.adultCount} ${formData.adultCount === 1 ? 'adult' : 'adults'}</strong>.`;
                             } else if (formData.adultCount > 0 && formData.childCount > 0) {
+                                // Show both adults and children
                                 confirmationDetails.innerHTML += `<br>This includes <strong>${formData.adultCount} ${formData.adultCount === 1 ? 'adult' : 'adults'}</strong> and <strong>${formData.childCount} ${formData.childCount === 1 ? 'child' : 'children'}</strong>.`;
                             }
 
@@ -918,10 +917,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 email: form.email.value || '',
                 phone: form.phone.value || '',
                 attending: 'yes',
-                adultCount: 0,
+                adultCount: 0, // Explicitly set to 0
                 childCount: childNames.length,
                 guestCount: childNames.length,
-                adultGuests: [],
+                adultGuests: [], // Empty array - no adults
                 childGuests: childNames,
                 additionalGuests: childNames,
                 submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
@@ -950,8 +949,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         const minimalDoc = {
                             name: form.name.value || 'Unknown',
                             attending: 'yes',
+                            adultCount: 0, // Explicitly set to 0
                             childCount: childNames.length,
+                            guestCount: childNames.length,
+                            adultGuests: [], // Empty array - no adults
                             childGuests: childNames,
+                            additionalGuests: childNames,
                             submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
                         };
 
