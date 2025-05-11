@@ -1,6 +1,6 @@
 // RSVP Form Submission Handler
 // Version tracking
-const RSVP_FORM_SUBMISSION_VERSION = "1.1";
+const RSVP_FORM_SUBMISSION_VERSION = "1.2";
 console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
 
 // Wait for the DOM to be fully loaded
