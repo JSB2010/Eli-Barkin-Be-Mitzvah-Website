@@ -26,3 +26,8 @@
 .update-notice {
     display: none;
 }
+
+/* Hidden class for elements that should be initially hidden */
+.hidden {
+    display: none;
+}
