@@ -1,6 +1,6 @@
 // RSVP Form Submission Handler
 // Version tracking
-const RSVP_FORM_SUBMISSION_VERSION = "1.5";
+const RSVP_FORM_SUBMISSION_VERSION = "1.6";
 console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
 
 // Wait for the DOM to be fully loaded
@@ -68,6 +68,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 sanitized.adultGuests = [];
             } else if (sanitized.adultCount === 0) {
                 // If adultCount is 0, ensure adultGuests is an empty array
+                sanitized.adultGuests = [];
+                console.log('🚨 EMERGENCY FIX: sanitizeFormData forced adultGuests to empty array because adultCount is 0');
+            }
+
+            // EMERGENCY FIX: Double-check that if adultCount is 0, adultGuests is ALWAYS empty
+            // This is a last-resort fix to ensure no adult guests are submitted when adultCount is 0
+            if (sanitized.adultCount === 0 && Array.isArray(sanitized.adultGuests) && sanitized.adultGuests.length > 0) {
+                console.log('🚨 EMERGENCY FIX: Found non-empty adultGuests with adultCount=0. Forcing to empty array.');
+                console.log('Original adultGuests:', JSON.stringify(sanitized.adultGuests));
                 sanitized.adultGuests = [];
             }
 
@@ -203,6 +212,29 @@ document.addEventListener('DOMContentLoaded', function() {
         rsvpForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const form = this;
+
+            // EMERGENCY FIX: Force clear all adult guest fields if adultCount is 0
+            // This is a last-resort fix to ensure no adult guests are submitted when adultCount is 0
+            const adultCountValue = parseInt(form.adultCount?.value) || 0;
+            const childCountValue = parseInt(form.childCount?.value) || 0;
+
+            if (adultCountValue === 0 && childCountValue > 0) {
+                console.log('🚨 EMERGENCY FIX: adultCount is 0 with children. Forcing clear of all adult guest fields.');
+
+                // Clear all adult name fields in the form
+                for (let i = 1; i <= 10; i++) { // Assume max 10 adults
+                    const adultField = form[`adultName${i}`];
+                    if (adultField) {
+                        adultField.value = '';
+                        console.log(`🚨 EMERGENCY FIX: Cleared adult field: adultName${i}`);
+                    }
+                }
+
+                // Also clear any hidden fields or variables that might contain adult guest data
+                window.adultGuestsOverride = []; // Create a special override
+                console.log('🚨 EMERGENCY FIX: Created empty adultGuestsOverride array');
+            }
+
             const submitButton = form.querySelector('button[type="submit"]');
 
             // Clear any previous error messages
@@ -268,15 +300,22 @@ document.addEventListener('DOMContentLoaded', function() {
                  } else {
                     formData.adultCount = adultCount;
                     formData.childCount = childCount;
-                     // Collect adult guest names
-                    formData.adultGuests = [];
-                    for (let i = 1; i <= adultCount; i++) {
-                        const adultNameField = form[`adultName${i}`];
-                        if (adultNameField) {
-                            formData.adultGuests.push(adultNameField.value.trim());
-                        } else {
-                             formData.adultGuests.push(''); // Add empty string if field missing
-                             console.warn(`Missing adultName field for index ${i}`);
+
+                    // EMERGENCY FIX: Check if we have an override for adultGuests
+                    if (window.adultGuestsOverride !== undefined) {
+                        console.log('🚨 EMERGENCY FIX: Using adultGuestsOverride array:', window.adultGuestsOverride);
+                        formData.adultGuests = window.adultGuestsOverride;
+                    } else {
+                        // Collect adult guest names
+                        formData.adultGuests = [];
+                        for (let i = 1; i <= adultCount; i++) {
+                            const adultNameField = form[`adultName${i}`];
+                            if (adultNameField) {
+                                formData.adultGuests.push(adultNameField.value.trim());
+                            } else {
+                                formData.adultGuests.push(''); // Add empty string if field missing
+                                console.warn(`Missing adultName field for index ${i}`);
+                            }
                         }
                     }
                      // Collect child guest names
@@ -984,6 +1023,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log('Child names collected:', childNames);
 
+            // EMERGENCY FIX: Force clear all adult guest fields
+            // This is a last-resort fix to ensure no adult guests are submitted when adultCount is 0
+            for (let i = 1; i <= 10; i++) { // Assume max 10 adults
+                const adultField = form[`adultName${i}`];
+                if (adultField) {
+                    adultField.value = '';
+                    console.log(`🚨 EMERGENCY FIX in submitZeroAdultsRSVP: Cleared adult field: adultName${i}`);
+                }
+            }
+
             // Create a clean document with only the essential fields
             // This avoids any issues with undefined values
             const document = {
@@ -1003,6 +1052,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 sundayBrunch: 'no',
                 isOutOfTown: false
             };
+
+            // EMERGENCY FIX: Triple-check that adultGuests is empty
+            if (Array.isArray(document.adultGuests) && document.adultGuests.length > 0) {
+                console.log('🚨 EMERGENCY FIX: Found non-empty adultGuests in submitZeroAdultsRSVP. Forcing to empty array.');
+                document.adultGuests = [];
+            }
 
             console.log('Clean document for zero adults submission:', document);
 
@@ -1031,6 +1086,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             additionalGuests: childNames,
                             submittedAt: firebase.firestore.Timestamp.fromDate(new Date())
                         };
+
+                        // EMERGENCY FIX: Triple-check that adultGuests is empty in minimal doc
+                        if (Array.isArray(minimalDoc.adultGuests) && minimalDoc.adultGuests.length > 0) {
+                            console.log('🚨 EMERGENCY FIX: Found non-empty adultGuests in minimal doc. Forcing to empty array.');
+                            minimalDoc.adultGuests = [];
+                        }
 
                         return firebase.firestore().collection('sheetRsvps').add(minimalDoc)
                             .then(docRef => {
