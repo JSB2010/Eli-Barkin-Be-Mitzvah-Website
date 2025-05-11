@@ -1,6 +1,6 @@
 // RSVP Guest Search and Form Handling
 // Version tracking
-const RSVP_FORM_VERSION = "1.4";
+const RSVP_FORM_VERSION = "1.5";
 console.log(`%cRSVP Form Version: ${RSVP_FORM_VERSION}`, "color: #0d47a1; font-size: 14px; font-weight: bold; background-color: #e3f2fd; padding: 5px 10px; border-radius: 4px;");
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1191,12 +1191,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Let the user enter the name manually
 
             // Special case for update mode with fallback submission
-            // Only fill the name if we actually have adults (adultCount > 0)
-            // This prevents filling the name when there are 0 adults
-            if (i === 0 && window.existingSubmission?.name && parseInt(adultCountInput.value) > 0) {
-                // This ensures the primary guest name is always filled, but only if we have adults
+            // CRITICAL FIX: Only fill the name if adultCount is greater than 0
+            // This is the root cause of the issue where invitation name was being used as an adult guest
+            // when there are 0 adults
+            if (i === 0 && window.existingSubmission?.name && adultCount > 0) {
+                // This ensures the primary guest name is always filled, but ONLY if adultCount > 0
                 input.value = window.existingSubmission.name;
-                console.log('[updateAdultGuestFields] Filled first adult name with invitation name:', window.existingSubmission.name);
+                console.log(`[updateAdultGuestFields] Filled first adult name with invitation name: ${window.existingSubmission.name}`);
+            } else if (i === 0 && window.existingSubmission?.name && adultCount === 0) {
+                console.log(`[updateAdultGuestFields] NOT filling first adult name with invitation name because adultCount is 0`);
             }
 
             guestField.appendChild(label);

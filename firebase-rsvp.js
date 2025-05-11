@@ -1,6 +1,6 @@
 // RSVP Form Submission Handler
 // Version tracking
-const RSVP_FORM_SUBMISSION_VERSION = "1.4";
+const RSVP_FORM_SUBMISSION_VERSION = "1.5";
 console.log(`%cRSVP Form Submission Version: ${RSVP_FORM_SUBMISSION_VERSION}`, "color: #2e7d32; font-size: 14px; font-weight: bold; background-color: #e8f5e9; padding: 5px 10px; border-radius: 4px;");
 
 // Wait for the DOM to be fully loaded
@@ -228,6 +228,21 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.fridayDinner = 'no';
             formData.sundayBrunch = 'no';
             formData.isOutOfTown = false;
+
+            // CRITICAL FIX: Check if we have 0 adults and some children
+            // This is a direct check before any other processing
+            const directAdultCount = parseInt(form.adultCount?.value) || 0;
+            const directChildCount = parseInt(form.childCount?.value) || 0;
+
+            if (directAdultCount === 0 && directChildCount > 0) {
+                console.log('CRITICAL FIX: Detected 0 adults with children at form data collection stage');
+                // Force all adult-related fields to be empty/zero
+                // This ensures no invitation name is used as an adult guest
+                form.querySelectorAll('[id^="adultName"]').forEach(input => {
+                    input.value = '';
+                    console.log(`Cleared adult input field: ${input.id}`);
+                });
+            }
 
             // Check if attending
             if (formData.attending === 'yes') {
