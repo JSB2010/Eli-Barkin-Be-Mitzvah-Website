@@ -1,0 +1,1188 @@
+RSVP Dashboard Enhancements: Initializing...
+firebase-config.js:30 Firebase config - Browser detection: Chrome/Chromium: true, Safari: false
+firebase-config.js:36 Attempting synchronous Firebase initialization
+firebase-config.js:50 Firebase initialized synchronously
+logger.ts:115 [2025-05-25T19:38:40.599Z]  @firebase/firestore: Firestore (9.23.0): You are overriding the original host. If you did not intend to override your settings, use {merge: true}.
+b @ logger.ts:115
+warn @ logger.ts:206
+Or @ index.esm2017.js:133
+settings @ database.ts:194
+initializeFirebaseSync @ firebase-config.js:63
+(anonymous) @ firebase-config.js:230Understand this warning
+firebase-config.js:67 Applied Chrome-specific Firestore settings
+firebase-config.js:73 Firestore initialized synchronously
+rsvp-dashboard.html:53 Environment information: {browser: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36', isProduction: false, isMobile: false, isFirefox: false, isSafari: false, …}
+rsvp-dashboard-fix.js:165 DOM ready, applying RSVP dashboard enhancements
+rsvp-dashboard-fix.js:82 Patching DashboardEnhancements.initTooltips
+rsvp-dashboard-fix.js:94 Function patching complete
+rsvp-dashboard-fix.js:102 Ensuring Firebase is ready...
+rsvp-dashboard-fix.js:106 Firebase already initialized, dashboard can proceed
+rsvp-dashboard-fix.js:176 RSVP Dashboard Enhancements: All enhancements applied
+rsvp-dashboard-charts-fix.js:3 RSVP Dashboard Charts Fix loaded
+rsvp-system-minimal.js:3036 DOM loaded, initializing RSVP System...
+rsvp-system-minimal.js:136 RSVP System initializing...
+rsvp-system-minimal.js:209 Firebase is already ready, initializing RSVP System immediately
+rsvp-system-minimal.js:149 Using global Firestore instance
+rsvp-system-minimal.js:291 Debug controls initialized
+rsvp-system-minimal.js:3043 Initializing dashboard data...
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:3064 Firebase available: true
+rsvp-system-minimal.js:3065 Firestore available: true
+rsvp-system-minimal.js:3066 Global db available: true
+rsvp-system-minimal.js:3067 RSVPSystem.state.db available: true
+rsvp-system-minimal.js:3102 Fetching submissions and guest list...
+rsvp-system-minimal.js:676 RSVPSystem.fetchSubmissions called
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:710 Fetching from sheetRsvps collection...
+rsvp-system-minimal.js:809 RSVPSystem.fetchGuestList called
+rsvp-system-minimal.js:841 Fetching from guestList collection...
+rsvp-system-minimal.js:3129 Dashboard initialization complete
+rsvp-system-minimal.js:162 RSVP System initialized with global Firestore instance
+sysadmin-dashboard.js:37 Sysadmin Dashboard initializing...
+sysadmin-dashboard.js:42 Firestore initialized for Sysadmin Dashboard
+sysadmin-dashboard.js:53 Sysadmin Dashboard initialized
+simple-login.js:18 Set RSVPSystem.state.db
+dashboard-utilities.js:703 Adding event listener to sync master sheet button
+dashboard-enhancements.js:25 Initializing dashboard enhancements...
+rsvp-dashboard-fix.js:89 Using safe tooltip initialization
+header-footer.js?v=1.0:13 Header/Footer: Detected RSVP dashboard login, not injecting header/footer yet
+content.bundle.js:55109 will try to open idb now: content
+simple-login.js:149 Auth state changed: User logged in
+simple-login.js:159 Initializing dashboard from auth state change
+simple-login.js:167 Auth state changed - Loading dashboard data
+rsvp-system-minimal.js:3043 Initializing dashboard data...
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:3064 Firebase available: true
+rsvp-system-minimal.js:3065 Firestore available: true
+rsvp-system-minimal.js:3066 Global db available: true
+rsvp-system-minimal.js:3067 RSVPSystem.state.db available: true
+rsvp-system-minimal.js:3102 Fetching submissions and guest list...
+rsvp-system-minimal.js:676 RSVPSystem.fetchSubmissions called
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:710 Fetching from sheetRsvps collection...
+rsvp-system-minimal.js:809 RSVPSystem.fetchGuestList called
+rsvp-system-minimal.js:841 Fetching from guestList collection...
+rsvp-system-minimal.js:3129 Dashboard initialization complete
+sysadmin-dashboard.js:128 Error loading API keys: FirebaseError: Missing or insufficient permissions.
+(anonymous) @ sysadmin-dashboard.js:128
+Promise.catch
+loadApiKeys @ sysadmin-dashboard.js:127
+init @ sysadmin-dashboard.js:48
+(anonymous) @ sysadmin-dashboard.js:1426Understand this error
+sysadmin-dashboard.js:132 Using default empty API keys
+sysadmin-dashboard.js:150 API Key Status: {github: false, googleAnalytics: false, cloudflare: false, brevo: false}
+sysadmin-dashboard.js:334 Refreshing all sysadmin data...
+sysadmin-dashboard.js:305 Loading sysadmin data...
+sysadmin-dashboard.js:359 Checking system status...
+sysadmin-dashboard.js:557 Loading analytics data...
+sysadmin-dashboard.js:814 Loading Firebase data...
+sysadmin-dashboard.js:920 Loading email data...
+sysadmin-dashboard.js:1022 Loading GitHub data...
+sysadmin-dashboard.js:1139 Loading Cloudflare data...
+sysadmin-dashboard.js:1230 Loading Sheets data...
+sysadmin-dashboard.js:1281 Loading system logs...
+rsvp-system-minimal.js:734 Query successful, received 42 documents in 997ms
+rsvp-system-minimal.js:748 Error converting timestamp for doc: WmAj79znntrL9a2BlsQf TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 36nYnCp31Hr9ThSVWyMY TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 5nznl35cf8qXemrk45vx TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: EKDVWTEIdYRBpouuvoEC TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: arCCH4xnVSlJWQjcOKg0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9nIFHk86EAP1kCjKQmX TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 0m13uJ54zmalL3MVbI00 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 1BLJrvsI7qza96HEfuPZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 6n2S8gyVzz6YUFUcDBVU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: J0nB8QQqaLiiaO6ggVBP TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: ds02sJHeAa6WaHEJ1WF0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: yQFNyA4kmozH7GRQxw6A TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: qUH25fNSvmuR4zixdnbZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9cBxi6OlQg9jHIPT80T TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: uERmy2hGGeqBhvnzLTxd TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: CMcXQyN1ILLolGFZX5p5 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: eLeKVPcC2l9jbOomABWH TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 7mwL9neLe9TaZzusP9NU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+initFirestore @ rsvp-system-minimal.js:160
+init @ rsvp-system-minimal.js:210
+(anonymous) @ rsvp-system-minimal.js:3037Understand this warning
+rsvp-system-minimal.js:764 Processed submissions data: 42 items
+rsvp-system-minimal.js:948 Processing submissions...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 0
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 0
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 0
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 0
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:734 Query successful, received 42 documents in 151ms
+rsvp-system-minimal.js:748 Error converting timestamp for doc: WmAj79znntrL9a2BlsQf TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 36nYnCp31Hr9ThSVWyMY TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 5nznl35cf8qXemrk45vx TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: EKDVWTEIdYRBpouuvoEC TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: arCCH4xnVSlJWQjcOKg0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9nIFHk86EAP1kCjKQmX TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 0m13uJ54zmalL3MVbI00 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 1BLJrvsI7qza96HEfuPZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 6n2S8gyVzz6YUFUcDBVU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: J0nB8QQqaLiiaO6ggVBP TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: ds02sJHeAa6WaHEJ1WF0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: yQFNyA4kmozH7GRQxw6A TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: qUH25fNSvmuR4zixdnbZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9cBxi6OlQg9jHIPT80T TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: uERmy2hGGeqBhvnzLTxd TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: CMcXQyN1ILLolGFZX5p5 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: eLeKVPcC2l9jbOomABWH TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 7mwL9neLe9TaZzusP9NU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+(anonymous) @ simple-login.js:161
+setTimeout
+(anonymous) @ simple-login.js:160
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:764 Processed submissions data: 42 items
+rsvp-system-minimal.js:948 Processing submissions...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 0
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 0
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 0
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 0
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:865 Guest list query successful, received 158 documents in 1046ms
+rsvp-system-minimal.js:894 === GUEST LIST DEBUG ===
+rsvp-system-minimal.js:895 Total guests: 158
+rsvp-system-minimal.js:896 Responded guests: 0
+rsvp-system-minimal.js:897 Attending guests: 0
+rsvp-system-minimal.js:898 Declining guests: 0
+rsvp-system-minimal.js:899 Sample responded guest: undefined
+rsvp-system-minimal.js:900 Sample attending guest: undefined
+rsvp-system-minimal.js:901 ========================
+rsvp-system-minimal.js:903 Processed guest list data: 158 items
+rsvp-system-minimal.js:1230 Processing guest list...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 158
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 158
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 158
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 158
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:579 Hiding loading indicator
+rsvp-system-minimal.js:579 Hiding loading indicator
+rsvp-system-minimal.js:865 Guest list query successful, received 158 documents in 187ms
+rsvp-system-minimal.js:894 === GUEST LIST DEBUG ===
+rsvp-system-minimal.js:895 Total guests: 158
+rsvp-system-minimal.js:896 Responded guests: 0
+rsvp-system-minimal.js:897 Attending guests: 0
+rsvp-system-minimal.js:898 Declining guests: 0
+rsvp-system-minimal.js:899 Sample responded guest: undefined
+rsvp-system-minimal.js:900 Sample attending guest: undefined
+rsvp-system-minimal.js:901 ========================
+rsvp-system-minimal.js:903 Processed guest list data: 158 items
+rsvp-system-minimal.js:1230 Processing guest list...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 158
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 158
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 158
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 158
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:579 Hiding loading indicator
+rsvp-system-minimal.js:579 Hiding loading indicator
+rsvp-dashboard-charts-fix.js:10 Initializing chart fixes
+rsvp-dashboard-charts-fix.js:78 Original createCharts function not found, adding our own
+initializeChartFixes @ rsvp-dashboard-charts-fix.js:78
+setTimeout
+(anonymous) @ rsvp-dashboard-charts-fix.js:6Understand this warning
+sysadmin-dashboard.js:545 Error checking Brevo status: FirebaseError: Missing or insufficient permissions.
+(anonymous) @ sysadmin-dashboard.js:545
+Promise.catch
+checkBrevoStatus @ sysadmin-dashboard.js:544
+checkSystemStatus @ sysadmin-dashboard.js:377
+loadSysadminData @ sysadmin-dashboard.js:308
+refreshAllData @ sysadmin-dashboard.js:340
+(anonymous) @ sysadmin-dashboard.js:134
+Promise.catch
+loadApiKeys @ sysadmin-dashboard.js:127
+init @ sysadmin-dashboard.js:48
+(anonymous) @ sysadmin-dashboard.js:1426Understand this error
+sysadmin-dashboard.js:504 Error checking Sheets status: FirebaseError: Missing or insufficient permissions.
+(anonymous) @ sysadmin-dashboard.js:504
+Promise.catch
+checkSheetsStatus @ sysadmin-dashboard.js:503
+checkSystemStatus @ sysadmin-dashboard.js:374
+loadSysadminData @ sysadmin-dashboard.js:308
+refreshAllData @ sysadmin-dashboard.js:340
+(anonymous) @ sysadmin-dashboard.js:134
+Promise.catch
+loadApiKeys @ sysadmin-dashboard.js:127
+init @ sysadmin-dashboard.js:48
+(anonymous) @ sysadmin-dashboard.js:1426Understand this error
+rsvp-system-minimal.js:3043 Initializing dashboard data...
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:3064 Firebase available: true
+rsvp-system-minimal.js:3065 Firestore available: true
+rsvp-system-minimal.js:3066 Global db available: true
+rsvp-system-minimal.js:3067 RSVPSystem.state.db available: true
+rsvp-system-minimal.js:3102 Fetching submissions and guest list...
+rsvp-system-minimal.js:676 RSVPSystem.fetchSubmissions called
+rsvp-system-minimal.js:557 Showing loading indicator
+rsvp-system-minimal.js:710 Fetching from sheetRsvps collection...
+rsvp-system-minimal.js:809 RSVPSystem.fetchGuestList called
+rsvp-system-minimal.js:841 Fetching from guestList collection...
+rsvp-system-minimal.js:3129 Dashboard initialization complete
+rsvp-system-minimal.js:734 Query successful, received 42 documents in 170ms
+rsvp-system-minimal.js:748 Error converting timestamp for doc: WmAj79znntrL9a2BlsQf TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 36nYnCp31Hr9ThSVWyMY TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 5nznl35cf8qXemrk45vx TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: EKDVWTEIdYRBpouuvoEC TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: arCCH4xnVSlJWQjcOKg0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9nIFHk86EAP1kCjKQmX TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 0m13uJ54zmalL3MVbI00 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 1BLJrvsI7qza96HEfuPZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 6n2S8gyVzz6YUFUcDBVU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: J0nB8QQqaLiiaO6ggVBP TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: ds02sJHeAa6WaHEJ1WF0 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: yQFNyA4kmozH7GRQxw6A TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: qUH25fNSvmuR4zixdnbZ TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: Y9cBxi6OlQg9jHIPT80T TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: uERmy2hGGeqBhvnzLTxd TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: CMcXQyN1ILLolGFZX5p5 TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: eLeKVPcC2l9jbOomABWH TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:748 Error converting timestamp for doc: 7mwL9neLe9TaZzusP9NU TypeError: data.submittedAt?.toDate is not a function
+    at rsvp-system-minimal.js:746:59
+    at Array.map (<anonymous>)
+    at rsvp-system-minimal.js:741:61
+(anonymous) @ rsvp-system-minimal.js:748
+(anonymous) @ rsvp-system-minimal.js:741
+Promise.then
+fetchSubmissions @ rsvp-system-minimal.js:730
+RSVPSystem.initDashboard @ rsvp-system-minimal.js:3103
+tryLoadData @ simple-login.js:179
+setTimeout
+(anonymous) @ simple-login.js:201
+next @ auth.ts:358
+(anonymous) @ auth_impl.ts:600
+Promise.then
+registerStateListener @ auth_impl.ts:600
+onAuthStateChanged @ auth_impl.ts:442
+onAuthStateChanged @ auth.ts:180
+(anonymous) @ simple-login.js:148Understand this warning
+rsvp-system-minimal.js:764 Processed submissions data: 42 items
+rsvp-system-minimal.js:948 Processing submissions...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 158
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 158
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 158
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 158
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:865 Guest list query successful, received 158 documents in 186ms
+rsvp-system-minimal.js:894 === GUEST LIST DEBUG ===
+rsvp-system-minimal.js:895 Total guests: 158
+rsvp-system-minimal.js:896 Responded guests: 0
+rsvp-system-minimal.js:897 Attending guests: 0
+rsvp-system-minimal.js:898 Declining guests: 0
+rsvp-system-minimal.js:899 Sample responded guest: undefined
+rsvp-system-minimal.js:900 Sample attending guest: undefined
+rsvp-system-minimal.js:901 ========================
+rsvp-system-minimal.js:903 Processed guest list data: 158 items
+rsvp-system-minimal.js:1230 Processing guest list...
+rsvp-system-minimal.js:1632 === UPDATING DASHBOARD STATS ===
+rsvp-system-minimal.js:1633 Total guests in state: 158
+rsvp-system-minimal.js:1642 Calculated stats:
+rsvp-system-minimal.js:1643 - Total guests: 158
+rsvp-system-minimal.js:1644 - Responded guests: 0
+rsvp-system-minimal.js:1645 - Not responded guests: 158
+rsvp-system-minimal.js:1646 - Attending guests: 0
+rsvp-system-minimal.js:1647 - Not attending guests: 0
+rsvp-system-minimal.js:1652 Sample responded guest: undefined
+rsvp-system-minimal.js:1653 Sample attending guest: undefined
+rsvp-system-minimal.js:1695 UI elements updated with values:
+rsvp-system-minimal.js:1696 - response-rate: 0%
+rsvp-system-minimal.js:1697 - total-guests-count: 158
+rsvp-system-minimal.js:1698 - responded-count: 0
+rsvp-system-minimal.js:1699 - attending-guests-count: 0
+rsvp-system-minimal.js:1700 - not-attending-guests-count: 0
+rsvp-system-minimal.js:1701 - adults-count: 33
+rsvp-system-minimal.js:1702 - children-count: 40
+rsvp-system-minimal.js:1703 =================================
+rsvp-system-minimal.js:579 Hiding loading indicator
+rsvp-system-minimal.js:579 Hiding loading indicator
+firebase-config.js:272 Chrome-specific safety check running

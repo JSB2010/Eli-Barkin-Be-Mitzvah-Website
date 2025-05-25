@@ -317,19 +317,17 @@ const RSVPSystem = {
 
                     // Add active class to current button and content
                     button.classList.add('active');
-                    document.getElementById(tabId).classList.add('active');
-
-                    // Refresh charts when switching to the analytics tab
+                    document.getElementById(tabId).classList.add('active');                    // Refresh charts when switching to the analytics tab
                     if (tabId === 'analytics-tab') {
                         this.updateCharts({
-                            attendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'yes').length,
-                            notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'no').length,
+                            attendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length,
+                            notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                             notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                             adultCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
+                                return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
                             }, 0),
                             childCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
+                                return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
                             }, 0),
                             responseRate: this.state.guests.length > 0 ?
                                 Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -341,7 +339,7 @@ const RSVPSystem = {
         }
 
         // Set up search functionality for submissions table
-        const searchBox = document.getElementById('search-box');
+        const searchBox = document.getElementById('submissions-search-box');
         if (searchBox) {
             searchBox.addEventListener('input', (e) => {
                 this.state.searchTerm = e.target.value.trim();
@@ -361,7 +359,7 @@ const RSVPSystem = {
         }
 
         // Set up filter functionality for submissions table
-        const filterDropdown = document.getElementById('filter-dropdown');
+        const filterDropdown = document.getElementById('submissions-filter-dropdown');
         if (filterDropdown) {
             filterDropdown.addEventListener('change', (e) => {
                 this.state.submissionFilter = e.target.value;
@@ -439,16 +437,15 @@ const RSVPSystem = {
             this.resizeTimeout = setTimeout(() => {
                 // Update charts on resize
                 const analyticsTab = document.getElementById('analytics-tab');
-                if (analyticsTab && analyticsTab.classList.contains('active')) {
-                    this.updateCharts({
-                        attendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'yes').length,
-                        notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'no').length,
+                if (analyticsTab && analyticsTab.classList.contains('active')) {                    this.updateCharts({
+                        attendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length,
+                        notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                         notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                         adultCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
+                            return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
                         }, 0),
                         childCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
+                            return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
                         }, 0),
                         responseRate: this.state.guests.length > 0 ?
                             Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -462,8 +459,21 @@ const RSVPSystem = {
         const refreshDataBtn = document.getElementById('refresh-data-btn');
         if (refreshDataBtn) {
             refreshDataBtn.addEventListener('click', () => {
-                console.log('Refresh data button clicked');
-                this.initDashboard();
+                console.log('Refresh data button clicked - forcing complete refresh');
+
+                // Clear existing data to force fresh fetch
+                this.state.guests = [];
+                this.state.submissions = [];
+                this.state.guestListLoaded = false;
+                this.state.submissionsLoaded = false;
+
+                this.showLoading();
+
+                // Force refresh with a small delay to ensure clean state
+                setTimeout(() => {
+                    this.fetchSubmissions();
+                    this.fetchGuestList();
+                }, 100);
             });
         }
 
@@ -474,6 +484,17 @@ const RSVPSystem = {
         if (exportRsvpsBtn) {
             exportRsvpsBtn.addEventListener('click', () => {
                 this.exportSubmissionsToCSV();
+            });
+        }
+
+        // Set up manual sync button for testing
+        const syncDataBtn = document.getElementById('sync-data-btn');
+        if (syncDataBtn) {
+            syncDataBtn.addEventListener('click', () => {
+                console.log('Manual sync button clicked');
+                this.syncGuestListWithSubmissions();
+                this.updateStats();
+                alert('Data sync completed! Check console for details.');
             });
         }
 
@@ -870,8 +891,26 @@ const RSVPSystem = {
                         phone: data.phone || '',
                         address: data.address || {},
                         submittedAt: data.submittedAt ? new Date(data.submittedAt.seconds * 1000) : null
-                    };
-                });
+                    };                });
+
+                // Debug: Log response status breakdown
+                if (this.DEBUG_MODE) {
+                    const respondedGuests = this.state.guests.filter(guest => guest.hasResponded);
+                    const attendingGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending');
+                    const decliningGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined');
+
+                    console.log('=== GUEST LIST DEBUG ===');
+                    console.log(`Total guests: ${this.state.guests.length}`);
+                    console.log(`Responded guests: ${respondedGuests.length}`);
+                    console.log(`Attending guests: ${attendingGuests.length}`);
+                    console.log(`Declining guests: ${decliningGuests.length}`);
+                    console.log('Sample responded guest:', respondedGuests[0]);
+                    console.log('Sample attending guest:', attendingGuests[0]);
+                    console.log('========================');
+                }
+
+                // CRITICAL FIX: Sync guest list with submissions data
+                this.syncGuestListWithSubmissions();
 
                 console.log(`Processed guest list data: ${this.state.guests.length} items`);
                 try {
@@ -942,15 +981,13 @@ const RSVPSystem = {
                        guestNames.includes(searchTerm);
 
                 if (!matchesSearch) return false;
-            }
-
-            // Apply filter dropdown selection
+            }            // Apply filter dropdown selection
             if (this.state.submissionFilter) {
                 switch (this.state.submissionFilter) {
                     case 'attending':
-                        return submission.attending === 'yes';
+                        return submission.attending === 'attending';
                     case 'not-attending':
-                        return submission.attending === 'no';
+                        return submission.attending === 'declined';
                     case 'recent': {
                         // Last 7 days
                         const oneWeekAgo = new Date();
@@ -960,6 +997,12 @@ const RSVPSystem = {
                     case 'large-party':
                         // 4 or more guests
                         return (submission.guestCount || 0) >= 4;
+                    case 'adults-only':
+                        return (submission.adultCount || 0) > 0 && (submission.childCount || 0) === 0;
+                    case 'children-only':
+                        return (submission.adultCount || 0) === 0 && (submission.childCount || 0) > 0;
+                    case 'mixed-party':
+                        return (submission.adultCount || 0) > 0 && (submission.childCount || 0) > 0;
                     case 'all':
                     default:
                         return true;
@@ -1234,19 +1277,18 @@ const RSVPSystem = {
             if (this.state.responseFilter && this.state.responseFilter !== 'all') {
                 switch (this.state.responseFilter) {
                     case 'responded':
-                        return guest.hasResponded === true;
-                    case 'not-responded':
+                        return guest.hasResponded === true;                    case 'not-responded':
                         return guest.hasResponded === false;
                     case 'attending':
-                        return guest.hasResponded === true && guest.response === 'yes';
+                        return guest.hasResponded === true && guest.response === 'attending';
                     case 'not-attending':
-                        return guest.hasResponded === true && guest.response === 'no';
+                        return guest.hasResponded === true && guest.response === 'declined';
                     case 'out-of-town': {
                         // Check if guest is from out of state (not CO)
                         const isOutOfTown = guest.address?.state &&
                                           guest.address.state.toUpperCase() !== 'CO' &&
                                           guest.hasResponded &&
-                                          guest.response === 'yes';
+                                          guest.response === 'attending';
                         return isOutOfTown;
                     }
                     case 'in-town': {
@@ -1254,7 +1296,7 @@ const RSVPSystem = {
                         const isInTown = (!guest.address?.state ||
                                         guest.address.state.toUpperCase() === 'CO') &&
                                         guest.hasResponded &&
-                                        guest.response === 'yes';
+                                        guest.response === 'attending';
                         return isInTown;
                     }
                     default:
@@ -1337,6 +1379,9 @@ const RSVPSystem = {
 
         // Only hide loading if both submissions and guest list are loaded
         if (this.state.submissionsLoaded && this.state.guestListLoaded) {
+            // CRITICAL FIX: Sync data when both are loaded
+            this.syncGuestListWithSubmissions();
+
             this.hideLoading();
             if (window.directDebug) {
                 window.directDebug('Both submissions and guest list loaded, hiding loading indicator');
@@ -1379,11 +1424,15 @@ const RSVPSystem = {
             <table>
                 <thead>
                     <tr>
+                        <th class="sortable" data-sort="date">Date <span class="sort-icon ${this.state.sortColumn === 'date' ? 'active' : ''}">${this.state.sortColumn === 'date' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
                         <th class="sortable" data-sort="name">Name <span class="sort-icon ${this.state.sortColumn === 'name' ? 'active' : ''}">${this.state.sortColumn === 'name' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
                         <th class="sortable" data-sort="email">Email <span class="sort-icon ${this.state.sortColumn === 'email' ? 'active' : ''}">${this.state.sortColumn === 'email' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
                         <th class="sortable" data-sort="phone">Phone <span class="sort-icon ${this.state.sortColumn === 'phone' ? 'active' : ''}">${this.state.sortColumn === 'phone' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
-                        <th class="sortable" data-sort="guestCount">Guests <span class="sort-icon ${this.state.sortColumn === 'guestCount' ? 'active' : ''}">${this.state.sortColumn === 'guestCount' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
-                        <th class="sortable" data-sort="date">Date <span class="sort-icon ${this.state.sortColumn === 'date' ? 'active' : ''}">${this.state.sortColumn === 'date' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
+                        <th class="sortable" data-sort="attending">Response <span class="sort-icon ${this.state.sortColumn === 'attending' ? 'active' : ''}">${this.state.sortColumn === 'attending' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
+                        <th class="sortable" data-sort="guestCount">Total Guests <span class="sort-icon ${this.state.sortColumn === 'guestCount' ? 'active' : ''}">${this.state.sortColumn === 'guestCount' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
+                        <th class="sortable" data-sort="adultCount">Adults <span class="sort-icon ${this.state.sortColumn === 'adultCount' ? 'active' : ''}">${this.state.sortColumn === 'adultCount' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
+                        <th class="sortable" data-sort="childCount">Children <span class="sort-icon ${this.state.sortColumn === 'childCount' ? 'active' : ''}">${this.state.sortColumn === 'childCount' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span></th>
+                        <th>Guest Names</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -1392,16 +1441,30 @@ const RSVPSystem = {
 
         // Add rows for each submission
         submissions.forEach(submission => {
-            const formattedDate = submission.submittedAt ? submission.submittedAt.toLocaleDateString() : 'N/A';
-            const formattedTime = submission.submittedAt ? submission.submittedAt.toLocaleTimeString() : '';
+            const formattedDate = submission.submittedAt ? submission.submittedAt.toLocaleDateString() : 'N/A';            const formattedTime = submission.submittedAt ? submission.submittedAt.toLocaleTimeString() : '';
+            const response = submission.attending === 'attending' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>';
+
+            // Format guest names
+            const guestNames = [];
+            if (submission.adultGuests && submission.adultGuests.length > 0) {
+                guestNames.push(...submission.adultGuests);
+            }
+            if (submission.childGuests && submission.childGuests.length > 0) {
+                guestNames.push(...submission.childGuests);
+            }
+            const guestNamesStr = guestNames.length > 0 ? guestNames.join(', ') : '-';
 
             tableHTML += `
                 <tr>
+                    <td title="${formattedDate} ${formattedTime}">${formattedDate}</td>
                     <td>${submission.name || 'N/A'}</td>
                     <td>${submission.email || 'N/A'}</td>
                     <td>${submission.phone || 'N/A'}</td>
+                    <td>${response}</td>
                     <td>${submission.guestCount || 0}</td>
-                    <td title="${formattedDate} ${formattedTime}">${formattedDate}</td>
+                    <td>${submission.adultCount || 0}</td>
+                    <td>${submission.childCount || 0}</td>
+                    <td class="guest-names" title="${guestNamesStr}">${guestNamesStr.length > 50 ? guestNamesStr.substring(0, 50) + '...' : guestNamesStr}</td>
                     <td class="action-column">
                         <button class="btn btn-sm primary view-details" data-id="${submission.id}">
                             <i class="fas fa-eye"></i> View
@@ -1521,7 +1584,7 @@ const RSVPSystem = {
         // Add rows for each guest
         guests.forEach(guest => {
             const status = guest.hasResponded ? '<span class="status responded">Responded</span>' : '<span class="status not-responded">Not Responded</span>';
-            const response = guest.hasResponded ? (guest.response === 'yes' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>') : '-';
+            const response = guest.hasResponded ? (guest.response === 'attending' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>') : '-';
             const location = guest.address && guest.address.state ? `${guest.address.state}` : 'N/A';
 
             rowsHTML += `
@@ -1591,7 +1654,250 @@ const RSVPSystem = {
             this.debug.info(`Updated guest list table with ${guests.length} rows`);
         } catch (e) {
             console.error('Error logging to debug panel:', e);
+        }    },
+
+    // CRITICAL FIX: Sync guest list with submissions data
+    syncGuestListWithSubmissions: function() {
+        console.log('=== SYNCING GUEST LIST WITH SUBMISSIONS ===');
+
+        if (!this.state.submissions || this.state.submissions.length === 0) {
+            console.log('No submissions data available for sync');
+            return;
         }
+
+        // Build optimized lookup maps for submissions using multiple strategies
+        const submissionsByEmail = new Map();
+        const submissionsById = new Map();
+        const submissionsByName = new Map();
+        const submissionDuplicates = {
+            email: new Map(),
+            id: new Map(),
+            name: new Map()
+        };
+
+        // Process submissions and detect duplicates
+        this.state.submissions.forEach(submission => {
+            // Track by email (primary identifier)
+            if (submission.email && submission.email.trim()) {
+                const normalizedEmail = submission.email.toLowerCase().trim();
+                if (submissionsByEmail.has(normalizedEmail)) {
+                    if (!submissionDuplicates.email.has(normalizedEmail)) {
+                        submissionDuplicates.email.set(normalizedEmail, []);
+                    }
+                    submissionDuplicates.email.get(normalizedEmail).push(submission);
+                } else {
+                    submissionsByEmail.set(normalizedEmail, submission);
+                }
+            }
+
+            // Track by submission ID (secondary identifier)
+            if (submission.id) {
+                if (submissionsById.has(submission.id)) {
+                    if (!submissionDuplicates.id.has(submission.id)) {
+                        submissionDuplicates.id.set(submission.id, []);
+                    }
+                    submissionDuplicates.id.get(submission.id).push(submission);
+                } else {
+                    submissionsById.set(submission.id, submission);
+                }
+            }
+
+            // Track by name (fallback identifier)
+            if (submission.name && submission.name.trim()) {
+                const normalizedName = submission.name.toLowerCase().trim();
+                if (submissionsByName.has(normalizedName)) {
+                    if (!submissionDuplicates.name.has(normalizedName)) {
+                        submissionDuplicates.name.set(normalizedName, []);
+                    }
+                    submissionDuplicates.name.get(normalizedName).push(submission);
+                } else {
+                    submissionsByName.set(normalizedName, submission);
+                }            }
+        });
+
+        // Log duplicate findings
+        if (this.DEBUG_MODE) {
+            if (submissionDuplicates.email.size > 0) {
+                console.warn(`Found ${submissionDuplicates.email.size} duplicate email(s) in submissions:`, 
+                    Array.from(submissionDuplicates.email.keys()));
+            }
+            if (submissionDuplicates.name.size > 0) {
+                console.warn(`Found ${submissionDuplicates.name.size} duplicate name(s) in submissions:`, 
+                    Array.from(submissionDuplicates.name.keys()));
+            }
+
+            console.log(`Processing ${submissionsByEmail.size} unique email submissions, ${submissionsByName.size} unique name submissions`);
+        }
+
+        // Build guest lookup maps and detect duplicates
+        const guestDuplicates = {
+            email: new Map(),
+            name: new Map()
+        };
+
+        this.state.guests.forEach(guest => {
+            // Check for guest email duplicates
+            if (guest.email && guest.email.trim()) {
+                const normalizedEmail = guest.email.toLowerCase().trim();
+                if (guestDuplicates.email.has(normalizedEmail)) {
+                    guestDuplicates.email.get(normalizedEmail).push(guest);
+                } else {
+                    guestDuplicates.email.set(normalizedEmail, [guest]);
+                }
+            }
+
+            // Check for guest name duplicates
+            if (guest.name && guest.name.trim()) {
+                const normalizedName = guest.name.toLowerCase().trim();
+                if (guestDuplicates.name.has(normalizedName)) {
+                    guestDuplicates.name.get(normalizedName).push(guest);
+                } else {
+                    guestDuplicates.name.set(normalizedName, [guest]);
+                }
+            }
+        });
+
+        // Log guest duplicate findings
+        const duplicateEmails = Array.from(guestDuplicates.email.entries()).filter(([, guests]) => guests.length > 1);
+        const duplicateNames = Array.from(guestDuplicates.name.entries()).filter(([, guests]) => guests.length > 1);
+
+        if (duplicateEmails.length > 0) {
+            console.warn(`Found ${duplicateEmails.length} duplicate email(s) in guest list:`, 
+                duplicateEmails.map(([email]) => email));
+        }
+        if (duplicateNames.length > 0) {
+            console.warn(`Found ${duplicateNames.length} duplicate name(s) in guest list:`, 
+                duplicateNames.map(([name]) => name));
+        }
+
+        let updatedCount = 0;
+        let conflictCount = 0;
+        const matchingLog = [];
+
+        // Process each guest for matching and updates
+        this.state.guests.forEach(guest => {
+            let matchingSubmission = null;
+            let matchMethod = null;
+
+            // Multi-tier matching strategy: Email > ID > Name
+
+            // 1. Try matching by email (most reliable)
+            if (guest.email && guest.email.trim()) {
+                const normalizedEmail = guest.email.toLowerCase().trim();
+                matchingSubmission = submissionsByEmail.get(normalizedEmail);
+                if (matchingSubmission) {
+                    matchMethod = 'email';
+                }
+            }
+
+            // 2. Try matching by guest ID if no email match
+            if (!matchingSubmission && guest.id) {
+                matchingSubmission = submissionsById.get(guest.id);
+                if (matchingSubmission) {
+                    matchMethod = 'id';
+                }
+            }
+
+            // 3. Fallback to name matching (least reliable)
+            if (!matchingSubmission && guest.name && guest.name.trim()) {
+                const normalizedName = guest.name.toLowerCase().trim();
+                matchingSubmission = submissionsByName.get(normalizedName);
+                if (matchingSubmission) {
+                    matchMethod = 'name';
+
+                    // Warn about name-only matches for conflict resolution
+                    if (submissionDuplicates.name.has(normalizedName)) {
+                        console.warn(`Potential conflict: Name "${guest.name}" has multiple submissions`);
+                        conflictCount++;
+                    }
+                }
+            }
+
+            if (matchingSubmission) {
+                // Conflict resolution: Check if data would actually change
+                const hasConflicts = this.detectDataConflicts(guest, matchingSubmission);
+
+                if (hasConflicts.length > 0 && matchMethod === 'name') {
+                    console.warn(`Data conflicts detected for ${guest.name} (matched by name):`, hasConflicts);
+                    conflictCount++;
+                }
+
+                // Update guest with submission data using conflict-aware merging
+                const wasResponded = guest.hasResponded;
+                
+                // Merge strategy based on match reliability
+                if (matchMethod === 'email' || matchMethod === 'id') {
+                    // High confidence matches: submission data takes precedence
+                    guest.email = matchingSubmission.email || guest.email;
+                    guest.phone = matchingSubmission.phone || guest.phone;
+                } else if (matchMethod === 'name') {
+                    // Lower confidence matches: only update if guest data is missing
+                    guest.email = guest.email || matchingSubmission.email;
+                    guest.phone = guest.phone || matchingSubmission.phone;
+                }
+
+                // Always update response data regardless of match method
+                guest.hasResponded = true;
+                guest.response = matchingSubmission.attending === 'attending' ? 'attending' : 'declined';
+                guest.actualGuestCount = matchingSubmission.guestCount || 0;
+                guest.adultCount = matchingSubmission.adultCount || 0;
+                guest.childCount = matchingSubmission.childCount || 0;
+
+                // Add metadata for debugging
+                guest.syncMethod = matchMethod;
+                guest.submissionId = matchingSubmission.id;
+                guest.lastSynced = new Date().toISOString();
+
+                if (!wasResponded) {
+                    updatedCount++;
+                    console.log(`Synced guest: ${guest.name} -> ${guest.response} (${guest.actualGuestCount} guests) [${matchMethod} match]`);
+                }
+
+                matchingLog.push({
+                    guestName: guest.name,
+                    guestEmail: guest.email,
+                    submissionName: matchingSubmission.name,
+                    submissionEmail: matchingSubmission.email,
+                    matchMethod: matchMethod,
+                    hasConflicts: hasConflicts.length > 0
+                });
+            }
+        });
+
+        console.log(`Synced ${updatedCount} guests with submission data`);
+        console.log(`Detected ${conflictCount} potential conflicts during sync`);
+        
+        // Log detailed matching information for debugging
+        if (matchingLog.length > 0) {
+            console.log('Matching details:', matchingLog);
+        }
+        
+        console.log('=== SYNC COMPLETE ===');
+    },
+
+    // Helper function to detect data conflicts between guest and submission
+    detectDataConflicts: function(guest, submission) {
+        const conflicts = [];
+
+        // Check for email conflicts
+        if (guest.email && submission.email && 
+            guest.email.toLowerCase().trim() !== submission.email.toLowerCase().trim()) {
+            conflicts.push(`Email: guest="${guest.email}" vs submission="${submission.email}"`);
+        }
+
+        // Check for phone conflicts
+        if (guest.phone && submission.phone && guest.phone !== submission.phone) {
+            conflicts.push(`Phone: guest="${guest.phone}" vs submission="${submission.phone}"`);
+        }
+
+        // Check for attendance conflicts
+        const guestAttending = guest.response === 'attending';
+        const submissionAttending = submission.attending === 'attending';
+        if (guest.hasResponded && guestAttending !== submissionAttending) {
+            conflicts.push(`Attendance: guest="${guest.response}" vs submission="${submission.attending}"`);
+        }
+
+        return conflicts;
     },
 
     // Update the dashboard statistics
@@ -1602,12 +1908,28 @@ const RSVPSystem = {
             console.error('Error logging to debug panel:', e);
         }
 
+        console.log('=== UPDATING DASHBOARD STATS ===');
+        console.log('Total guests in state:', this.state.guests.length);
+
         // Calculate statistics
         const totalGuests = this.state.guests.length;
         const respondedGuests = this.state.guests.filter(guest => guest.hasResponded).length;
         const notRespondedGuests = totalGuests - respondedGuests;
-        const attendingGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'yes').length;
-        const notAttendingGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'no').length;
+        const attendingGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
+        const notAttendingGuests = this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
+
+        console.log('Calculated stats:');
+        console.log('- Total guests:', totalGuests);
+        console.log('- Responded guests:', respondedGuests);
+        console.log('- Not responded guests:', notRespondedGuests);
+        console.log('- Attending guests:', attendingGuests);
+        console.log('- Not attending guests:', notAttendingGuests);
+
+        // Show sample data for debugging
+        const sampleRespondedGuest = this.state.guests.find(guest => guest.hasResponded);
+        const sampleAttendingGuest = this.state.guests.find(guest => guest.hasResponded && guest.response === 'attending');
+        console.log('Sample responded guest:', sampleRespondedGuest);
+        console.log('Sample attending guest:', sampleAttendingGuest);
 
         // Calculate percentages
         const respondedPercent = totalGuests > 0 ? Math.round((respondedGuests / totalGuests) * 100) : 0;
@@ -1620,10 +1942,8 @@ const RSVPSystem = {
 
         // Calculate adult and child counts
         let adultCount = 0;
-        let childCount = 0;
-
-        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'yes') {
+        let childCount = 0;        this.state.submissions.forEach(submission => {
+            if (submission.attending === 'attending') {
                 adultCount += submission.adultCount || 0;
                 childCount += submission.childCount || 0;
             }
@@ -1649,8 +1969,15 @@ const RSVPSystem = {
         this.updateStatElement('children-count', childCount);
         this.updateStatElement('children-percent', `${childPercent}% of total attending`);
 
-        // Update out-of-town stats
-        this.updateOutOfTownStats();
+        console.log('UI elements updated with values:');
+        console.log('- response-rate:', `${responseRate}%`);
+        console.log('- total-guests-count:', totalGuests);
+        console.log('- responded-count:', respondedGuests);
+        console.log('- attending-guests-count:', attendingGuests);
+        console.log('- not-attending-guests-count:', notAttendingGuests);
+        console.log('- adults-count:', adultCount);
+        console.log('- children-count:', childCount);
+        console.log('=================================');
 
         // Update charts
         this.updateCharts({
@@ -1695,8 +2022,11 @@ const RSVPSystem = {
         // Update timeline chart
         this.updateTimelineChart(data);
 
-        // Update out-of-town events chart
-        this.updateOutOfTownEventsChart();
+        // Update response rate chart
+        this.updateResponseRateChart(data);
+
+        // Update latest activity cards
+        this.updateLatestActivity(data);
 
         try {
             this.debug.info('Dashboard charts updated successfully');
@@ -1948,15 +2278,13 @@ const RSVPSystem = {
                    guest.address.state &&
                    guest.address.state.toUpperCase() !== 'CO' &&
                    guest.hasResponded &&
-                   guest.response === 'yes';
+                   guest.response === 'attending';
         }).length;
 
         // Count guests attending Friday dinner and Sunday brunch
         let fridayDinnerCount = 0;
-        let sundayBrunchCount = 0;
-
-        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'yes' && submission.outOfTown) {
+        let sundayBrunchCount = 0;        this.state.submissions.forEach(submission => {
+            if (submission.attending === 'attending' && submission.outOfTown) {
                 if (submission.fridayDinner === 'yes') {
                     fridayDinnerCount += submission.guestCount || 0;
                 }
@@ -1997,6 +2325,140 @@ const RSVPSystem = {
         });
     },
 
+    // Update the response rate chart
+    updateResponseRateChart: function(data) {
+        const chartCanvas = document.getElementById('response-rate-analytics-chart');
+        if (!chartCanvas) return;
+
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded');
+            return;
+        }
+
+        // Destroy existing chart if it exists
+        if (this.responseRateChart) {
+            this.responseRateChart.destroy();
+        }
+
+        // Set a fixed size for the canvas
+        chartCanvas.style.height = '300px';
+        chartCanvas.style.width = '100%';
+
+        const totalGuests = this.state.guests.length;
+        const respondedGuests = this.state.guests.filter(guest => guest.hasResponded).length;
+        const notRespondedGuests = totalGuests - respondedGuests;
+
+        // Create the chart
+        this.responseRateChart = new Chart(chartCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Responded', 'Not Responded'],
+                datasets: [{
+                    data: [respondedGuests, notRespondedGuests],
+                    backgroundColor: ['#4CAF50', '#FFC107'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const percentage = ((context.parsed / totalGuests) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    },
+
+    // Update latest activity cards
+    updateLatestActivity: function(data) {
+        try {
+            // Latest RSVP
+            if (this.state.submissions && this.state.submissions.length > 0) {
+                const sortedSubmissions = [...this.state.submissions].sort((a, b) => {
+                    if (!a.submittedAt) return 1;
+                    if (!b.submittedAt) return -1;
+                    return b.submittedAt - a.submittedAt;
+                });
+
+                const latestSubmission = sortedSubmissions[0];
+                if (latestSubmission) {
+                    this.updateStatElement('latest-rsvp-name', latestSubmission.name || 'Unknown');
+                    const timeAgo = this.getTimeAgo(latestSubmission.submittedAt);
+                    this.updateStatElement('latest-rsvp-time', timeAgo);
+                }
+            }
+
+            // Response trend (last 7 days)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const recentSubmissions = this.state.submissions.filter(submission =>
+                submission.submittedAt && submission.submittedAt >= sevenDaysAgo
+            );
+
+            const trendText = recentSubmissions.length > 0 ?
+                `${recentSubmissions.length} RSVPs in last 7 days` :
+                'No recent RSVPs';
+            this.updateStatElement('response-trend', trendText);
+
+            // Age distribution
+            const totalAttending = data.adultCount + data.childCount;
+            if (totalAttending > 0) {
+                const adultPercent = Math.round((data.adultCount / totalAttending) * 100);
+                const childPercent = Math.round((data.childCount / totalAttending) * 100);
+                this.updateStatElement('age-distribution', `${adultPercent}% Adults, ${childPercent}% Children`);
+            } else {
+                this.updateStatElement('age-distribution', 'No attendees yet');
+            }
+
+            // Recent activity (last 24 hours)
+            const oneDayAgo = new Date();
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+            const recentActivity = this.state.submissions.filter(submission =>
+                submission.submittedAt && submission.submittedAt >= oneDayAgo
+            );
+
+            const activityText = recentActivity.length > 0 ?
+                `${recentActivity.length} new RSVPs` :
+                'No recent activity';
+            this.updateStatElement('recent-activity', activityText);
+
+        } catch (e) {
+            console.error('Error updating latest activity:', e);
+        }
+    },
+
+    // Helper function to get time ago string
+    getTimeAgo: function(date) {
+        if (!date) return 'Unknown';
+
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} minutes ago`;
+        if (diffHours < 24) return `${diffHours} hours ago`;
+        if (diffDays < 7) return `${diffDays} days ago`;
+
+        return date.toLocaleDateString();
+    },
+
     // Update a single stat element
     updateStatElement: function(id, value) {
         const element = document.getElementById(id);
@@ -2019,15 +2481,13 @@ const RSVPSystem = {
                    guest.address.state &&
                    guest.address.state.toUpperCase() !== 'CO' &&
                    guest.hasResponded &&
-                   guest.response === 'yes';
+                   guest.response === 'attending';
         }).length;
 
         // Count guests attending Friday dinner and Sunday brunch
         let fridayDinnerCount = 0;
-        let sundayBrunchCount = 0;
-
-        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'yes' && submission.outOfTown) {
+        let sundayBrunchCount = 0;        this.state.submissions.forEach(submission => {
+            if (submission.attending === 'attending' && submission.outOfTown) {
                 if (submission.fridayDinner === 'yes') {
                     fridayDinnerCount += submission.guestCount || 0;
                 }
@@ -2102,7 +2562,7 @@ const RSVPSystem = {
                 <div class="detail-group">
                     <div class="detail-item">
                         <div class="detail-label">Attending</div>
-                        <div class="detail-value">${submission.attending === 'yes' ? 'Yes' : 'No'}</div>
+                        <div class="detail-value">${submission.attending === 'attending' ? 'Yes' : 'No'}</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">Total Guests</div>
@@ -2309,7 +2769,7 @@ const RSVPSystem = {
                 guest.email || '',
                 guest.phone || '',
                 guest.hasResponded ? 'Responded' : 'Not Responded',
-                guest.hasResponded ? (guest.response === 'yes' ? 'Attending' : 'Not Attending') : '',
+                guest.hasResponded ? (guest.response === 'attending' ? 'Attending' : 'Not Attending') : '',
                 guest.actualGuestCount || 0,
                 (guest.additionalGuests || []).join(', '),
                 guest.address?.line1 || '',
@@ -2671,10 +3131,9 @@ const RSVPSystem = {
             name,
             category,
             email,
-            phone,
-            hasResponded: responseStatus === 'responded',
+            phone,            hasResponded: responseStatus === 'responded',
             response: responseStatus === 'responded' ? response : '',
-            actualGuestCount: responseStatus === 'responded' && response === 'yes' ? guestCount : 0,
+            actualGuestCount: responseStatus === 'responded' && response === 'attending' ? guestCount : 0,
             address: {
                 line1: addressLine1,
                 line2: addressLine2,
@@ -2893,7 +3352,7 @@ const RSVPSystem = {
                         <div class="detail-label">Response</div>
                         <div class="detail-value">
                             ${guest.hasResponded ?
-                                (guest.response === 'yes' ?
+                                (guest.response === 'attending' ?
                                     '<span class="response attending">Attending</span>' :
                                     '<span class="response not-attending">Not Attending</span>') :
                                 'N/A'}

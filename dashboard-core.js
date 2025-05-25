@@ -274,14 +274,20 @@ function updateGuestListStats() {
     const totalGuests = allGuests.length;
     const respondedCount = allGuests.filter(guest => guest.hasResponded).length;
     const notRespondedCount = totalGuests - respondedCount;
-    const attendingCount = allGuests.filter(guest => guest.response === 'attending').length;
-    const notAttendingCount = allGuests.filter(guest => guest.response === 'declined').length;
+    const attendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
+    const notAttendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
 
     // Calculate percentages
-    const respondedPercent = totalGuests > 0 ? ((respondedCount / totalGuests) * 100).toFixed(1) : 0;
-    const notRespondedPercent = totalGuests > 0 ? ((notRespondedCount / totalGuests) * 100).toFixed(1) : 0;
-    const attendingPercent = respondedCount > 0 ? ((attendingCount / respondedCount) * 100).toFixed(1) : 0;
-    const notAttendingPercent = respondedCount > 0 ? ((notAttendingCount / respondedCount) * 100).toFixed(1) : 0;
+    const respondedPercent = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+    const notRespondedPercent = totalGuests > 0 ? Math.round((notRespondedCount / totalGuests) * 100) : 0;
+    const attendingPercent = respondedCount > 0 ? Math.round((attendingCount / respondedCount) * 100) : 0;
+    const notAttendingPercent = respondedCount > 0 ? Math.round((notAttendingCount / respondedCount) * 100) : 0;
+
+    // Update response rate in the main dashboard
+    const responseRateElem = document.getElementById('response-rate');
+    if (responseRateElem) {
+        responseRateElem.textContent = `${respondedPercent}%`;
+    }
 
     // Update DOM elements with null checks
     const elements = {
