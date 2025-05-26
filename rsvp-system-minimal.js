@@ -324,10 +324,10 @@ const RSVPSystem = {
                             notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                             notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                             adultCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
+                                return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
                             }, 0),
                             childCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
+                                return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
                             }, 0),
                             responseRate: this.state.guests.length > 0 ?
                                 Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -442,10 +442,10 @@ const RSVPSystem = {
                         notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                         notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                         adultCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
+                            return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
                         }, 0),
                         childCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
+                            return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
                         }, 0),
                         responseRate: this.state.guests.length > 0 ?
                             Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -988,9 +988,9 @@ const RSVPSystem = {
             if (this.state.submissionFilter) {
                 switch (this.state.submissionFilter) {
                     case 'attending':
-                        return submission.attending === 'attending';
+                        return submission.attending === 'yes';
                     case 'not-attending':
-                        return submission.attending === 'declined';
+                        return submission.attending === 'no';
                     case 'recent': {
                         // Last 7 days
                         const oneWeekAgo = new Date();
@@ -1445,7 +1445,7 @@ const RSVPSystem = {
         // Add rows for each submission
         submissions.forEach(submission => {
             const formattedDate = submission.submittedAt ? submission.submittedAt.toLocaleDateString() : 'N/A';            const formattedTime = submission.submittedAt ? submission.submittedAt.toLocaleTimeString() : '';
-            const response = submission.attending === 'attending' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>';
+            const response = submission.attending === 'yes' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>';
 
             // Format guest names
             const guestNames = [];
@@ -1845,7 +1845,7 @@ const RSVPSystem = {
 
                 // Always update response data regardless of match method
                 guest.hasResponded = true;
-                guest.response = matchingSubmission.attending === 'attending' ? 'attending' : 'declined';
+                guest.response = matchingSubmission.attending === 'yes' ? 'attending' : 'declined';
                 guest.actualGuestCount = matchingSubmission.guestCount || 0;
                 guest.adultCount = matchingSubmission.adultCount || 0;
                 guest.childCount = matchingSubmission.childCount || 0;
@@ -1899,7 +1899,7 @@ const RSVPSystem = {
 
         // Check for attendance conflicts
         const guestAttending = guest.response === 'attending';
-        const submissionAttending = submission.attending === 'attending';
+        const submissionAttending = submission.attending === 'yes';
         if (guest.hasResponded && guestAttending !== submissionAttending) {
             conflicts.push(`Attendance: guest="${guest.response}" vs submission="${submission.attending}"`);
         }
@@ -1962,7 +1962,7 @@ const RSVPSystem = {
         // If no counts from guest list, fall back to submissions
         if (adultCount === 0 && childCount === 0) {
             this.state.submissions.forEach(submission => {
-                if (submission.attending === 'attending') {
+                if (submission.attending === 'yes') {
                     adultCount += submission.adultCount || 0;
                     childCount += submission.childCount || 0;
                 }
@@ -2304,7 +2304,7 @@ const RSVPSystem = {
         // Count guests attending Friday dinner and Sunday brunch
         let fridayDinnerCount = 0;
         let sundayBrunchCount = 0;        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'attending' && submission.outOfTown) {
+            if (submission.attending === 'yes' && submission.outOfTown) {
                 if (submission.fridayDinner === 'yes') {
                     fridayDinnerCount += submission.guestCount || 0;
                 }
@@ -2507,7 +2507,7 @@ const RSVPSystem = {
         // Count guests attending Friday dinner and Sunday brunch
         let fridayDinnerCount = 0;
         let sundayBrunchCount = 0;        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'attending' && submission.outOfTown) {
+            if (submission.attending === 'yes' && submission.outOfTown) {
                 if (submission.fridayDinner === 'yes') {
                     fridayDinnerCount += submission.guestCount || 0;
                 }
@@ -2582,7 +2582,7 @@ const RSVPSystem = {
                 <div class="detail-group">
                     <div class="detail-item">
                         <div class="detail-label">Attending</div>
-                        <div class="detail-value">${submission.attending === 'attending' ? 'Yes' : 'No'}</div>
+                        <div class="detail-value">${submission.attending === 'yes' ? 'Yes' : 'No'}</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">Total Guests</div>

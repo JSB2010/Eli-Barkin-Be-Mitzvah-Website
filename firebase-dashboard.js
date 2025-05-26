@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Guest list query successful, received', querySnapshot.size, 'documents');
                         allGuests = querySnapshot.docs.map(doc => {
                         const data = doc.data() || {};
-                        return {
+                        const guest = {
                             id: doc.id,
                             name: data.name || '',
                             category: data.category || '',
@@ -265,6 +265,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             address: data.address || {},
                             submittedAt: data.submittedAt ? new Date(data.submittedAt.seconds * 1000) : null
                         };
+
+
+
+                        return guest;
                     });
 
                     // Extract unique categories
@@ -320,6 +324,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         console.log(`Processing ${allGuests.length} guests`);
+
+        // Log summary of responded guests
+        const respondedGuests = allGuests.filter(guest => guest.hasResponded);
+        console.log(`Found ${respondedGuests.length} guests who have responded`);
 
         // Apply filters to guest list
         applyGuestListFilters();
@@ -459,8 +467,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalGuests = allGuests.length;
         const respondedCount = allGuests.filter(guest => guest.hasResponded).length;
         const notRespondedCount = totalGuests - respondedCount;
-        const attendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
-        const notAttendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
+        const attendingCount = allGuests.filter(guest =>
+            guest.hasResponded === true && guest.response === 'attending'
+        ).length;
+        const notAttendingCount = allGuests.filter(guest =>
+            guest.hasResponded === true && guest.response === 'declined'
+        ).length;
+
+        // Log basic stats for monitoring
+        console.log(`Guest List Stats: ${totalGuests} total, ${respondedCount} responded, ${attendingCount} attending, ${notAttendingCount} not attending`);
+
+        // Log attending guests for verification
+        const attendingGuests = allGuests.filter(guest => guest.hasResponded === true && guest.response === 'attending');
+        if (attendingGuests.length > 0) {
+            console.log(`Attending guests (${attendingGuests.length}):`, attendingGuests.map(g => g.name));
+        }
 
         // Calculate percentages
         const respondedPercent = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
@@ -474,18 +495,31 @@ document.addEventListener('DOMContentLoaded', function() {
             responseRateElem.textContent = `${respondedPercent}%`;
         }
 
-        // Update DOM elements
-        document.getElementById('total-guests-count').textContent = totalGuests;
-        document.getElementById('responded-count').textContent = respondedCount;
-        document.getElementById('not-responded-count').textContent = notRespondedCount;
-        document.getElementById('attending-guests-count').textContent = attendingCount;
-        document.getElementById('not-attending-guests-count').textContent = notAttendingCount;
+        // Update DOM elements with null checks
+        const totalGuestsElem = document.getElementById('total-guests-count');
+        const respondedCountElem = document.getElementById('responded-count');
+        const notRespondedCountElem = document.getElementById('not-responded-count');
+        const attendingGuestsCountElem = document.getElementById('attending-guests-count');
+        const notAttendingGuestsCountElem = document.getElementById('not-attending-guests-count');
 
-        // Update percentage texts
-        document.getElementById('responded-percent').textContent = `${respondedPercent}% of total`;
-        document.getElementById('not-responded-percent').textContent = `${notRespondedPercent}% of total`;
-        document.getElementById('attending-guests-percent').textContent = `${attendingPercent}% of responded`;
-        document.getElementById('not-attending-guests-percent').textContent = `${notAttendingPercent}% of responded`;
+        if (totalGuestsElem) totalGuestsElem.textContent = totalGuests;
+        if (respondedCountElem) respondedCountElem.textContent = respondedCount;
+        if (notRespondedCountElem) notRespondedCountElem.textContent = notRespondedCount;
+        if (attendingGuestsCountElem) attendingGuestsCountElem.textContent = attendingCount;
+        if (notAttendingGuestsCountElem) notAttendingGuestsCountElem.textContent = notAttendingCount;
+
+        // Update percentage texts with null checks
+        const respondedPercentElem = document.getElementById('responded-percent');
+        const notRespondedPercentElem = document.getElementById('not-responded-percent');
+        const attendingGuestsPercentElem = document.getElementById('attending-guests-percent');
+        const notAttendingGuestsPercentElem = document.getElementById('not-attending-guests-percent');
+
+        if (respondedPercentElem) respondedPercentElem.textContent = `${respondedPercent}% of total`;
+        if (notRespondedPercentElem) notRespondedPercentElem.textContent = `${notRespondedPercent}% of total`;
+        if (attendingGuestsPercentElem) attendingGuestsPercentElem.textContent = `${attendingPercent}% of responded`;
+        if (notAttendingGuestsPercentElem) notAttendingGuestsPercentElem.textContent = `${notAttendingPercent}% of responded`;
+
+
     }
 
     // Update statistics
@@ -1911,18 +1945,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Add event listener for refresh button
+    const refreshBtn = document.getElementById('refresh-data-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            console.log('Manual refresh triggered');
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshBtn.disabled = true;
+
+            // Clear existing data
+            allGuests = [];
+            allSubmissions = [];
+
+            // Reload data
+            fetchGuestList();
+            fetchSubmissions();
+
+            // Re-enable button after a delay
+            setTimeout(() => {
+                refreshBtn.innerHTML = '<i class="fas fa-redo"></i> Refresh';
+                refreshBtn.disabled = false;
+            }, 3000);
+        });
+    }
+
     // Make the fetch functions globally available
     window.fetchSubmissions = fetchSubmissions;
     window.fetchGuestList = fetchGuestList;
     console.log('Dashboard functions exposed globally');
 
-    // Check if user is already logged in and fetch data
+    // Always fetch guest list data (public access allowed)
+    console.log('Fetching guest list data (public access)');
+    fetchGuestList();
+
+    // Check if user is logged in for submissions data
     if (firebase.auth().currentUser) {
-        console.log('User is already logged in, fetching data directly');
+        console.log('User is already logged in, fetching submissions data');
         fetchSubmissions();
-        fetchGuestList();
     } else {
-        console.log('No user is logged in yet, waiting for login');
+        console.log('No user is logged in yet, waiting for login to fetch submissions');
     }
 });
 
