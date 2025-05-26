@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log(`🚨 EMERGENCY FIX: Cleared adult field: adultName${i}`);
                     }
                 }
-                window.adultGuestsOverride = []; 
+                window.adultGuestsOverride = [];
                 console.log('🚨 EMERGENCY FIX: Created empty adultGuestsOverride array');
             }
 
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // This is a direct check before any other processing
             // const directAdultCount = parseInt(form.adultCount?.value) || 0; // Already defined above
             // const directChildCount = parseInt(form.childCount?.value) || 0; // Already defined above
-            
+
             const criticalCondition = (directAdultCount === 0 && directChildCount > 0);
             console.log(`[CRITICAL_FIX_CONDITION_CHECK] (directAdultCount === 0 && directChildCount > 0) is ${criticalCondition}`);
             if (criticalCondition) {
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log(`Cleared adult input field: ${input.id}`);
                 });
                 // Ensure adultGuestsOverride is set if it exists, or initialize it
-                window.adultGuestsOverride = []; 
+                window.adultGuestsOverride = [];
                 console.log('CRITICAL FIX: Ensured adultGuestsOverride is an empty array for 0 adults case.');
             }
 
@@ -407,10 +407,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (formData.adultCount !== 0 || (formData.adultGuests && formData.adultGuests.length > 0)) {
                     console.warn(
                         'FINAL CORRECTION: formData was inconsistent for 0 adults, >0 children. Overriding. Was:',
-                        JSON.stringify({ 
-                            ac: formData.adultCount, 
-                            ag: formData.adultGuests, 
-                            gc: formData.guestCount 
+                        JSON.stringify({
+                            ac: formData.adultCount,
+                            ag: formData.adultGuests,
+                            gc: formData.guestCount
                         })
                     );
                     formData.adultCount = 0;
@@ -434,12 +434,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     console.log(
                         'FINAL CORRECTION: formData is now:',
-                        JSON.stringify({ 
-                            ac: formData.adultCount, 
-                            ag: formData.adultGuests, 
+                        JSON.stringify({
+                            ac: formData.adultCount,
+                            ag: formData.adultGuests,
                             cg: formData.childGuests,
-                            gc: formData.guestCount, 
-                            addg: formData.additionalGuests 
+                            gc: formData.guestCount,
+                            addg: formData.additionalGuests
                         })
                     );
                 } else {
@@ -464,8 +464,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Determine if this is an update or a new submission
             const formMode = form.getAttribute('data-mode');
-            const submissionId = form.getAttribute('data-submission-id'); 
-            const isUpdate = formMode === 'update' && submissionId; 
+            const submissionId = form.getAttribute('data-submission-id');
+            const isUpdate = formMode === 'update' && submissionId;
             const isFallbackSubmission = window.existingSubmission?.isFallback === true;
 
             console.log(`[PRE-ROUTING_NEW_UPDATE] directAdultCount: ${directAdultCount}, directChildCount: ${directChildCount}`); // Log before new/update decision
@@ -473,10 +473,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 isUpdate,
                 formMode,
                 submissionId,
-                formDataName: formData.name, 
-                directAdultCountFromForm: directAdultCount, 
-                directChildCountFromForm: directChildCount, 
-                windowExistingSubmission: window.existingSubmission, 
+                formDataName: formData.name,
+                directAdultCountFromForm: directAdultCount,
+                directChildCountFromForm: directChildCount,
+                windowExistingSubmission: window.existingSubmission,
                 isFallbackSubmission
             });
 
@@ -588,13 +588,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 savePromise = Promise.resolve();
             } else {
                 // Create new RSVP
-                console.log('Creating new RSVP for:', form.name.value); 
-                
+                console.log('Creating new RSVP for:', form.name.value);
+
                 const baseDetailsFromForm = {
                     name: form.name.value,
                     email: form.email.value,
                     phone: form.phone.value,
-                    attending: form.attending.value, 
+                    attending: form.attending.value,
                     fridayDinner: formData.fridayDinner || 'no',
                     sundayBrunch: formData.sundayBrunch || 'no',
                     isOutOfTown: formData.isOutOfTown || false,
@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (zeroAdultRouteCondition) {
                     console.log('INFO: Routing to submitZeroAdultsRSVP based on directAdultCount/directChildCount.');
-                    savePromise = submitZeroAdultsRSVP(form, directChildCount, baseDetailsFromForm); 
+                    savePromise = submitZeroAdultsRSVP(form, directChildCount, baseDetailsFromForm);
                 } else {
                     console.log('INFO: Routing to standard new RSVP submission logic.');
                     // For standard new RSVPs, we use the main formData object,
@@ -720,9 +720,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const guestDocRef = snapshot.docs[0].ref;
                                 console.log(`[updateGuestList] Found guestList entry (ID: ${guestDocRef.id}). Updating...`);
                                 // Create a clean update object with no undefined values
+                                const responseValue = rsvpData.attending === 'yes' ? 'attending' : 'declined';
+
                                 const updateData = {
                                     hasResponded: true,
-                                    response: rsvpData.attending === 'yes' ? 'attending' : 'declined',
+                                    response: responseValue,
                                     // Use counts directly from rsvpData
                                     actualGuestCount: rsvpData.guestCount || 0,
                                     adultCount: rsvpData.adultCount || 0,
@@ -759,8 +761,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         })
                         .catch(error => {
                             // Log but don't fail the whole submission if guest list update fails
-                            console.warn(`[updateGuestList] Failed to update guest list entry for ${guestName}, but RSVP was saved:`, error);
-                            return Promise.resolve(); // Resolve silently on error
+                            console.error(`[updateGuestList] Failed to update guest list entry for ${guestName}:`, error);
+
+                            // Check if it's a permission error
+                            if (error.code === 'permission-denied') {
+                                console.error('PERMISSION DENIED: Cannot update guest list. Check Firestore security rules.');
+                            }
+
+                            return Promise.resolve(); // Resolve silently on error to not break RSVP submission
                         });
                 } catch (error) {
                     console.warn('[updateGuestList] Error during guest list update process:', error);
@@ -1022,24 +1030,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Special function to handle the case of 0 adults with children
     // This uses a completely different approach to avoid any issues with undefined values
     // --- Helper function to submit RSVP with 0 adults and some children ---
-    async function submitZeroAdultsRSVP(form, childCount, baseDetails) { 
+    async function submitZeroAdultsRSVP(form, childCount, baseDetails) {
         const rsvpData = {
             name: baseDetails.name,
             email: baseDetails.email,
             phone: baseDetails.phone,
             attending: baseDetails.attending === 'yes' ? 'yes' : 'no',
-            adultCount: 0, 
+            adultCount: 0,
             childCount: childCount,
-            guestCount: childCount, 
-            adultGuests: [], 
+            guestCount: childCount,
+            adultGuests: [],
             childGuests: [],
-            additionalGuests: [], 
+            additionalGuests: [],
             fridayDinner: baseDetails.fridayDinner || 'no',
             sundayBrunch: baseDetails.sundayBrunch || 'no',
             isOutOfTown: baseDetails.isOutOfTown || false,
             submittedAt: firebase.firestore.Timestamp.fromDate(new Date()),
             isUpdate: false,
-            submissionSource: 'submitZeroAdultsRSVP_v4' 
+            submissionSource: 'submitZeroAdultsRSVP_v4'
         };
 
         for (let i = 1; i <= childCount; i++) {

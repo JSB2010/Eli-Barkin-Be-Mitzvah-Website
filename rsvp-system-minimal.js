@@ -324,10 +324,10 @@ const RSVPSystem = {
                             notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                             notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                             adultCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
+                                return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
                             }, 0),
                             childCount: this.state.submissions.reduce((sum, submission) => {
-                                return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
+                                return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
                             }, 0),
                             responseRate: this.state.guests.length > 0 ?
                                 Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -442,10 +442,10 @@ const RSVPSystem = {
                         notAttendingGuests: this.state.guests.filter(guest => guest.hasResponded && guest.response === 'declined').length,
                         notRespondedGuests: this.state.guests.filter(guest => !guest.hasResponded).length,
                         adultCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'attending' ? sum + (submission.adultCount || 0) : sum;
+                            return submission.attending === 'yes' ? sum + (submission.adultCount || 0) : sum;
                         }, 0),
                         childCount: this.state.submissions.reduce((sum, submission) => {
-                            return submission.attending === 'attending' ? sum + (submission.childCount || 0) : sum;
+                            return submission.attending === 'yes' ? sum + (submission.childCount || 0) : sum;
                         }, 0),
                         responseRate: this.state.guests.length > 0 ?
                             Math.round((this.state.guests.filter(guest => guest.hasResponded).length / this.state.guests.length) * 100) : 0,
@@ -985,9 +985,9 @@ const RSVPSystem = {
             if (this.state.submissionFilter) {
                 switch (this.state.submissionFilter) {
                     case 'attending':
-                        return submission.attending === 'attending';
+                        return submission.attending === 'yes';
                     case 'not-attending':
-                        return submission.attending === 'declined';
+                        return submission.attending === 'no';
                     case 'recent': {
                         // Last 7 days
                         const oneWeekAgo = new Date();
@@ -1442,7 +1442,7 @@ const RSVPSystem = {
         // Add rows for each submission
         submissions.forEach(submission => {
             const formattedDate = submission.submittedAt ? submission.submittedAt.toLocaleDateString() : 'N/A';            const formattedTime = submission.submittedAt ? submission.submittedAt.toLocaleTimeString() : '';
-            const response = submission.attending === 'attending' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>';
+            const response = submission.attending === 'yes' ? '<span class="response attending">Attending</span>' : '<span class="response not-attending">Not Attending</span>';
 
             // Format guest names
             const guestNames = [];
@@ -1718,11 +1718,11 @@ const RSVPSystem = {
         // Log duplicate findings
         if (this.DEBUG_MODE) {
             if (submissionDuplicates.email.size > 0) {
-                console.warn(`Found ${submissionDuplicates.email.size} duplicate email(s) in submissions:`, 
+                console.warn(`Found ${submissionDuplicates.email.size} duplicate email(s) in submissions:`,
                     Array.from(submissionDuplicates.email.keys()));
             }
             if (submissionDuplicates.name.size > 0) {
-                console.warn(`Found ${submissionDuplicates.name.size} duplicate name(s) in submissions:`, 
+                console.warn(`Found ${submissionDuplicates.name.size} duplicate name(s) in submissions:`,
                     Array.from(submissionDuplicates.name.keys()));
             }
 
@@ -1762,11 +1762,11 @@ const RSVPSystem = {
         const duplicateNames = Array.from(guestDuplicates.name.entries()).filter(([, guests]) => guests.length > 1);
 
         if (duplicateEmails.length > 0) {
-            console.warn(`Found ${duplicateEmails.length} duplicate email(s) in guest list:`, 
+            console.warn(`Found ${duplicateEmails.length} duplicate email(s) in guest list:`,
                 duplicateEmails.map(([email]) => email));
         }
         if (duplicateNames.length > 0) {
-            console.warn(`Found ${duplicateNames.length} duplicate name(s) in guest list:`, 
+            console.warn(`Found ${duplicateNames.length} duplicate name(s) in guest list:`,
                 duplicateNames.map(([name]) => name));
         }
 
@@ -1824,7 +1824,7 @@ const RSVPSystem = {
 
                 // Update guest with submission data using conflict-aware merging
                 const wasResponded = guest.hasResponded;
-                
+
                 // Merge strategy based on match reliability
                 if (matchMethod === 'email' || matchMethod === 'id') {
                     // High confidence matches: submission data takes precedence
@@ -1838,7 +1838,7 @@ const RSVPSystem = {
 
                 // Always update response data regardless of match method
                 guest.hasResponded = true;
-                guest.response = matchingSubmission.attending === 'attending' ? 'attending' : 'declined';
+                guest.response = matchingSubmission.attending === 'yes' ? 'attending' : 'declined';
                 guest.actualGuestCount = matchingSubmission.guestCount || 0;
                 guest.adultCount = matchingSubmission.adultCount || 0;
                 guest.childCount = matchingSubmission.childCount || 0;
@@ -1866,12 +1866,12 @@ const RSVPSystem = {
 
         console.log(`Synced ${updatedCount} guests with submission data`);
         console.log(`Detected ${conflictCount} potential conflicts during sync`);
-        
+
         // Log detailed matching information for debugging
         if (matchingLog.length > 0) {
             console.log('Matching details:', matchingLog);
         }
-        
+
         console.log('=== SYNC COMPLETE ===');
     },
 
@@ -1880,7 +1880,7 @@ const RSVPSystem = {
         const conflicts = [];
 
         // Check for email conflicts
-        if (guest.email && submission.email && 
+        if (guest.email && submission.email &&
             guest.email.toLowerCase().trim() !== submission.email.toLowerCase().trim()) {
             conflicts.push(`Email: guest="${guest.email}" vs submission="${submission.email}"`);
         }
@@ -1943,7 +1943,7 @@ const RSVPSystem = {
         // Calculate adult and child counts
         let adultCount = 0;
         let childCount = 0;        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'attending') {
+            if (submission.attending === 'yes') {
                 adultCount += submission.adultCount || 0;
                 childCount += submission.childCount || 0;
             }

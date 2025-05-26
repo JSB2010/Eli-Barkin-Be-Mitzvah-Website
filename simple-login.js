@@ -203,6 +203,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // User is signed out
             console.log('Auth state changed - User is signed out');
 
+            // Still load guest list data (public access allowed)
+            if (typeof fetchGuestList === 'function') {
+                console.log('Loading guest list data for signed-out user');
+                fetchGuestList();
+            } else if (typeof window.fetchGuestList === 'function') {
+                console.log('Loading guest list data for signed-out user (window scope)');
+                window.fetchGuestList();
+            }
+
             // Show login form
             if (dashboardSection && loginSection) {
                 dashboardSection.classList.add('hidden');
