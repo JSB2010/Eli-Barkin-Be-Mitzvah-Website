@@ -1371,6 +1371,14 @@
             background-color: var(--danger-dark);
         }
 
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--dark-gray);
+            opacity: 0.8;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 1rem;
@@ -3229,14 +3237,25 @@
                                 <label for="edit-guest-response">Response</label>
                                 <select id="edit-guest-response" disabled>
                                     <option value="">Select...</option>
-                                    <option value="yes">Attending</option>
-                                    <option value="no">Not Attending</option>
+                                    <option value="attending">Attending</option>
+                                    <option value="declined">Not Attending</option>
                                 </select>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-guest-adult-count">Adult Count</label>
+                                <input type="number" id="edit-guest-adult-count" min="0" value="0" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-guest-child-count">Child Count</label>
+                                <input type="number" id="edit-guest-child-count" min="0" value="0" disabled>
+                            </div>
+                        </div>
                         <div class="form-group">
-                            <label for="edit-guest-count">Guest Count</label>
-                            <input type="number" id="edit-guest-count" min="0" value="0" disabled>
+                            <label for="edit-guest-total-count">Total Guest Count</label>
+                            <input type="number" id="edit-guest-total-count" min="0" value="0" disabled readonly>
+                            <small class="form-help">This is automatically calculated from adult and child counts</small>
                         </div>
                     </div>
                     <div id="edit-guest-error" class="error-message hidden"></div>

@@ -886,12 +886,15 @@ const RSVPSystem = {
                         hasResponded: data.hasResponded || false,
                         response: data.response || '',
                         actualGuestCount: data.actualGuestCount || 0,
+                        adultCount: data.adultCount || 0,
+                        childCount: data.childCount || 0,
                         additionalGuests: data.additionalGuests || [],
                         email: data.email || '',
                         phone: data.phone || '',
                         address: data.address || {},
                         submittedAt: data.submittedAt ? new Date(data.submittedAt.seconds * 1000) : null
-                    };                });
+                    };
+                });
 
                 // Debug: Log response status breakdown
                 if (this.DEBUG_MODE) {
@@ -1592,7 +1595,11 @@ const RSVPSystem = {
                     <td>${guest.name || 'N/A'}</td>
                     <td>${status}</td>
                     <td>${response}</td>
-                    <td>${guest.actualGuestCount || 0}</td>
+                    <td>
+                        ${guest.actualGuestCount || 0}
+                        ${(guest.adultCount !== undefined || guest.childCount !== undefined) ?
+                            `<br><small>(${guest.adultCount || 0}A, ${guest.childCount || 0}C)</small>` : ''}
+                    </td>
                     <td>${location}</td>
                     <td class="action-column">
                         <button class="btn btn-sm primary view-guest-details" data-id="${guest.id}">
@@ -1718,11 +1725,11 @@ const RSVPSystem = {
         // Log duplicate findings
         if (this.DEBUG_MODE) {
             if (submissionDuplicates.email.size > 0) {
-                console.warn(`Found ${submissionDuplicates.email.size} duplicate email(s) in submissions:`, 
+                console.warn(`Found ${submissionDuplicates.email.size} duplicate email(s) in submissions:`,
                     Array.from(submissionDuplicates.email.keys()));
             }
             if (submissionDuplicates.name.size > 0) {
-                console.warn(`Found ${submissionDuplicates.name.size} duplicate name(s) in submissions:`, 
+                console.warn(`Found ${submissionDuplicates.name.size} duplicate name(s) in submissions:`,
                     Array.from(submissionDuplicates.name.keys()));
             }
 
@@ -1762,11 +1769,11 @@ const RSVPSystem = {
         const duplicateNames = Array.from(guestDuplicates.name.entries()).filter(([, guests]) => guests.length > 1);
 
         if (duplicateEmails.length > 0) {
-            console.warn(`Found ${duplicateEmails.length} duplicate email(s) in guest list:`, 
+            console.warn(`Found ${duplicateEmails.length} duplicate email(s) in guest list:`,
                 duplicateEmails.map(([email]) => email));
         }
         if (duplicateNames.length > 0) {
-            console.warn(`Found ${duplicateNames.length} duplicate name(s) in guest list:`, 
+            console.warn(`Found ${duplicateNames.length} duplicate name(s) in guest list:`,
                 duplicateNames.map(([name]) => name));
         }
 
@@ -1824,7 +1831,7 @@ const RSVPSystem = {
 
                 // Update guest with submission data using conflict-aware merging
                 const wasResponded = guest.hasResponded;
-                
+
                 // Merge strategy based on match reliability
                 if (matchMethod === 'email' || matchMethod === 'id') {
                     // High confidence matches: submission data takes precedence
@@ -1866,12 +1873,12 @@ const RSVPSystem = {
 
         console.log(`Synced ${updatedCount} guests with submission data`);
         console.log(`Detected ${conflictCount} potential conflicts during sync`);
-        
+
         // Log detailed matching information for debugging
         if (matchingLog.length > 0) {
             console.log('Matching details:', matchingLog);
         }
-        
+
         console.log('=== SYNC COMPLETE ===');
     },
 
@@ -1880,7 +1887,7 @@ const RSVPSystem = {
         const conflicts = [];
 
         // Check for email conflicts
-        if (guest.email && submission.email && 
+        if (guest.email && submission.email &&
             guest.email.toLowerCase().trim() !== submission.email.toLowerCase().trim()) {
             conflicts.push(`Email: guest="${guest.email}" vs submission="${submission.email}"`);
         }
@@ -1942,12 +1949,25 @@ const RSVPSystem = {
 
         // Calculate adult and child counts
         let adultCount = 0;
-        let childCount = 0;        this.state.submissions.forEach(submission => {
-            if (submission.attending === 'attending') {
-                adultCount += submission.adultCount || 0;
-                childCount += submission.childCount || 0;
+        let childCount = 0;
+
+        // First, try to get counts from guest list (more reliable)
+        this.state.guests.forEach(guest => {
+            if (guest.hasResponded && guest.response === 'attending') {
+                adultCount += guest.adultCount || 0;
+                childCount += guest.childCount || 0;
             }
         });
+
+        // If no counts from guest list, fall back to submissions
+        if (adultCount === 0 && childCount === 0) {
+            this.state.submissions.forEach(submission => {
+                if (submission.attending === 'attending') {
+                    adultCount += submission.adultCount || 0;
+                    childCount += submission.childCount || 0;
+                }
+            });
+        }
 
         const totalAttending = adultCount + childCount;
         const adultPercent = totalAttending > 0 ? Math.round((adultCount / totalAttending) * 100) : 0;
@@ -2944,6 +2964,8 @@ const RSVPSystem = {
             hasResponded: false,
             response: '',
             actualGuestCount: 0,
+            adultCount: 0,
+            childCount: 0,
             additionalGuests: [],
             address: {
                 line1: addressLine1,
@@ -3065,23 +3087,50 @@ const RSVPSystem = {
             responseSelect.disabled = !guest.hasResponded;
         }
 
-        // Set the guest count
-        const guestCountInput = document.getElementById('edit-guest-count');
-        if (guestCountInput) {
-            guestCountInput.value = guest.actualGuestCount || 0;
-            guestCountInput.disabled = !guest.hasResponded || guest.response !== 'yes';
+        // Set the adult and child counts
+        const adultCountInput = document.getElementById('edit-guest-adult-count');
+        const childCountInput = document.getElementById('edit-guest-child-count');
+        const totalCountInput = document.getElementById('edit-guest-total-count');
+
+        if (adultCountInput && childCountInput && totalCountInput) {
+            // Use stored adult/child counts if available, otherwise try to derive from actualGuestCount
+            const adultCount = guest.adultCount !== undefined ? guest.adultCount :
+                              (guest.actualGuestCount > 0 ? Math.max(1, guest.actualGuestCount) : 0);
+            const childCount = guest.childCount !== undefined ? guest.childCount : 0;
+
+            adultCountInput.value = adultCount;
+            childCountInput.value = childCount;
+            totalCountInput.value = adultCount + childCount;
+
+            const isDisabled = !guest.hasResponded || guest.response !== 'attending';
+            adultCountInput.disabled = isDisabled;
+            childCountInput.disabled = isDisabled;
+
+            // Add event listeners to update total count when adult/child counts change
+            const updateTotalCount = () => {
+                const adults = parseInt(adultCountInput.value) || 0;
+                const children = parseInt(childCountInput.value) || 0;
+                totalCountInput.value = adults + children;
+            };
+
+            adultCountInput.addEventListener('input', updateTotalCount);
+            childCountInput.addEventListener('input', updateTotalCount);
         }
 
         // Set up the response status change event
-        if (responseStatusSelect && responseSelect && guestCountInput) {
+        if (responseStatusSelect && responseSelect && adultCountInput && childCountInput) {
             responseStatusSelect.onchange = function() {
                 const isResponded = this.value === 'responded';
                 responseSelect.disabled = !isResponded;
-                guestCountInput.disabled = !isResponded || responseSelect.value !== 'yes';
+                const isAttending = responseSelect.value === 'attending';
+                adultCountInput.disabled = !isResponded || !isAttending;
+                childCountInput.disabled = !isResponded || !isAttending;
             };
 
             responseSelect.onchange = function() {
-                guestCountInput.disabled = this.value !== 'yes';
+                const isAttending = this.value === 'attending';
+                adultCountInput.disabled = !isAttending;
+                childCountInput.disabled = !isAttending;
             };
         }
 
@@ -3110,7 +3159,9 @@ const RSVPSystem = {
         const zip = document.getElementById('edit-guest-zip').value.trim();
         const responseStatus = document.getElementById('edit-guest-response-status').value;
         const response = document.getElementById('edit-guest-response').value;
-        const guestCount = parseInt(document.getElementById('edit-guest-count').value) || 0;
+        const adultCount = parseInt(document.getElementById('edit-guest-adult-count').value) || 0;
+        const childCount = parseInt(document.getElementById('edit-guest-child-count').value) || 0;
+        const totalGuestCount = adultCount + childCount;
 
         // Validate the form
         if (!name) {
@@ -3131,9 +3182,12 @@ const RSVPSystem = {
             name,
             category,
             email,
-            phone,            hasResponded: responseStatus === 'responded',
+            phone,
+            hasResponded: responseStatus === 'responded',
             response: responseStatus === 'responded' ? response : '',
-            actualGuestCount: responseStatus === 'responded' && response === 'attending' ? guestCount : 0,
+            actualGuestCount: responseStatus === 'responded' && response === 'attending' ? totalGuestCount : 0,
+            adultCount: responseStatus === 'responded' && response === 'attending' ? adultCount : 0,
+            childCount: responseStatus === 'responded' && response === 'attending' ? childCount : 0,
             address: {
                 line1: addressLine1,
                 line2: addressLine2,
@@ -3164,6 +3218,8 @@ const RSVPSystem = {
             hasResponded: updatedGuest.hasResponded,
             response: updatedGuest.response,
             actualGuestCount: updatedGuest.actualGuestCount,
+            adultCount: updatedGuest.adultCount,
+            childCount: updatedGuest.childCount,
             address: updatedGuest.address
         })
             .then(() => {
@@ -3359,8 +3415,12 @@ const RSVPSystem = {
                         </div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">Actual Guest Count</div>
-                        <div class="detail-value">${guest.actualGuestCount || 0}</div>
+                        <div class="detail-label">Guest Count</div>
+                        <div class="detail-value">
+                            ${guest.actualGuestCount || 0} total
+                            ${(guest.adultCount !== undefined || guest.childCount !== undefined) ?
+                                ` (${guest.adultCount || 0} adults, ${guest.childCount || 0} children)` : ''}
+                        </div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">Response Date</div>
