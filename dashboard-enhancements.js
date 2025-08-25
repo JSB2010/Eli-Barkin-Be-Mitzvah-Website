@@ -67,7 +67,7 @@ const DashboardEnhancements = {
         const exportRsvpsBtn = document.getElementById('export-rsvps-btn');
         if (exportRsvpsBtn) {
             exportRsvpsBtn.addEventListener('click', function() {
-                DashboardEnhancements.exportToCSV('rsvps');
+                DashboardEnhancements.exportToCSV('guests');
             });
         }
 
@@ -284,8 +284,8 @@ const DashboardEnhancements = {
         });
     },
 
-    // Export data to CSV
-    exportToCSV: function(type) {
+    // Export data to CSV with improved data merging
+    exportToCSV: async function(type) {
         if (typeof RSVPSystem === 'undefined' || !RSVPSystem.state) {
             if (typeof ToastSystem !== 'undefined') {
                 ToastSystem.error('RSVP System not initialized', 'Export Failed');
@@ -293,77 +293,239 @@ const DashboardEnhancements = {
             return;
         }
 
-        let data = [];
-        let filename = '';
-        let headers = [];
-
-        if (type === 'rsvps') {
-            data = RSVPSystem.state.submissions || [];
-            filename = 'rsvp-submissions-' + new Date().toISOString().split('T')[0] + '.csv';
-            headers = ['Name', 'Email', 'Phone', 'Response', 'Guest Count', 'Additional Guests', 'Submitted At'];
-        } else if (type === 'guests') {
-            data = RSVPSystem.state.guests || [];
-            filename = 'guest-list-' + new Date().toISOString().split('T')[0] + '.csv';
-            headers = ['Name', 'Email', 'Phone', 'Status', 'Response', 'Guest Count', 'Additional Guests', 'Address', 'City', 'State', 'Zip', 'Category'];
-        }
-
-        if (data.length === 0) {
+        try {
+            // Show loading notification
             if (typeof ToastSystem !== 'undefined') {
-                ToastSystem.warning('No data to export', 'Export Failed');
+                ToastSystem.info('Preparing export...', 'Export in Progress');
             }
-            return;
+
+            // Get merged data like the dashboard does
+            const mergedData = await this.getMergedGuestData();
+
+            if (mergedData.length === 0) {
+                if (typeof ToastSystem !== 'undefined') {
+                    ToastSystem.warning('No data to export', 'Export Failed');
+                }
+                return;
+            }
+
+            // Generate filename with timestamp
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', '_');
+            const filename = `guest_list_complete_${timestamp}.csv`;
+
+            // CSV Headers - comprehensive export
+            const headers = [
+                'Name',
+                'Email',
+                'Phone',
+                'Responding',
+                'Attending',
+                'Number of Adults',
+                'Number of Children',
+                'Names of Adults',
+                'Names of Children',
+                'Category',
+                'Address',
+                'City',
+                'State',
+                'Zip',
+                'Submitted At'
+            ];
+
+            // Generate CSV content
+            let csvContent = headers.join(',') + '\n';
+
+            mergedData.forEach(guest => {
+                // Extract and format data
+                const name = this.escapeCsvValue(guest.name || '');
+                const email = this.escapeCsvValue(guest.email || '');
+                const phone = this.escapeCsvValue(guest.phone || '');
+
+                // Use the merged data (now accurate like the dashboard)
+                const responding = guest.hasResponded ? 'Yes' : 'No';
+                const attending = guest.response === 'attending' ? 'Yes' : (guest.response === 'declined' ? 'No' : '');
+
+                // Use RSVP submission data if available
+                let adultCount = guest.adultCount || 0;
+                let childCount = guest.childCount || 0;
+                let adultGuests = '';
+                let childGuests = '';
+
+                // Format adult guest names
+                if (Array.isArray(guest.adultGuests) && guest.adultGuests.length > 0) {
+                    adultGuests = guest.adultGuests.filter(name => name && name.trim()).join('; ');
+                } else if (guest.hasResponded && guest.actualGuestCount > 0) {
+                    adultGuests = name;
+                    if (adultCount === 0) adultCount = 1;
+                }
+
+                // Format child guest names
+                if (Array.isArray(guest.childGuests) && guest.childGuests.length > 0) {
+                    childGuests = guest.childGuests.filter(name => name && name.trim()).join('; ');
+                }
+
+                // If no specific breakdown but have total count, estimate
+                if (adultCount === 0 && childCount === 0 && guest.actualGuestCount > 0) {
+                    const additionalGuests = guest.additionalGuests || [];
+                    if (additionalGuests.length > 0) {
+                        const childNames = additionalGuests.filter(name =>
+                            name && (name.toLowerCase().includes('child') ||
+                                    name.toLowerCase().includes('kid') ||
+                                    name.toLowerCase().includes('jr') ||
+                                    name.toLowerCase().includes('baby'))
+                        );
+                        const adultNames = additionalGuests.filter(name =>
+                            name && !childNames.includes(name)
+                        );
+
+                        adultCount = 1 + adultNames.length;
+                        childCount = childNames.length;
+                        adultGuests = [name, ...adultNames].join('; ');
+                        childGuests = childNames.join('; ');
+                    } else {
+                        adultCount = 1;
+                        adultGuests = name;
+                    }
+                }
+
+                // Format address
+                const address = guest.address || {};
+                const addressLine = this.escapeCsvValue(address.line1 || '');
+                const city = this.escapeCsvValue(address.city || '');
+                const state = this.escapeCsvValue(address.state || '');
+                const zip = this.escapeCsvValue(address.zip || '');
+
+                // Format submitted date
+                let submittedAt = '';
+                if (guest.submittedAt) {
+                    try {
+                        submittedAt = guest.submittedAt.toLocaleString();
+                    } catch (e) {
+                        submittedAt = 'Invalid Date';
+                    }
+                }
+
+                // Create CSV row
+                const row = [
+                    name,
+                    email,
+                    phone,
+                    responding,
+                    attending,
+                    adultCount,
+                    childCount,
+                    this.escapeCsvValue(adultGuests),
+                    this.escapeCsvValue(childGuests),
+                    this.escapeCsvValue(guest.category || ''),
+                    addressLine,
+                    city,
+                    state,
+                    zip,
+                    this.escapeCsvValue(submittedAt)
+                ];
+
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Show success notification
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.success(`${mergedData.length} complete guest records exported successfully`, 'Export Complete');
+            }
+
+        } catch (error) {
+            console.error('Export error:', error);
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.error(`Export failed: ${error.message}`, 'Export Failed');
+            }
+        }
+    },
+
+    // Get merged guest data (combines guestList and sheetRsvps like the dashboard)
+    getMergedGuestData: async function() {
+        if (!RSVPSystem.state.db) {
+            throw new Error('Database not available');
         }
 
-        // Process data
-        let csvContent = headers.join(',') + '\\n';
+        try {
+            // Fetch both collections like the dashboard does
+            const [guestSnapshot, rsvpSnapshot] = await Promise.all([
+                RSVPSystem.state.db.collection('guestList').get(),
+                RSVPSystem.state.db.collection('sheetRsvps').get()
+            ]);
 
-        data.forEach(item => {
-            let row = [];
+            // Process RSVP submissions into a map by name (like the dashboard does)
+            const submissionsByName = new Map();
+            rsvpSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.name) {
+                    submissionsByName.set(data.name.toLowerCase(), {
+                        id: doc.id,
+                        ...data,
+                        submittedAt: data.submittedAt?.toDate ? data.submittedAt.toDate() : new Date(data.submittedAt)
+                    });
+                }
+            });
 
-            if (type === 'rsvps') {
-                row = [
-                    this.escapeCsvValue(item.name || ''),
-                    this.escapeCsvValue(item.email || ''),
-                    this.escapeCsvValue(item.phone || ''),
-                    this.escapeCsvValue(item.response || ''),
-                    item.guestCount || 0,
-                    this.escapeCsvValue((item.additionalGuests || []).join(', ')),
-                    item.submittedAt ? new Date(item.submittedAt).toLocaleString() : ''
-                ];
-            } else if (type === 'guests') {
-                row = [
-                    this.escapeCsvValue(item.name || ''),
-                    this.escapeCsvValue(item.email || ''),
-                    this.escapeCsvValue(item.phone || ''),
-                    item.hasResponded ? 'Responded' : 'Not Responded',
-                    item.hasResponded ? (item.response === 'yes' ? 'Attending' : 'Not Attending') : '',
-                    item.actualGuestCount || 0,
-                    this.escapeCsvValue((item.additionalGuests || []).join(', ')),
-                    this.escapeCsvValue(item.address?.line1 || ''),
-                    this.escapeCsvValue(item.address?.city || ''),
-                    this.escapeCsvValue(item.address?.state || ''),
-                    this.escapeCsvValue(item.address?.zip || ''),
-                    this.escapeCsvValue(item.category || '')
-                ];
-            }
+            // Process guests and merge with RSVP submission data
+            const guests = [];
+            guestSnapshot.forEach(doc => {
+                const guestData = doc.data();
+                const guest = {
+                    id: doc.id,
+                    name: guestData.name || '',
+                    category: guestData.category || '',
+                    hasResponded: guestData.hasResponded || false,
+                    response: guestData.response || '',
+                    actualGuestCount: guestData.actualGuestCount || 0,
+                    additionalGuests: guestData.additionalGuests || [],
+                    email: guestData.email || '',
+                    phone: guestData.phone || '',
+                    address: guestData.address || {},
+                    submittedAt: guestData.submittedAt ? new Date(guestData.submittedAt.seconds * 1000) : null
+                };
 
-            csvContent += row.join(',') + '\\n';
-        });
+                // Merge with RSVP submission data if available (like the dashboard does)
+                if (guest.name) {
+                    const matchingSubmission = submissionsByName.get(guest.name.toLowerCase());
+                    if (matchingSubmission) {
+                        guest.hasResponded = true;
+                        guest.response = matchingSubmission.attending === 'yes' ? 'attending' : 'declined';
+                        guest.actualGuestCount = matchingSubmission.guestCount || 1;
+                        guest.additionalGuests = matchingSubmission.additionalGuests || [];
+                        guest.email = matchingSubmission.email || guest.email;
+                        guest.phone = matchingSubmission.phone || guest.phone;
+                        guest.submittedAt = matchingSubmission.submittedAt;
 
-        // Create download link
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+                        // Store additional RSVP details for better export
+                        guest.adultCount = matchingSubmission.adultCount || 0;
+                        guest.childCount = matchingSubmission.childCount || 0;
+                        guest.adultGuests = matchingSubmission.adultGuests || [];
+                        guest.childGuests = matchingSubmission.childGuests || [];
+                    }
+                }
 
-        // Show success notification
-        if (typeof ToastSystem !== 'undefined') {
-            ToastSystem.success(`${data.length} records exported successfully`, 'Export Complete');
+                guests.push(guest);
+            });
+
+            // Sort by name
+            guests.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            return guests;
+
+        } catch (error) {
+            console.error('Error fetching merged guest data:', error);
+            throw error;
         }
     },
 

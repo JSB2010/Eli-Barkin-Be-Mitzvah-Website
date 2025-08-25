@@ -8,11 +8,29 @@ let filteredGuests = [];
 // Initialize Firebase when the script loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard core script loaded and DOM ready');
+    
+    // Debug: Check if elements exist in the DOM
+    const statsElements = [
+        'response-rate', 'total-guests-count', 'responded-count', 
+        'not-responded-count', 'attending-guests-count', 'not-attending-guests-count'
+    ];
+    
+    statsElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`Element ${id} exists in DOM:`, element ? true : false);
+        if (element) {
+            console.log(`  - Current value:`, element.textContent);
+        }
+    });
 
     // Initialize Firestore
     try {
         db = firebase.firestore();
         console.log('Firestore initialized successfully');
+        
+        // Fetch both data sets and let the updateAllDashboardStats handle statistics
+        fetchGuestList();
+        fetchSubmissions();
     } catch (error) {
         console.error('Error initializing Firestore:', error);
         const loadingElement = document.getElementById('loading');
@@ -74,6 +92,9 @@ function fetchSubmissions() {
 
             // Process the data
             processSubmissions();
+            
+            // Attempt to update all dashboard stats
+            updateAllDashboardStats();
         })
         .catch((error) => {
             console.error('Error fetching submissions:', error);
@@ -118,10 +139,116 @@ function fetchGuestList() {
 
             // Process the guest list
             processGuestList();
+            
+            // Attempt to update all dashboard stats
+            updateAllDashboardStats();
         })
         .catch((error) => {
             console.error('Error fetching guest list:', error);
         });
+}
+
+// Function to update all dashboard statistics
+function updateAllDashboardStats() {
+    console.log('Updating all dashboard statistics');
+    
+    // Make sure both data sets are loaded
+    if (allGuests.length > 0 && allSubmissions.length > 0) {
+        // Update guest list statistics first
+        updateGuestListStats();
+        // Then update submission stats which might depend on guest counts
+        updateStats();
+        
+        // Direct element update as a final measure
+        setTimeout(forceUpdateDashboardStats, 500);
+        
+        console.log('All dashboard statistics updated successfully');
+    } else {
+        console.log('Cannot update all stats - missing data', {
+            guestsLoaded: allGuests.length > 0,
+            submissionsLoaded: allSubmissions.length > 0
+        });
+    }
+}
+
+// Direct DOM manipulation as a fallback
+function forceUpdateDashboardStats() {
+    console.log('Forcing direct update of dashboard statistics elements');
+    
+    if (allGuests.length === 0) {
+        console.warn('No guest data available for force update');
+        return;
+    }
+    
+    // Calculate key statistics
+    const totalGuests = allGuests.length;
+    const respondedCount = allGuests.filter(guest => guest.hasResponded).length;
+    const notRespondedCount = totalGuests - respondedCount;
+    const attendingCount = allGuests.filter(guest => guest.response === 'attending').length;
+    const notAttendingCount = allGuests.filter(guest => guest.response === 'declined').length;
+    
+    // Calculate percentages
+    const respondedPercent = totalGuests > 0 ? ((respondedCount / totalGuests) * 100).toFixed(1) : 0;
+    const notRespondedPercent = totalGuests > 0 ? ((notRespondedCount / totalGuests) * 100).toFixed(1) : 0;
+    const attendingPercent = respondedCount > 0 ? ((attendingCount / respondedCount) * 100).toFixed(1) : 0;
+    const notAttendingPercent = respondedCount > 0 ? ((notAttendingCount / respondedCount) * 100).toFixed(1) : 0;
+    
+    // Calculate response rate correctly
+    const responseRate = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+    
+    // Direct DOM updates with error handling
+    try {
+        // Response Rate
+        const responseRateElem = document.getElementById('response-rate');
+        if (responseRateElem) responseRateElem.textContent = `${responseRate}%`;
+        
+        // Total Guests
+        const totalGuestsElem = document.getElementById('total-guests-count');
+        if (totalGuestsElem) totalGuestsElem.textContent = totalGuests;
+        
+        // Responded
+        const respondedElem = document.getElementById('responded-count');
+        if (respondedElem) respondedElem.textContent = respondedCount;
+        
+        // Responded Percent
+        const respondedPercentElem = document.getElementById('responded-percent');
+        if (respondedPercentElem) respondedPercentElem.textContent = `${respondedPercent}% of total`;
+        
+        // Not Responded
+        const notRespondedElem = document.getElementById('not-responded-count');
+        if (notRespondedElem) notRespondedElem.textContent = notRespondedCount;
+        
+        // Not Responded Percent
+        const notRespondedPercentElem = document.getElementById('not-responded-percent');
+        if (notRespondedPercentElem) notRespondedPercentElem.textContent = `${notRespondedPercent}% of total`;
+        
+        // Attending
+        const attendingElem = document.getElementById('attending-guests-count');
+        if (attendingElem) attendingElem.textContent = attendingCount;
+        
+        // Attending Percent
+        const attendingPercentElem = document.getElementById('attending-guests-percent');
+        if (attendingPercentElem) attendingPercentElem.textContent = `${attendingPercent}% of responded`;
+        
+        // Not Attending
+        const notAttendingElem = document.getElementById('not-attending-guests-count');
+        if (notAttendingElem) notAttendingElem.textContent = notAttendingCount;
+        
+        // Not Attending Percent
+        const notAttendingPercentElem = document.getElementById('not-attending-guests-percent');
+        if (notAttendingPercentElem) notAttendingPercentElem.textContent = `${notAttendingPercent}% of responded`;
+        
+        console.log('Force update completed successfully with values:', {
+            responseRate,
+            totalGuests,
+            respondedCount,
+            notRespondedCount,
+            attendingCount,
+            notAttendingCount
+        });
+    } catch (error) {
+        console.error('Error during force update:', error);
+    }
 }
 
 // Process submissions data
@@ -144,7 +271,10 @@ function processSubmissions() {
     // Apply filters (simplified for now)
     filteredSubmissions = [...allSubmissions];
 
-    // Update statistics
+    // Update statistics - make sure updateGuestListStats is also called if guests are loaded
+    if (allGuests.length > 0) {
+        updateGuestListStats();
+    }
     updateStats();
 
     // Display submissions in table
@@ -205,6 +335,11 @@ function processGuestList() {
 
     // Update guest list statistics
     updateGuestListStats();
+    
+    // If submissions have been loaded, refresh stats with new guest count
+    if (allSubmissions.length > 0) {
+        updateStats();
+    }
 
     // Display guest list
     displayGuestList();
@@ -212,7 +347,10 @@ function processGuestList() {
 
 // Update statistics
 function updateStats() {
-    console.log('Updating statistics...');
+    console.log('Starting updateStats with:', { 
+        totalSubmissions: allSubmissions.length,
+        totalGuests: allGuests.length
+    });
 
     const totalSubmissions = allSubmissions.length;
     const attendingCount = allSubmissions.filter(submission => submission.attending === 'yes').length;
@@ -221,10 +359,23 @@ function updateStats() {
     // Calculate total guests
     const totalGuests = allSubmissions
         .filter(submission => submission.attending === 'yes')
-        .reduce((total, submission) => total + (submission.guestCount || 1), 0);
+        .reduce((total, submission) => total + (parseInt(submission.guestCount) || 1), 0);
 
-    // Calculate response rate
-    const responseRate = Math.round((totalSubmissions / 300) * 100); // Assuming 300 expected invites
+    // Use guest list stats for response rate calculation
+    const totalGuestCount = allGuests.length;
+    const respondedCount = allGuests.filter(guest => guest.hasResponded).length;
+    // Response rate is the percentage of guests who have responded
+    const responseRate = totalGuestCount > 0 ? Math.round((respondedCount / totalGuestCount) * 100) : 0;
+
+    console.log('Stats calculated:', {
+        totalSubmissions,
+        attendingCount,
+        notAttendingCount,
+        totalGuests,
+        totalGuestCount,
+        respondedCount,
+        responseRate
+    });
 
     // Calculate percentages
     const attendingPercent = totalSubmissions > 0 ? Math.round((attendingCount / totalSubmissions) * 100) : 0;
@@ -244,17 +395,23 @@ function updateStats() {
         'attending-count': attendingCount,
         'not-attending-count': notAttendingCount,
         'total-guests': totalGuests,
-        'total-submissions-percent': `${responseRate}% of expected invites`,
+        'total-submissions-percent': `${responseRate}% of total guests`,
         'attending-percent': `${attendingPercent}% of responses`,
         'not-attending-percent': `${notAttendingPercent}% of responses`,
         'avg-party-size': `Avg party size: ${avgPartySize}`,
         'response-rate': `${responseRate}%`
     };
 
-    // Update all elements with null checks
+    // Update all elements with null checks and log results
+    console.log('Attempting to update elements with IDs from updateStats:', Object.keys(elements));
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element) element.textContent = value;
+        if (element) {
+            element.textContent = value;
+            console.log(`Updated element ${id} with value ${value}`);
+        } else {
+            console.warn(`Element with ID ${id} not found in the document`);
+        }
     });
 
     // Update latest RSVP info
@@ -269,25 +426,73 @@ function updateStats() {
     }
 }
 
-// Update guest list statistics
+// Fix the response rate calculation in updateGuestListStats
 function updateGuestListStats() {
+    console.log('Starting updateGuestListStats with:', { 
+        totalGuests: allGuests.length, 
+        allSubmissions: allSubmissions.length 
+    });
+    
     const totalGuests = allGuests.length;
-    const respondedCount = allGuests.filter(guest => guest.hasResponded).length;
+    // Check if hasResponded field exists and is being used correctly
+    console.log('Sample guest data:', allGuests.length > 0 ? {
+        firstGuest: allGuests[0],
+        hasRespondedField: allGuests[0].hasResponded,
+        responseField: allGuests[0].response
+    } : 'No guests available');
+    
+    // Count directly with detailed logging
+    let respondedCount = 0;
+    let attendingCount = 0;
+    let notAttendingCount = 0;
+    
+    allGuests.forEach((guest, index) => {
+        if (guest.hasResponded) {
+            respondedCount++;
+            if (guest.response === 'attending') {
+                attendingCount++;
+            } else if (guest.response === 'declined') {
+                notAttendingCount++;
+            }
+        }
+    });
+    
+    console.log(`Direct count: ${respondedCount} responded out of ${totalGuests} total`);
+    
+    // Alternative calculation using filter
+    const respondedCountFilter = allGuests.filter(guest => guest.hasResponded).length;
+    const attendingCountFilter = allGuests.filter(guest => guest.response === 'attending').length;
+    const notAttendingCountFilter = allGuests.filter(guest => guest.response === 'declined').length;
+    
+    console.log('Filter count comparison:', {
+        respondedCount,
+        respondedCountFilter,
+        attendingCount,
+        attendingCountFilter,
+        notAttendingCount,
+        notAttendingCountFilter
+    });
+    
+    // Use the direct count numbers
     const notRespondedCount = totalGuests - respondedCount;
-    const attendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'attending').length;
-    const notAttendingCount = allGuests.filter(guest => guest.hasResponded && guest.response === 'declined').length;
 
     // Calculate percentages
-    const respondedPercent = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
-    const notRespondedPercent = totalGuests > 0 ? Math.round((notRespondedCount / totalGuests) * 100) : 0;
-    const attendingPercent = respondedCount > 0 ? Math.round((attendingCount / respondedCount) * 100) : 0;
-    const notAttendingPercent = respondedCount > 0 ? Math.round((notAttendingCount / respondedCount) * 100) : 0;
+    const respondedPercent = totalGuests > 0 ? ((respondedCount / totalGuests) * 100).toFixed(1) : 0;
+    const notRespondedPercent = totalGuests > 0 ? ((notRespondedCount / totalGuests) * 100).toFixed(1) : 0;
+    const attendingPercent = respondedCount > 0 ? ((attendingCount / respondedCount) * 100).toFixed(1) : 0;
+    const notAttendingPercent = respondedCount > 0 ? ((notAttendingCount / respondedCount) * 100).toFixed(1) : 0;
 
-    // Update response rate in the main dashboard
-    const responseRateElem = document.getElementById('response-rate');
-    if (responseRateElem) {
-        responseRateElem.textContent = `${respondedPercent}%`;
-    }
+    // Calculate response rate - this is the percentage of guests who have responded
+    const responseRate = totalGuests > 0 ? Math.round((respondedCount / totalGuests) * 100) : 0;
+
+    console.log('Guest stats calculated:', {
+        totalGuests,
+        respondedCount,
+        notRespondedCount,
+        attendingCount,
+        notAttendingCount,
+        responseRate
+    });
 
     // Update DOM elements with null checks
     const elements = {
@@ -299,13 +504,30 @@ function updateGuestListStats() {
         'responded-percent': `${respondedPercent}% of total`,
         'not-responded-percent': `${notRespondedPercent}% of total`,
         'attending-guests-percent': `${attendingPercent}% of responded`,
-        'not-attending-guests-percent': `${notAttendingPercent}% of responded`
+        'not-attending-guests-percent': `${notAttendingPercent}% of responded`,
+        'response-rate': `${responseRate}%`
     };
 
-    // Update all elements with null checks
+    // Update all elements with null checks and log results
+    console.log('Attempting to update elements with IDs:', Object.keys(elements));
+    
+    // Double check that key elements exist
+    const keyElements = ['response-rate', 'total-guests-count', 'responded-count'];
+    keyElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`Key element check - ${id} exists:`, element ? true : false);
+    });
+    
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element) element.textContent = value;
+        if (element) {
+            // Log the previous value to see if it's being overwritten
+            const previousValue = element.textContent;
+            element.textContent = value;
+            console.log(`Updated element ${id} from "${previousValue}" to "${value}"`);
+        } else {
+            console.warn(`Element with ID ${id} not found in the document`);
+        }
     });
 }
 
@@ -364,6 +586,33 @@ function displayGuestList() {
         guestListBody.appendChild(row);
     });
 }
+
+// Final initialization - run after everything else has loaded
+window.addEventListener('load', function() {
+    console.log('Window fully loaded, running final stats update check');
+    
+    // Wait a short time for any other scripts to complete
+    setTimeout(function() {
+        // Check if data is loaded
+        if (allGuests.length > 0) {
+            console.log('Running final forced update with', allGuests.length, 'guests');
+            forceUpdateDashboardStats();
+        } else {
+            console.warn('No guest data available for final update');
+            
+            // Check if our script is being properly loaded and executed
+            console.log('Checking document state and script execution:');
+            console.log('- document.readyState:', document.readyState);
+            console.log('- dashboard-core.js present:', !!window.fetchGuestList);
+            
+            // Try to fetch data again if needed
+            if (typeof db !== 'undefined' && db) {
+                console.log('Attempting to fetch guest data again...');
+                fetchGuestList();
+            }
+        }
+    }, 1000);
+});
 
 // Make functions globally available
 window.fetchSubmissions = fetchSubmissions;

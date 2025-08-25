@@ -35,6 +35,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase Config - Load this first to initialize Firebase -->
     <script src="firebase-config.js"></script>
+    <script src="dashboard-core.js"></script>
     <!-- Add a script to detect browser and environment -->
     <script>
         // Create a global object to store environment information
@@ -62,12 +63,8 @@
         // Add handler for unhandled promise rejections
         window.addEventListener('unhandledrejection', function(event) {
             console.error('Unhandled promise rejection:', event.reason);
-
-            // Only show error for non-Firebase related issues
-            if (event.reason && !event.reason.message?.includes('Firebase') && !event.reason.message?.includes('firestore')) {
-                if (typeof ToastSystem !== 'undefined') {
-                    ToastSystem.error('An error occurred in background task', 'Error');
-                }
+            if (typeof ToastSystem !== 'undefined') {
+                ToastSystem.error('An error occurred in background task', 'Error');
             }
 
             // Prevent the default browser error popup in Chrome
@@ -1371,14 +1368,6 @@
             background-color: var(--danger-dark);
         }
 
-        .form-help {
-            font-size: 0.85rem;
-            color: var(--dark-gray);
-            opacity: 0.8;
-            margin-top: 0.25rem;
-            display: block;
-        }
-
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 1rem;
@@ -2040,13 +2029,6 @@
         .event-response.not-attending {
             background-color: rgba(239, 68, 68, 0.15);
             color: var(--danger);
-        }
-
-        .guest-names {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         /* Out-of-town analytics styles */
@@ -2721,16 +2703,18 @@
                     <p class="dashboard-subtitle">Eli's Be Mitzvah Guest Management</p>
                 </div>
                 <div class="dashboard-actions">
-                    <button type="button" id="refresh-data-btn" class="btn" title="Refresh all dashboard data"><i class="fas fa-redo"></i> Refresh</button>
-                    <button type="button" id="sync-data-btn" class="btn warning" title="Sync guest list with RSVP submissions"><i class="fas fa-sync"></i> Sync Data</button>
-                    <button type="button" id="export-rsvps-btn" class="btn success" title="Export RSVP submissions to CSV"><i class="fas fa-download"></i> Export</button>
-                    <button type="button" id="add-guest-btn" class="btn primary" title="Add a new guest to the list"><i class="fas fa-user-plus"></i> Add Guest</button>
+                    <button type="button" id="refresh-data-btn" class="btn"><i class="fas fa-redo"></i> Refresh</button>
+                    <button type="button" id="sync-sheet-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Sync Sheet</button>
                     <button type="button" id="logout-btn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                    <button type="button" id="show-debug-btn" class="btn-icon" title="Show debug information"><i class="fas fa-bug"></i></button>
+                    <button type="button" id="show-debug-btn" class="btn-icon"><i class="fas fa-bug"></i></button>
                 </div>
             </div>
 
-
+            <!-- Dashboard Tabs -->
+            <div class="dashboard-tabs">
+                <button type="button" class="tab-button active" data-tab="rsvp-tab"><i class="fas fa-envelope-open-text"></i> RSVP Management</button>
+                <button type="button" class="tab-button" data-tab="sysadmin-tab"><i class="fas fa-server"></i> System Admin</button>
+            </div>
 
             <!-- Dashboard Overview -->
             <div class="dashboard-overview">
@@ -2746,14 +2730,17 @@
 
 
 
-            <!-- RSVP Dashboard Content -->
+            <!-- Tab Content Containers -->
+            <div id="rsvp-tab" class="tab-content active">
+
+                <!-- RSVP Dashboard Content -->
                 <!-- Key Metrics Section -->
                 <div class="metrics-section">
                     <div class="stats-container">
                         <div class="stat-card highlight">
                             <h3>Response Rate</h3>
                             <div id="response-rate" class="stat-value">-</div>
-                            <div class="stat-subtext">Based on expected ~300 invites</div>
+                            <div class="stat-subtext">Based on total guests in system</div>
                         </div>
                         <div class="stat-card">
                             <h3>Total Guests</h3>
@@ -2816,12 +2803,36 @@
 
                         <div class="chart-card">
                             <h3>Response Rate</h3>
-                            <canvas id="response-rate-analytics-chart"></canvas>
+                            <div id="response-rate-analytics" class="chart-content"></div>
                         </div>
 
+                        <div class="chart-card">
+                            <h3>Attendance Prediction</h3>
+                            <div id="attendance-prediction-analytics" class="chart-content"></div>
+                        </div>
 
-
-
+                        <div class="chart-card">
+                            <h3>Out-of-Town Events</h3>
+                            <div class="out-of-town-analytics">
+                                <div class="out-of-town-stats">
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Out-of-Town Guests:</div>
+                                        <div id="out-of-town-count" class="stat-value">0</div>
+                                    </div>
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Friday Dinner at Linger:</div>
+                                        <div id="friday-dinner-count" class="stat-value">0</div>
+                                    </div>
+                                    <div class="out-of-town-stat-item">
+                                        <div class="stat-label">Sunday Brunch at Eli's:</div>
+                                        <div id="sunday-brunch-count" class="stat-value">0</div>
+                                    </div>
+                                </div>
+                                <div class="out-of-town-chart-container">
+                                    <canvas id="out-of-town-events-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2852,8 +2863,8 @@
                                         </select>
                                     </div>
                                 </div>
-
-
+                                <button type="button" id="add-guest-btn" class="btn primary"><i class="fas fa-user-plus"></i> Add Guest</button>
+                                <button type="button" id="export-guest-list-btn" class="btn"><i class="fas fa-download"></i> Export Guest List</button>
                             </div>
                         </div>
 
@@ -2893,20 +2904,17 @@
                                 <div class="search-filter-group">
                                     <div class="search-container">
                                         <i class="fas fa-search search-icon"></i>
-                                        <input type="text" id="submissions-search-box" class="search-box" placeholder="Search by name, email, phone...">
+                                        <input type="text" id="search-box" class="search-box" placeholder="Search by name, email...">
                                     </div>
-                                    <select id="submissions-filter-dropdown" class="filter-dropdown">
+                                    <select id="filter-dropdown" class="filter-dropdown">
                                         <option value="all">All Submissions</option>
                                         <option value="attending">Attending</option>
                                         <option value="not-attending">Not Attending</option>
                                         <option value="recent">Last 7 Days</option>
                                         <option value="large-party">Large Parties (4+)</option>
-                                        <option value="adults-only">Adults Only</option>
-                                        <option value="children-only">Children Only</option>
-                                        <option value="mixed-party">Mixed (Adults + Children)</option>
                                     </select>
                                 </div>
-
+                                <button type="button" id="export-rsvps-btn" class="btn"><i class="fas fa-download"></i> Export CSV</button>
                             </div>
                         </div>
 
@@ -2918,7 +2926,7 @@
                                         <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="email">Email <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="phone">Phone <span class="sort-icon">↕</span></th>
-                                        <th class="sortable" data-sort="attending">Response <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="attending">Attending <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="guestCount">Total Guests <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="adultCount">Adults <span class="sort-icon">↕</span></th>
                                         <th class="sortable" data-sort="childCount">Children <span class="sort-icon">↕</span></th>
@@ -2949,7 +2957,15 @@
                             <div class="activity-content">
                                 <h4>Latest RSVP</h4>
                                 <p id="latest-rsvp-name">-</p>
-                                <p id="latest-rsvp-time" class="activity-time">-</p>
+                                <p id="latest-rsvp-time" class="activity-time"></p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-sync-alt"></i></div>
+                            <div class="activity-content">
+                                <h4>Last Sync</h4>
+                                <p id="last-sync-time">-</p>
+                                <p id="sync-status" class="activity-status">Sync with Google Sheet to update</p>
                             </div>
                         </div>
                         <div class="activity-card">
@@ -2961,19 +2977,27 @@
                             </div>
                         </div>
                         <div class="activity-card">
-                            <div class="activity-icon"><i class="fas fa-users"></i></div>
+                            <div class="activity-icon"><i class="fas fa-child"></i></div>
                             <div class="activity-content">
                                 <h4>Age Distribution</h4>
                                 <p id="age-distribution">-</p>
-                                <p class="activity-status">Adults vs. Children attending</p>
+                                <p class="activity-status">Adults vs. Children</p>
                             </div>
                         </div>
                         <div class="activity-card">
-                            <div class="activity-icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="activity-icon"><i class="fas fa-clipboard-check"></i></div>
                             <div class="activity-content">
-                                <h4>Recent Activity</h4>
-                                <p id="recent-activity">-</p>
-                                <p class="activity-status">RSVPs in last 24 hours</p>
+                                <h4>Response Rate</h4>
+                                <p id="response-rate-chart">-</p>
+                                <p class="activity-status">Percentage of guests who responded</p>
+                            </div>
+                        </div>
+                        <div class="activity-card">
+                            <div class="activity-icon"><i class="fas fa-users"></i></div>
+                            <div class="activity-content">
+                                <h4>Attendance Prediction</h4>
+                                <p id="attendance-prediction">-</p>
+                                <p class="activity-status">Estimated final attendance</p>
                             </div>
                         </div>
                     </div>
@@ -2987,54 +3011,74 @@
                     <div class="utilities-container">
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3><i class="fas fa-sync-alt"></i> Google Sheet Integration</h3>
+                                <h3><i class="fas fa-sync-alt"></i> Google Sheet Sync</h3>
                             </div>
                             <div class="utility-content">
-                                <p>Sync data between Firebase and Google Sheets for backup and external access.</p>
+                                <p>Sync data between Firebase and Google Sheets.</p>
                                 <div class="utility-actions">
-                                    <button type="button" id="sync-sheet-to-firebase-btn" class="btn primary" title="Import guest list from Google Sheets"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
-                                    <button type="button" id="sync-firebase-to-sheet-btn" class="btn primary" title="Export current data to Google Sheets"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
-                                    <button type="button" id="sync-master-sheet-btn" class="btn success" title="Sync master guest list with RSVP data"><i class="fas fa-sync-alt"></i> Sync Master Sheet</button>
+                                    <button type="button" id="sync-sheet-to-firebase-btn" class="btn primary"><i class="fas fa-cloud-download-alt"></i> Import from Sheet</button>
+                                    <button type="button" id="sync-firebase-to-sheet-btn" class="btn primary"><i class="fas fa-cloud-upload-alt"></i> Export to Sheet</button>
+                                    <button type="button" id="sync-master-sheet-btn" class="btn success"><i class="fas fa-sync-alt"></i> Sync Master Sheet</button>
                                 </div>
                                 <div class="utility-help">
-                                    <small><i class="fas fa-info-circle"></i> Sync Master Sheet updates the master guest list with current RSVP responses</small>
+                                    <small>Sync Master Sheet updates the master guest list with RSVP data</small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3><i class="fas fa-file-import"></i> Data Import/Export</h3>
+                                <h3><i class="fas fa-user-edit"></i> Test User Management</h3>
                             </div>
                             <div class="utility-content">
-                                <p>Import guests from CSV files and export guest lists for external use.</p>
+                                <p>Reset test users to test the RSVP process again.</p>
                                 <div class="utility-actions">
-                                    <button type="button" id="bulk-add-guests-btn" class="btn success" title="Upload CSV file with guest information"><i class="fas fa-upload"></i> Upload CSV</button>
+                                    <button type="button" id="reset-test-users-btn" class="btn warning"><i class="fas fa-undo"></i> Reset Test Users</button>
+                                </div>
+                                <div class="test-users-list">
+                                    <span class="test-user-badge">Jacob Barkin</span>
+                                    <span class="test-user-badge">Hagen Zuzu Barkin</span>
+                                    <span class="test-user-badge">Alton Barkin</span>
+                                    <span class="test-user-badge">Jesse Strassburger</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Data card removed (all buttons were duplicates) -->
+
+                        <div class="utility-card">
+                            <div class="utility-header">
+                                <h3><i class="fas fa-file-import"></i> Import Data</h3>
+                            </div>
+                            <div class="utility-content">
+                                <p>Import guests from a CSV file.</p>
+                                <div class="utility-actions">
+                                    <button type="button" id="bulk-add-guests-btn" class="btn success"><i class="fas fa-upload"></i> Upload CSV</button>
                                     <input type="file" id="file-upload-input" accept=".csv" class="file-input-hidden">
-                                    <button type="button" id="export-guest-list-btn" class="btn primary" title="Export current guest list to CSV"><i class="fas fa-download"></i> Export Guest List</button>
                                 </div>
                                 <div class="utility-help">
-                                    <small><i class="fas fa-info-circle"></i> CSV format: Name, Email, Phone, Address, City, State, Zip, Category</small>
+                                    <small>CSV format: Name, Email, Phone, Address, City, State, Zip, Category</small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="utility-card">
                             <div class="utility-header">
-                                <h3><i class="fas fa-database"></i> Database Operations</h3>
+                                <h3><i class="fas fa-database"></i> Database Management</h3>
                             </div>
                             <div class="utility-content">
-                                <p>Backup, restore, and manage your database data.</p>
+                                <p>Manage your database data.</p>
                                 <div class="utility-actions">
-                                    <button type="button" id="backup-database-btn" class="btn primary" title="Download complete database backup"><i class="fas fa-download"></i> Backup Database</button>
-                                    <button type="button" id="reset-test-users-btn" class="btn warning" title="Reset test users for RSVP testing"><i class="fas fa-undo"></i> Reset Test Users</button>
-                                    <button type="button" id="clear-test-data-btn" class="btn danger" title="Remove all test submissions (cannot be undone)"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
+                                    <button type="button" id="backup-database-btn" class="btn primary"><i class="fas fa-download"></i> Backup Database</button>
+                                    <button type="button" id="clear-test-data-btn" class="btn danger"><i class="fas fa-trash-alt"></i> Clear Test Data</button>
                                 </div>
                                 <div class="utility-help">
-                                    <small><i class="fas fa-exclamation-triangle"></i> Warning: Clear Test Data will permanently remove all test submissions</small>
+                                    <small>Warning: Clear Test Data will remove all test submissions</small>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Quick Actions card removed (all buttons were duplicates) -->
                     </div>
 
                     <!-- Utility Results Container -->
@@ -3050,15 +3094,390 @@
                 </div>
             </div>
 
+            <!-- System Admin Tab Content -->
+            <div id="sysadmin-tab" class="tab-content">
+                <!-- System Admin Header -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-server"></i> System Administration</h2>
+                        <div class="section-actions">
+                            <button type="button" id="refresh-sysadmin-btn" class="btn primary"><i class="fas fa-sync-alt"></i> Refresh All Data</button>
+                        </div>
+                    </div>
+                    <p class="section-description">Comprehensive monitoring and analytics for all connected services.</p>
+                </div>
+
+                <!-- System Status Overview -->
+                <div class="metrics-section">
+                    <div class="section-header system-status-header">
+                        <h2 class="text-white"><i class="fas fa-heartbeat"></i> System Status</h2>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-card" id="cloudflare-status">
+                            <h3>Cloudflare</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Website Hosting</div>
+                        </div>
+                        <div class="stat-card" id="firebase-status">
+                            <h3>Firebase</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Database & Functions</div>
+                        </div>
+                        <div class="stat-card" id="github-status">
+                            <h3>GitHub</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Code Repository</div>
+                        </div>
+                        <div class="stat-card" id="analytics-status">
+                            <h3>Google Analytics</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Visitor Tracking</div>
+                        </div>
+                        <div class="stat-card" id="sheets-status">
+                            <h3>Google Sheets</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Guest Data Storage</div>
+                        </div>
+                        <div class="stat-card" id="brevo-status">
+                            <h3>Brevo</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Email Notifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Website Analytics -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> Website Analytics</h2>
+                        <div class="section-actions">
+                            <select id="analytics-timeframe" class="filter-dropdown">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected>Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Overview -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="visitors-card">
+                            <h3>Total Visitors</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Unique visitors</div>
+                        </div>
+                        <div class="stat-card" id="pageviews-card">
+                            <h3>Page Views</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Total views</div>
+                        </div>
+                        <div class="stat-card" id="avg-time-card">
+                            <h3>Avg. Time on Site</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Per session</div>
+                        </div>
+                        <div class="stat-card" id="bounce-rate-card">
+                            <h3>Bounce Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Single page visits</div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Visitors Over Time</h3>
+                            <canvas id="visitors-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Top Pages</h3>
+                            <canvas id="pages-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Traffic Sources</h3>
+                            <canvas id="sources-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Device Breakdown</h3>
+                            <canvas id="devices-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Firebase Usage -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-database"></i> Firebase Usage</h2>
+                    </div>
+
+                    <!-- Firebase Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="db-reads-card">
+                            <h3>Database Reads</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="db-writes-card">
+                            <h3>Database Writes</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="function-calls-card">
+                            <h3>Function Calls</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="storage-used-card">
+                            <h3>Storage Used</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Of 5GB free tier</div>
+                        </div>
+                    </div>
+
+                    <!-- Firebase Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Database Operations</h3>
+                            <canvas id="db-ops-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Function Executions</h3>
+                            <canvas id="function-exec-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Notifications -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-envelope"></i> Email Notifications</h2>
+                    </div>
+
+                    <!-- Email Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="emails-sent-card">
+                            <h3>Emails Sent</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="delivery-rate-card">
+                            <h3>Delivery Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Successfully delivered</div>
+                        </div>
+                        <div class="stat-card" id="open-rate-card">
+                            <h3>Open Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Emails opened</div>
+                        </div>
+                        <div class="stat-card" id="click-rate-card">
+                            <h3>Click Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Links clicked</div>
+                        </div>
+                    </div>
+
+                    <!-- Email Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Email Activity</h3>
+                            <canvas id="email-activity-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Email Performance</h3>
+                            <canvas id="email-performance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub Repository -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fab fa-github"></i> GitHub Repository</h2>
+                        <div class="section-actions">
+                            <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" rel="noopener noreferrer" class="btn"><i class="fas fa-external-link-alt"></i> View on GitHub</a>
+                        </div>
+                    </div>
+
+                    <!-- GitHub Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="commits-card">
+                            <h3>Total Commits</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">All time</div>
+                        </div>
+                        <div class="stat-card" id="branches-card">
+                            <h3>Branches</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Active branches</div>
+                        </div>
+                        <div class="stat-card" id="contributors-card">
+                            <h3>Contributors</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Total contributors</div>
+                        </div>
+                        <div class="stat-card" id="last-commit-card">
+                            <h3>Last Commit</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Time since last commit</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Commits -->
+                    <div class="table-responsive">
+                        <h3 class="subsection-title"><i class="fas fa-code-commit"></i> Recent Commits</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Author</th>
+                                    <th>Message</th>
+                                    <th>Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commits-table-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading commit history...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cloudflare Analytics -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-cloud"></i> Cloudflare Analytics</h2>
+                    </div>
+
+                    <!-- Cloudflare Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="bandwidth-card">
+                            <h3>Bandwidth Used</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="requests-card">
+                            <h3>Total Requests</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="cache-rate-card">
+                            <h3>Cache Rate</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Cache hit ratio</div>
+                        </div>
+                        <div class="stat-card" id="performance-score-card">
+                            <h3>Performance Score</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Cloudflare rating</div>
+                        </div>
+                    </div>
+
+                    <!-- Cloudflare Charts -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Traffic Over Time</h3>
+                            <canvas id="traffic-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Status Codes</h3>
+                            <canvas id="status-codes-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Sheets Integration -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-table"></i> Google Sheets Integration</h2>
+                    </div>
+
+                    <!-- Sheets Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card" id="sheet-rows-card">
+                            <h3>Total Rows</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">In guest spreadsheet</div>
+                        </div>
+                        <div class="stat-card" id="last-sync-card">
+                            <h3>Last Sync</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Time since last sync</div>
+                        </div>
+                        <div class="stat-card" id="sync-status-card">
+                            <h3>Sync Status</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Current status</div>
+                        </div>
+                        <div class="stat-card" id="api-quota-card">
+                            <h3>API Quota</h3>
+                            <div class="stat-value"><i class="fas fa-circle-notch fa-spin"></i></div>
+                            <div class="stat-subtext">Remaining today</div>
+                        </div>
+                    </div>
+
+                    <!-- Sync History -->
+                    <div class="table-responsive">
+                        <h3 class="subsection-title"><i class="fas fa-history"></i> Sync History</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Records Synced</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sync-history-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading sync history...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
 
 
+                <!-- System Logs -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-clipboard-list"></i> System Logs</h2>
+                        <div class="section-actions">
+                            <select id="log-filter" class="filter-dropdown">
+                                <option value="all">All Logs</option>
+                                <option value="error">Errors Only</option>
+                                <option value="warning">Warnings & Errors</option>
+                                <option value="info">Info & Above</option>
+                            </select>
+                        </div>
+                    </div>
 
+                    <!-- Log Table -->
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Level</th>
+                                    <th>Source</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table-body">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading system logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-
-
-
-
+                        <div id="logs-pagination" class="pagination">
+                            <!-- Pagination will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3237,25 +3656,14 @@
                                 <label for="edit-guest-response">Response</label>
                                 <select id="edit-guest-response" disabled>
                                     <option value="">Select...</option>
-                                    <option value="attending">Attending</option>
-                                    <option value="declined">Not Attending</option>
+                                    <option value="yes">Attending</option>
+                                    <option value="no">Not Attending</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="edit-guest-adult-count">Adult Count</label>
-                                <input type="number" id="edit-guest-adult-count" min="0" value="0" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="edit-guest-child-count">Child Count</label>
-                                <input type="number" id="edit-guest-child-count" min="0" value="0" disabled>
-                            </div>
-                        </div>
                         <div class="form-group">
-                            <label for="edit-guest-total-count">Total Guest Count</label>
-                            <input type="number" id="edit-guest-total-count" min="0" value="0" disabled readonly>
-                            <small class="form-help">This is automatically calculated from adult and child counts</small>
+                            <label for="edit-guest-count">Guest Count</label>
+                            <input type="number" id="edit-guest-count" min="0" value="0" disabled>
                         </div>
                     </div>
                     <div id="edit-guest-error" class="error-message hidden"></div>

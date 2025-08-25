@@ -62,3 +62,10 @@ firebase-config.local.js
 
 # Mac files
 .DS_Store
+
+# Temporary export files and scripts
+export_rsvp_data.html
+export_rsvp_data.sh
+export_rsvp_simple.sh
+rsvp_exports/
+temp_export_script.js
