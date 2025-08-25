@@ -17,8 +17,22 @@ const dns = require('dns');
 const { promisify } = require('util');
 const axios = require('axios');
 const chalk = require('chalk');
-
-// Promisify DNS methods
+const { URL } = require('url');
+// Helper to check allowed DNS CNAME host
+// Accepts direct domain, or subdomain of allowed domain
+function isAllowedHost(cname, allowedDomains) {
+  if (!cname) return false;
+  // Normalize: remove trailing dot if present
+  let host = cname.endsWith('.') ? cname.slice(0, -1) : cname;
+  // Lowercase
+  host = host.toLowerCase();
+  // Direct match
+  if (allowedDomains.includes(host)) return true;
+  // Subdomain match
+  return allowedDomains.some(d =>
+    host === d || host.endsWith('.' + d)
+  );
+}
 const resolveTxt = promisify(dns.resolveTxt);
 const resolveMx = promisify(dns.resolveMx);
 
@@ -186,7 +200,8 @@ async function checkReturnPath() {
         console.log(chalk.green('✅ Return-Path configuration found (CNAME):'));
         console.log(chalk.gray(`  ${records[0]}`));
         
-        if (records[0].includes('sendinblue.com') || records[0].includes('brevo.com')) {
+        const allowedBounceDomains = ['sendinblue.com', 'brevo.com'];
+        if (isAllowedHost(records[0], allowedBounceDomains)) {
           console.log(chalk.green('✅ Properly configured with Brevo/Sendinblue'));
         }
         
