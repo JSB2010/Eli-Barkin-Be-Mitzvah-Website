@@ -163,7 +163,13 @@ function trackElementClicks(selector, eventName, eventType = 'click') {
             } else {
                 // For normal clicks, we can delay a bit to ensure the event is sent
                 const href = element.getAttribute('href');
-                if (href && href.indexOf('#') !== 0 && href.indexOf('javascript:') !== 0) {
+                if (
+                    href &&
+                    href.indexOf('#') !== 0 &&
+                    href.indexOf('javascript:') !== 0 &&
+                    href.indexOf('data:') !== 0 &&
+                    href.indexOf('vbscript:') !== 0
+                ) {
                     // It's a link that navigates away
                 }
             }
