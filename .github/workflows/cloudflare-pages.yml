@@ -1,3 +1,4 @@
+permissions: {}
 name: Cloudflare Pages Deployment
 
 on:
