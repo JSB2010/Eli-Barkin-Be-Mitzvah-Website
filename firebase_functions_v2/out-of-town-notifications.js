@@ -64,7 +64,7 @@ exports.sendOutOfTownEventNotificationV2 = onDocumentWritten({
     let apiKeyValue = brevoApiKey.value().trim();
     // Remove any newline characters
     apiKeyValue = apiKeyValue.replace(/[\r\n]+/g, '');
-    console.log('Using Brevo API key:', apiKeyValue.substring(0, 5) + '...');
+    console.log('Using Brevo API key for transactional emails');
     apiKey.apiKey = apiKeyValue;
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
