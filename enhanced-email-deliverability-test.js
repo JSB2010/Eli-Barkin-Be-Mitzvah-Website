@@ -21,6 +21,20 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 
+
+// Helper to check if CNAME belongs to trusted providers
+function isTrustedCname(cname) {
+  // Normalize case
+  const domain = cname.trim().toLowerCase().replace(/\.$/, '');
+  const allowed = [
+    'sendinblue.com',
+    'brevo.com'
+  ];
+  return allowed.some(allowedDomain => 
+    domain === allowedDomain || domain.endsWith('.' + allowedDomain)
+  );
+}
+
 // Promisify DNS methods
 const resolveTxt = promisify(dns.resolveTxt);
 const resolveMx = promisify(dns.resolveMx);
@@ -190,7 +204,7 @@ async function checkReturnPath() {
         console.log(chalk.green('✅ Return-Path configuration found (CNAME):'));
         console.log(chalk.gray(`  ${records[0]}`));
         
-        if (records[0].includes('sendinblue.com') || records[0].includes('brevo.com')) {
+        if (isTrustedCname(records[0])) {
           console.log(chalk.green('✅ Properly configured with Brevo/Sendinblue'));
         }
         
