@@ -56,33 +56,53 @@ function injectHeader() {
     const currentPath = window.location.pathname;
     const pageName = currentPath.split('/').pop() || 'index.html';
 
-    // Create header HTML
-    const headerHTML = `
-        <header>
-            <div class="logo">
-                <a href="index.html">
-                    <img src="logo.PNG" alt="EZB Sports Logo">
-                </a>
-            </div>
-            <div class="menu-toggle" id="mobile-menu-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="index.html" ${pageName === 'index.html' ? 'class="active"' : ''}>Home</a></li>
-                    <li><a href="journey.html" ${pageName === 'journey.html' ? 'class="active"' : ''}>Eli's Journey</a></li>
-                    <li><a href="the-big-day.html" ${pageName === 'the-big-day.html' ? 'class="active"' : ''}>Game Day Details</a></li>
-                    <li><a href="rsvp.html" ${pageName === 'rsvp.html' ? 'class="active"' : ''}>RSVP</a></li>
-                    <li><a href="family-details.html" ${pageName === 'family-details.html' ? 'class="active"' : ''}>Family & Out-of-Town Guests</a></li>
-                    ${pageName === 'rsvp-dashboard.html' ? '<li><a href="rsvp-dashboard.html" class="active">RSVP Dashboard</a></li>' : ''}
-                </ul>
-            </nav>
-        </header>
-        <div class="menu-overlay"></div>
-        <div class="main-content">
-    `;
+    // Check if we're on the index page
+    const isIndexPage = pageName === 'index.html';
+
+    // Create header HTML - minimal for index page, full for others
+    let headerHTML;
+
+    if (isIndexPage) {
+        // Minimal header for index page - just logo, no navigation
+        headerHTML = `
+            <header>
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="logo.PNG" alt="EZB Sports Logo">
+                    </a>
+                </div>
+            </header>
+            <div class="main-content">
+        `;
+    } else {
+        // Full header for all other pages
+        headerHTML = `
+            <header>
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="logo.PNG" alt="EZB Sports Logo">
+                    </a>
+                </div>
+                <div class="menu-toggle" id="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html" ${pageName === 'index.html' ? 'class="active"' : ''}>Home</a></li>
+                        <li><a href="journey.html" ${pageName === 'journey.html' ? 'class="active"' : ''}>Eli's Journey</a></li>
+                        <li><a href="the-big-day.html" ${pageName === 'the-big-day.html' ? 'class="active"' : ''}>Game Day Details</a></li>
+                        <li><a href="rsvp.html" ${pageName === 'rsvp.html' ? 'class="active"' : ''}>RSVP</a></li>
+                        <li><a href="family-details.html" ${pageName === 'family-details.html' ? 'class="active"' : ''}>Family & Out-of-Town Guests</a></li>
+                        ${pageName === 'rsvp-dashboard.html' ? '<li><a href="rsvp-dashboard.html" class="active">RSVP Dashboard</a></li>' : ''}
+                    </ul>
+                </nav>
+            </header>
+            <div class="menu-overlay"></div>
+            <div class="main-content">
+        `;
+    }
 
     // Find the body element
     const body = document.body;
@@ -96,31 +116,55 @@ function injectHeader() {
 }
 
 function injectFooter() {
-    // Create footer HTML
-    const footerHTML = `
-        </div> <!-- Close main-content -->
-        <footer>
-            <div class="container">
-                <div class="footer-credits">
-                    <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
-                    <span class="separator">|</span>
-                    <a href="https://askthekidz.com" target="_blank" rel="noopener">Ask The Kidz</a>
-                    <span class="separator">|</span>
-                    <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" rel="noopener" class="github-link">
-                        <i class="fab fa-github"></i> View on GitHub
-                    </a>
+    // Get the current page name
+    const pageName = window.location.pathname.split('/').pop() || 'index.html';
+    const isIndexPage = pageName === 'index.html';
+
+    // Create footer HTML - minimal for index page, full for others
+    let footerHTML;
+
+    if (isIndexPage) {
+        // Minimal footer for index page
+        footerHTML = `
+            </div> <!-- Close main-content -->
+            <footer>
+                <div class="container">
+                    <div class="footer-credits">
+                        <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
+                    </div>
+                    <div class="footer-links">
+                        <a href="rsvp-dashboard.html">RSVP Dashboard</a>
+                    </div>
                 </div>
-                <div class="footer-links">
-                    <a href="index.html">Home</a>
-                    <a href="journey.html">Eli's Journey</a>
-                    <a href="the-big-day.html">Game Day Details</a>
-                    <a href="rsvp.html">RSVP</a>
-                    <a href="family-details.html">Family & Out-of-Town Guests</a>
-                    <a href="rsvp-dashboard.html">RSVP Dashboard</a>
+            </footer>
+        `;
+    } else {
+        // Full footer for all other pages
+        footerHTML = `
+            </div> <!-- Close main-content -->
+            <footer>
+                <div class="container">
+                    <div class="footer-credits">
+                        <a href="https://jacobbarkin.com" target="_blank" rel="noopener">Designed by Jacob Barkin</a>
+                        <span class="separator">|</span>
+                        <a href="https://askthekidz.com" target="_blank" rel="noopener">Ask The Kidz</a>
+                        <span class="separator">|</span>
+                        <a href="https://github.com/JSB2010/Eli-Barkin-Be-Mitzvah-Website" target="_blank" rel="noopener" class="github-link">
+                            <i class="fab fa-github"></i> View on GitHub
+                        </a>
+                    </div>
+                    <div class="footer-links">
+                        <a href="index.html">Home</a>
+                        <a href="journey.html">Eli's Journey</a>
+                        <a href="the-big-day.html">Game Day Details</a>
+                        <a href="rsvp.html">RSVP</a>
+                        <a href="family-details.html">Family & Out-of-Town Guests</a>
+                        <a href="rsvp-dashboard.html">RSVP Dashboard</a>
+                    </div>
                 </div>
-            </div>
-        </footer>
-    `;
+            </footer>
+        `;
+    }
 
     // Find the body element
     const body = document.body;
@@ -130,6 +174,15 @@ function injectFooter() {
 }
 
 function setupMobileNav() {
+    // Get the current page name
+    const pageName = window.location.pathname.split('/').pop() || 'index.html';
+    const isIndexPage = pageName === 'index.html';
+
+    // Don't setup mobile nav on index page (no hamburger menu there)
+    if (isIndexPage) {
+        return;
+    }
+
     // Wait for elements to be available (after injection)
     setTimeout(() => {
         const menuToggle = document.querySelector('#mobile-menu-toggle');

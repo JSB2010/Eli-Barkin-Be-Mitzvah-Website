@@ -249,6 +249,14 @@ body.force-mobile-nav nav ul li a.active {
         text-shadow: 1px 1px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.8);
     }
 
+    .thank-you-message h2 {
+        font-size: 1.8rem;
+    }
+
+    .thank-you-message p {
+        font-size: 1.1rem;
+    }
+
     .menu-toggle {
         display: flex;
     }
@@ -341,6 +349,19 @@ body.force-mobile-nav nav ul li a.active {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
     }
+
+    .thank-you-message {
+        margin-top: 1.5rem;
+        padding: 1rem;
+    }
+
+    .thank-you-message h2 {
+        font-size: 1.5rem;
+    }
+
+    .thank-you-message p {
+        font-size: 1rem;
+    }
 }
 
 nav ul {
@@ -418,6 +439,30 @@ nav ul li a.active {
     z-index: 2;
     padding: 2rem;
     max-width: 90%;
+}
+
+.thank-you-message {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.thank-you-message h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--white);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.thank-you-message p {
+    font-size: 1.2rem;
+    color: var(--white);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    line-height: 1.6;
 }
 
 .hero-content h1 {
