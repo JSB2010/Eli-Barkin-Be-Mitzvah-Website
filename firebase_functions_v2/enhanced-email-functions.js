@@ -40,7 +40,8 @@ exports.sendStyledRsvpConfirmationV2 = onDocumentCreated({
     let apiKeyValue = brevoApiKey.value().trim();
     // Remove any newline characters
     apiKeyValue = apiKeyValue.replace(/[\r\n]+/g, '');
-    console.log('Using Brevo API key:', apiKeyValue.substring(0, 5) + '...');
+    // Do NOT log the API key itself or any part of it for security reasons
+    console.log('Brevo API key is set and non-empty: ', !!apiKeyValue);
     apiKey.apiKey = apiKeyValue;
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
